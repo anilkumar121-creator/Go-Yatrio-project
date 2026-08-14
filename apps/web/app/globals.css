@@ -1,27 +1,71 @@
 @import "tailwindcss";
 
 :root {
+  /* Surfaces */
   --background: #f8fafc;
   --foreground: #1f2937;
   --card: #ffffff;
   --card-foreground: #1f2937;
+
+  /* Brand */
   --primary: #0057d9;
   --primary-foreground: #ffffff;
   --secondary: #7a1fd1;
   --secondary-foreground: #ffffff;
   --accent: #ff8a1d;
   --accent-foreground: #111827;
+
+  /* Neutrals */
   --border: #d7dde8;
+  --input: #c8d1de;
   --muted: #eef2f7;
   --muted-foreground: #64748b;
+  --ring: #0057d9;
+
+  /* Status */
   --success: #16a34a;
+  --success-foreground: #ffffff;
   --warning: #f59e0b;
+  --warning-foreground: #111827;
   --error: #dc2626;
+  --error-foreground: #ffffff;
+  --info: #0284c7;
+  --info-foreground: #ffffff;
+
+  /* Typography */
+  --font-sans: Inter, "Segoe UI", Arial, sans-serif;
+  --font-display: Inter, "Segoe UI", Arial, sans-serif;
+  --leading-tight: 1.2;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.625;
+
+  /* Spacing */
+  --spacing-section: 4rem;
+  --spacing-section-tablet: 5rem;
+  --spacing-section-desktop: 6rem;
+  --spacing-container: 2rem;
+  --spacing-component: 1.5rem;
+
+  /* Visual */
   --radius: 0.5rem;
+  --radius-sm: 0.25rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --shadow-sm: 0 1px 2px rgb(15 23 42 / 0.08);
+  --shadow-md: 0 8px 24px rgb(15 23 42 / 0.12);
+  --shadow-lg: 0 16px 48px rgb(15 23 42 / 0.16);
+
+  /* Layout */
   --container: 80rem;
+  --container-narrow: 48rem;
+  --container-wide: 88rem;
+
+  /* Motion */
   --duration-fast: 150ms;
   --duration-base: 220ms;
   --duration-slow: 360ms;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
 }
 
 @theme inline {
@@ -36,9 +80,26 @@
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
   --color-border: var(--border);
+  --color-input: var(--input);
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
-  --font-sans: Inter, Arial, sans-serif;
+  --color-ring: var(--ring);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-error: var(--error);
+  --color-error-foreground: var(--error-foreground);
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
+  --font-sans: var(--font-sans);
+  --font-display: var(--font-display);
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+  --shadow-sm: var(--shadow-sm);
+  --shadow-md: var(--shadow-md);
+  --shadow-lg: var(--shadow-lg);
   --breakpoint-xs: 30rem;
   --breakpoint-tablet: 48rem;
   --breakpoint-laptop: 64rem;
@@ -58,7 +119,7 @@ body {
   min-height: 100vh;
   background: var(--background);
   color: var(--foreground);
-  font-family: Inter, Arial, sans-serif;
+  font-family: var(--font-sans);
   text-rendering: optimizeLegibility;
 }
 
@@ -67,11 +128,155 @@ a {
   text-decoration: none;
 }
 
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
 :focus-visible {
-  outline: 3px solid color-mix(in srgb, var(--primary), white 20%);
+  outline: 3px solid color-mix(in srgb, var(--ring), white 20%);
   outline-offset: 3px;
 }
 
 ::selection {
   background: color-mix(in srgb, var(--primary), white 78%);
+}
+
+/* ------------------------------------------------------------------ */
+/* Animation foundation                                                */
+/* ------------------------------------------------------------------ */
+
+@keyframes gy-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes gy-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(0.75rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes gy-fade-down {
+  from {
+    opacity: 0;
+    transform: translateY(-0.75rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes gy-scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes gy-shimmer {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+
+@keyframes gy-slide-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(1rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-fade-in {
+  animation: gy-fade-in var(--duration-base) var(--ease-out) both;
+}
+
+.animate-fade-up {
+  animation: gy-fade-up var(--duration-slow) var(--ease-out) both;
+}
+
+.animate-fade-down {
+  animation: gy-fade-down var(--duration-base) var(--ease-out) both;
+}
+
+.animate-scale-in {
+  animation: gy-scale-in var(--duration-base) var(--ease-out) both;
+}
+
+.animate-slide-in-right {
+  animation: gy-slide-in-right var(--duration-base) var(--ease-out) both;
+}
+
+.skeleton-shimmer {
+  background: linear-gradient(
+    100deg,
+    var(--muted) 40%,
+    color-mix(in srgb, var(--muted), white 30%) 50%,
+    var(--muted) 60%
+  );
+  background-size: 200% 100%;
+  animation: gy-shimmer 1.6s linear infinite;
+}
+
+/* Hover lift used by cards and interactive tiles */
+.hover-lift {
+  transition:
+    transform var(--duration-base) var(--ease-out),
+    box-shadow var(--duration-base) var(--ease-out);
+}
+
+.hover-lift:hover {
+  transform: translateY(-0.25rem);
+  box-shadow: var(--shadow-md);
+}
+
+/* Image zoom on hover */
+.image-zoom img {
+  transition: transform var(--duration-slow) var(--ease-out);
+}
+
+.image-zoom:hover img {
+  transform: scale(1.04);
+}
+
+/* ------------------------------------------------------------------ */
+/* Reduced motion                                                      */
+/* ------------------------------------------------------------------ */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  html {
+    scroll-behavior: auto;
+  }
 }

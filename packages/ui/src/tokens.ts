@@ -1,4 +1,25 @@
 export const uiFoundation = {
+  color: {
+    background: "#f8fafc",
+    foreground: "#1f2937",
+    card: "#ffffff",
+    cardForeground: "#1f2937",
+    primary: "#0057d9",
+    primaryForeground: "#ffffff",
+    secondary: "#7a1fd1",
+    secondaryForeground: "#ffffff",
+    accent: "#ff8a1d",
+    accentForeground: "#111827",
+    border: "#d7dde8",
+    input: "#c8d1de",
+    muted: "#eef2f7",
+    mutedForeground: "#64748b",
+    ring: "#0057d9",
+    success: "#16a34a",
+    warning: "#f59e0b",
+    error: "#dc2626",
+    info: "#0284c7",
+  },
   radius: {
     sm: "0.25rem",
     md: "0.5rem",
@@ -8,5 +29,26 @@ export const uiFoundation = {
     sm: "0 1px 2px rgb(15 23 42 / 0.08)",
     md: "0 8px 24px rgb(15 23 42 / 0.12)",
     lg: "0 16px 48px rgb(15 23 42 / 0.16)",
+  },
+  typography: {
+    fontFamily: 'Inter, "Segoe UI", Arial, sans-serif',
+    display: 'Inter, "Segoe UI", Arial, sans-serif',
+  },
+  spacing: {
+    section: "4rem",
+    sectionTablet: "5rem",
+    sectionDesktop: "6rem",
+    container: "2rem",
+    component: "1.5rem",
+  },
+  container: {
+    default: "80rem",
+    narrow: "48rem",
+    wide: "88rem",
+  },
+  duration: {
+    fast: "150ms",
+    base: "220ms",
+    slow: "360ms",
   },
 } as const;

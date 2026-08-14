@@ -3,6 +3,7 @@ import { Footer } from "@/components/layout/footer";
 import { Navbar } from "@/components/layout/navbar";
 import { PageTransition } from "@/components/layout/page-transition";
 import { ScrollToTop } from "@/components/layout/scroll-to-top";
+import { ToastProvider } from "@/components/common/toast";
 import "./globals.css";
 
 const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
@@ -60,12 +61,14 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html lang="en-IN">
       <body>
-        <Navbar />
-        <PageTransition>
-          <main id="main-content">{children}</main>
-        </PageTransition>
-        <Footer />
-        <ScrollToTop />
+        <ToastProvider>
+          <Navbar />
+          <PageTransition>
+            <main id="main-content">{children}</main>
+          </PageTransition>
+          <Footer />
+          <ScrollToTop />
+        </ToastProvider>
       </body>
     </html>
   );
