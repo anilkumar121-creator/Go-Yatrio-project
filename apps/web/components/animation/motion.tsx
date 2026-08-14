@@ -1,6 +1,8 @@
-"use client";
+﻿"use client";
 
 import { motion, useReducedMotion } from "framer-motion";
+
+export const MotionDiv = motion.div;
 
 const DURATION = 0.3;
 const EASE: [number, number, number, number] = [0.22, 1, 0.36, 1];
