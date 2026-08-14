@@ -1,9 +1,9 @@
 import "dotenv/config";
+import { env } from "./config/env.js";
 import { createApp } from "./app.js";
 
-const port = Number(process.env.API_PORT ?? 4000);
 const app = createApp();
 
-app.listen(port, () => {
-  console.log(`GoYatrio API foundation listening on port ${port}`);
+app.listen(env.API_PORT, () => {
+  console.log(`GoYatrio API foundation listening on port ${env.API_PORT}`);
 });

@@ -1,10 +1,6 @@
 import { Router } from "express";
+import { health } from "../controllers/health.controller.js";
 
 export const healthRouter = Router();
 
-healthRouter.get("/", (_request, response) => {
-  response.status(200).json({
-    status: "ok",
-    service: "goyatrio-api",
-  });
-});
+healthRouter.get("/", health);
