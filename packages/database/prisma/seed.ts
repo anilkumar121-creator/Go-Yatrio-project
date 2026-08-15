@@ -1,19 +1,22 @@
-import { PrismaClient, PackageType, VehicleType } from "@prisma/client";
+﻿import { PrismaClient, PackageType, VehicleType, UserRole } from "@prisma/client";
 import { hash } from "bcryptjs";
 
 const prisma = new PrismaClient();
 
 async function main() {
-  const password = process.env.SEED_ADMIN_PASSWORD ?? "ChangeMe.dev.only.123";
+  const adminEmail = process.env.ADMIN_EMAIL ?? "admin.dev@goyatrio.local";
+  const password = process.env.ADMIN_PASSWORD ?? process.env.SEED_ADMIN_PASSWORD ?? "ChangeMe.dev.only.123";
   const passwordHash = await hash(password, 12);
 
   const admin = await prisma.user.upsert({
-    where: { email: "admin.dev@goyatrio.local" },
-    update: { name: "GoYatrio Dev Admin", passwordHash, isActive: true },
+    where: { email: adminEmail },
+    update: { name: "GoYatrio Dev Admin", passwordHash, role: UserRole.ADMIN, isActive: true },
     create: {
       name: "GoYatrio Dev Admin",
-      email: "admin.dev@goyatrio.local",
+      email: adminEmail,
       passwordHash,
+      role: UserRole.ADMIN,
+      isActive: true,
     },
   });
 

@@ -1,4 +1,4 @@
-import {
+﻿import {
   InquiryServiceType,
   InquiryStatus,
   MediaResourceType,
@@ -9,8 +9,23 @@ import { z } from "zod";
 import { moneySchema, optionalStringField, slugSchema, stringField } from "./common.js";
 
 export const loginSchema = z.object({
-  email: z.email().max(255),
-  password: z.string().min(8).max(128),
+  email: z.string().email().max(255),
+  password: z.string().min(8, "Password must be at least 8 characters").max(128),
+});
+
+export const registerSchema = z.object({
+  name: stringField(120),
+  email: z.string().email().max(255),
+  password: z.string().min(8, "Password must be at least 8 characters").max(128),
+});
+
+export const changePasswordSchema = z.object({
+  currentPassword: z.string().min(1, "Current password is required"),
+  newPassword: z.string().min(8, "New password must be at least 8 characters").max(128),
+});
+
+export const refreshTokenSchema = z.object({
+  refreshToken: z.string().min(1, "Refresh token is required").optional(),
 });
 
 export const destinationCreateSchema = z.object({
@@ -92,7 +107,7 @@ export const vehicleUpdateSchema = vehicleCreateSchema.partial();
 
 export const inquiryCreateSchema = z.object({
   fullName: stringField(120),
-  email: z.email().max(255),
+  email: z.string().email().max(255),
   phone: stringField(30),
   travelDate: z.coerce.date().optional(),
   numberOfTravelers: z.coerce.number().int().positive().max(500).optional(),

@@ -1,130 +1,200 @@
-# GoYatrio Backend API
+﻿# GoYatrio Platform — API Documentation
 
-The backend API is mounted under `/api`.
+This document describes the REST API foundation for the **GoYatrio** travel platform backend service (`apps/api`).
 
-## Environment
+## Base URL
 
-Required for database-backed features:
+By default in development: `http://localhost:4000`
 
-```env
-DATABASE_URL=
-JWT_SECRET=
-API_PORT=4000
-API_CORS_ORIGIN=http://localhost:3000
-CLOUDINARY_CLOUD_NAME=
-CLOUDINARY_API_KEY=
-CLOUDINARY_API_SECRET=
-```
+---
 
-`JWT_SECRET` must be at least 32 characters. Never commit real secrets.
+## Authentication & Authorization
 
-## Authentication
-
-Admin login:
+Protected endpoints require a valid JWT passed in the `Authorization` header:
 
 ```http
-POST /api/auth/login
-Content-Type: application/json
-
-{
-  "email": "admin.dev@goyatrio.local",
-  "password": "development-password"
-}
+Authorization: Bearer <your_jwt_access_token>
 ```
 
-Successful response:
+### Authentication Endpoints
 
-```json
-{
-  "success": true,
-  "data": {
-    "token": "jwt-token",
-    "user": {
-      "id": "user-id",
-      "name": "GoYatrio Dev Admin",
-      "email": "admin.dev@goyatrio.local",
-      "role": "ADMIN"
+#### 1. Register User
+- **Method:** `POST`
+- **Path:** `/api/auth/register`
+- **Access:** Public
+- **Request Body:**
+  ```json
+  {
+    "name": "John Doe",
+    "email": "john.doe@example.com",
+    "password": "SecurePassword123!"
+  }
+  ```
+- **Response (201 Created):**
+  ```json
+  {
+    "success": true,
+    "message": "User registered successfully.",
+    "data": {
+      "accessToken": "eyJhbGci...",
+      "refreshToken": "4a7b...",
+      "user": {
+        "id": "cuid...",
+        "name": "John Doe",
+        "email": "john.doe@example.com",
+        "role": "CUSTOMER",
+        "isActive": true,
+        "createdAt": "2026-08-15T02:00:00.000Z"
+      }
     }
   }
-}
-```
+  ```
 
-Use the token for protected write routes:
-
-```http
-Authorization: Bearer <token>
-```
-
-## Health
-
-```http
-GET /api/health
-```
-
-Response includes API status and database connectivity status when `DATABASE_URL` is configured.
-
-## Resource Routes
-
-The following resources expose a foundation CRUD shape:
-
-- `/api/destinations`
-- `/api/packages`
-- `/api/itineraries`
-- `/api/hotels`
-- `/api/cabs`
-- `/api/inquiries`
-- `/api/blogs`
-- `/api/media`
-
-Common endpoints:
-
-```http
-GET /api/<resource>
-GET /api/<resource>/:id
-POST /api/<resource>
-PATCH /api/<resource>/:id
-DELETE /api/<resource>/:id
-```
-
-Write operations require admin authentication, except `POST /api/inquiries`, which is public for lead capture.
-
-## Example Inquiry
-
-```http
-POST /api/inquiries
-Content-Type: application/json
-
-{
-  "fullName": "Demo Traveler",
-  "email": "demo@example.com",
-  "phone": "+910000000000",
-  "destination": "Kerala",
-  "serviceType": "DOMESTIC_TOUR",
-  "numberOfTravelers": 2,
-  "message": "Development sample inquiry"
-}
-```
-
-## Validation Errors
-
-Validation errors use a consistent shape:
-
-```json
-{
-  "success": false,
-  "message": "Validation failed",
-  "error": "VALIDATION_ERROR",
-  "issues": [
-    {
-      "path": "email",
-      "message": "Invalid email address"
+#### 2. User Login
+- **Method:** `POST`
+- **Path:** `/api/auth/login`
+- **Access:** Public
+- **Request Body:**
+  ```json
+  {
+    "email": "john.doe@example.com",
+    "password": "SecurePassword123!"
+  }
+  ```
+- **Response (200 OK):**
+  ```json
+  {
+    "success": true,
+    "message": "User authenticated successfully.",
+    "data": {
+      "accessToken": "eyJhbGci...",
+      "refreshToken": "4a7b...",
+      "user": {
+        "id": "cuid...",
+        "name": "John Doe",
+        "email": "john.doe@example.com",
+        "role": "CUSTOMER"
+      }
     }
-  ]
-}
-```
+  }
+  ```
 
-## Notes
+#### 3. User Logout
+- **Method:** `POST`
+- **Path:** `/api/auth/logout`
+- **Access:** Authenticated (`Bearer <token>`)
+- **Request Body (Optional):**
+  ```json
+  {
+    "refreshToken": "4a7b..."
+  }
+  ```
+- **Response (200 OK):**
+  ```json
+  {
+    "success": true,
+    "message": "Logged out successfully.",
+    "data": {
+      "success": true
+    }
+  }
+  ```
 
-- Password hashes are never returned by the API.
-- Cloudinary media records store references only, not binary files.
-- Delete routes use safe behavior where business data should be retained, such as soft-deactivating destinations, packages, hotels, vehicles, closing inquiries, and unpublishing blogs.
+#### 4. Get Current User (`/me`)
+- **Method:** `GET`
+- **Path:** `/api/auth/me`
+- **Access:** Authenticated (`Bearer <token>`)
+- **Response (200 OK):**
+  ```json
+  {
+    "success": true,
+    "message": "Current user fetched successfully.",
+    "data": {
+      "user": {
+        "id": "cuid...",
+        "name": "John Doe",
+        "email": "john.doe@example.com",
+        "role": "CUSTOMER",
+        "isActive": true
+      }
+    }
+  }
+  ```
+
+#### 5. Refresh Session
+- **Method:** `POST`
+- **Path:** `/api/auth/refresh`
+- **Access:** Public (Requires valid refresh token in body or `X-Refresh-Token` header)
+- **Request Body:**
+  ```json
+  {
+    "refreshToken": "4a7b..."
+  }
+  ```
+- **Response (200 OK):** Returns new `accessToken` and rotated `refreshToken`.
+
+#### 6. Change Password
+- **Method:** `POST`
+- **Path:** `/api/auth/change-password`
+- **Access:** Authenticated (`Bearer <token>`)
+- **Request Body:**
+  ```json
+  {
+    "currentPassword": "SecurePassword123!",
+    "newPassword": "NewSecurePassword456!"
+  }
+  ```
+- **Response (200 OK):** Invalidates active sessions and updates password hash.
+
+---
+
+## Health Check APIs
+
+- **`GET /health`** or **`GET /api/status`** or **`GET /api/health`**
+- **Access:** Public
+- **Response (200 OK):**
+  ```json
+  {
+    "success": true,
+    "data": {
+      "status": "ok",
+      "service": "goyatrio-api",
+      "database": "connected",
+      "timestamp": "2026-08-15T02:00:00.000Z"
+    }
+  }
+  ```
+
+---
+
+## CRUD Domain Endpoints
+
+The API supports standardized CRUD operations for core travel entities:
+
+- **Destinations:** `/api/destinations`
+- **Tour Packages:** `/api/packages`
+- **Itineraries:** `/api/itineraries`
+- **Hotels:** `/api/hotels`
+- **Cabs & Vehicles:** `/api/cabs`
+- **Travel Inquiries:** `/api/inquiries`
+- **Blogs:** `/api/blogs`
+- **Media Assets:** `/api/media`
+
+### Standard Response Structure
+
+- **Success Response:**
+  ```json
+  {
+    "success": true,
+    "message": "Operation completed successfully.",
+    "data": {}
+  }
+  ```
+- **Error Response:**
+  ```json
+  {
+    "success": false,
+    "message": "Error description.",
+    "code": "ERROR_CODE"
+  }
+  ```
