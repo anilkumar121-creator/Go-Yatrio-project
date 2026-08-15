@@ -88,14 +88,49 @@ export const packageFeaturedSchema = z.object({
   featured: z.boolean(),
 });
 
-export const itineraryCreateSchema = z.object({
-  packageId: z.string().min(1),
+export const activityCreateSchema = z.object({
+  title: stringField(140),
+  description: optionalStringField(1000),
+  location: optionalStringField(200),
+  timing: optionalStringField(100),
+  sortOrder: z.coerce.number().int().min(0).default(0),
+});
+
+export const activityUpdateSchema = activityCreateSchema.partial();
+
+export const dayCreateSchema = z.object({
   dayNumber: z.coerce.number().int().positive().max(365),
+  sortOrder: z.coerce.number().int().min(0).optional(),
   title: stringField(140),
   description: stringField(4000),
-  accommodation: optionalStringField(500),
-  meals: optionalStringField(500),
-  activities: optionalStringField(1000),
+  city: optionalStringField(120),
+  hotel: optionalStringField(200),
+  meals: optionalStringField(200),
+  transfers: optionalStringField(200),
+  notes: optionalStringField(1000),
+  activities: z.array(activityCreateSchema).optional(),
+});
+
+export const dayUpdateSchema = dayCreateSchema.partial();
+
+export const reorderDaysSchema = z.object({
+  dayOrders: z.array(
+    z.object({
+      dayId: z.string().min(1),
+      sortOrder: z.coerce.number().int().min(0),
+      dayNumber: z.coerce.number().int().positive().optional(),
+    })
+  ).min(1),
+});
+
+export const itineraryCreateSchema = z.object({
+  packageId: z.string().min(1),
+  title: stringField(140),
+  slug: slugSchema.optional(),
+  description: optionalStringField(1000),
+  isDefault: z.boolean().optional(),
+  isActive: z.boolean().optional(),
+  days: z.array(dayCreateSchema).optional(),
 });
 
 export const itineraryUpdateSchema = itineraryCreateSchema.partial();

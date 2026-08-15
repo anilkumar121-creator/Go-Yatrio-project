@@ -1,14 +1,47 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Image from "next/image";
-import { MapPin, Calendar, CheckCircle2, XCircle, ImageIcon } from "lucide-react";
+import Link from "next/link";
+import { MapPin, Calendar, CheckCircle2, XCircle, ImageIcon, Hotel, Utensils, Car, Clock, ArrowRight } from "lucide-react";
 import { Container } from "@/components/common/container";
 import { Badge } from "@/components/common/badge";
 import { Card } from "@/components/common/card";
 import { Price } from "@/components/common/price";
+import { Button } from "@/components/common/button";
 import { CardMedia } from "@/components/cards/card-media";
 import { PageWrapper } from "@/components/layout/page-wrapper";
 import { PackageInquiryForm } from "./package-inquiry-form";
+
+type Activity = {
+  id: string;
+  title: string;
+  description?: string | null;
+  location?: string | null;
+  timing?: string | null;
+};
+
+type ItineraryDay = {
+  id: string;
+  dayNumber: number;
+  sortOrder: number;
+  title: string;
+  description: string;
+  city?: string | null;
+  hotel?: string | null;
+  meals?: string | null;
+  transfers?: string | null;
+  notes?: string | null;
+  activities?: Activity[];
+};
+
+type Itinerary = {
+  id: string;
+  title: string;
+  slug: string;
+  description?: string | null;
+  isDefault: boolean;
+  days: ItineraryDay[];
+};
 
 type PackageDetail = {
   id: string;
@@ -36,15 +69,7 @@ type PackageDetail = {
     country: string;
     state: string | null;
   };
-  itineraries: {
-    id: string;
-    dayNumber: number;
-    title: string;
-    description: string;
-    accommodation: string | null;
-    meals: string | null;
-    activities: string | null;
-  }[];
+  itineraries: Itinerary[];
 };
 
 async function getPackage(slug: string): Promise<PackageDetail | null> {
@@ -114,6 +139,8 @@ export default async function PackageDetailPage({ params }: Props) {
       ? [pkg.featuredImage]
       : [];
 
+  const activeItinerary = pkg.itineraries.find((i) => i.isDefault) ?? pkg.itineraries[0];
+
   return (
     <PageWrapper>
       {/* Hero Banner */}
@@ -155,25 +182,23 @@ export default async function PackageDetailPage({ params }: Props) {
           </p>
 
           <div className="mt-6 flex items-center gap-4">
-            <Price amount={Number(pkg.priceFrom)} per="per person" size="lg" className="text-white" />
+            <Price amount={Number(pkg.priceFrom)} per="per person" className="text-white" size="lg" />
           </div>
         </Container>
       </section>
 
-      {/* Main Content + Inquiry Form Sidebar */}
-      <section className="py-14 tablet:py-20">
+      {/* Main Content Layout */}
+      <section className="py-12 tablet:py-16">
         <Container>
-          <div className="grid grid-cols-1 gap-10 tablet:grid-cols-3">
-            {/* Package Content */}
-            <div className="space-y-10 tablet:col-span-2">
+          <div className="grid grid-cols-1 gap-10 desktop:grid-cols-3">
+            {/* Main Package Details Column */}
+            <div className="desktop:col-span-2 space-y-10">
               {/* Overview */}
               <div>
-                <h2 className="text-2xl font-semibold text-foreground">Package Overview</h2>
-                <div className="mt-4 space-y-4 text-base leading-7 text-muted-foreground">
-                  {pkg.description.split("\n").filter(Boolean).map((paragraph, idx) => (
-                    <p key={idx}>{paragraph}</p>
-                  ))}
-                </div>
+                <h2 className="text-2xl font-semibold text-foreground mb-4">Tour Overview</h2>
+                <p className="text-base leading-relaxed text-muted-foreground whitespace-pre-line">
+                  {pkg.description}
+                </p>
               </div>
 
               {/* Inclusions & Exclusions */}
@@ -215,28 +240,76 @@ export default async function PackageDetailPage({ params }: Props) {
                 </div>
               ) : null}
 
-              {/* Day by Day Itinerary Accordion */}
-              {pkg.itineraries.length > 0 ? (
+              {/* Day by Day Itinerary Accordion / Timeline */}
+              {activeItinerary && activeItinerary.days.length > 0 ? (
                 <div>
-                  <h2 className="text-2xl font-semibold text-foreground mb-6">Day-by-Day Itinerary</h2>
-                  <div className="space-y-4">
-                    {pkg.itineraries.map((day) => (
-                      <Card key={day.id} className="p-6">
-                        <div className="flex items-center gap-3 mb-2">
-                          <span className="rounded-md bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary">
-                            Day {day.dayNumber}
-                          </span>
-                          <h3 className="text-lg font-semibold text-foreground">{day.title}</h3>
-                        </div>
-                        <p className="text-sm leading-6 text-muted-foreground mt-2">{day.description}</p>
+                  <div className="flex items-center justify-between mb-6">
+                    <div>
+                      <h2 className="text-2xl font-semibold text-foreground">Day-by-Day Itinerary</h2>
+                      <p className="text-xs text-muted-foreground mt-1">{activeItinerary.title}</p>
+                    </div>
+                    <Button asChild variant="outline" size="sm" className="gap-1">
+                      <Link href={`/itineraries/${activeItinerary.slug}`}>
+                        Full Timeline
+                        <ArrowRight className="size-3.5" />
+                      </Link>
+                    </Button>
+                  </div>
 
-                        {(day.accommodation || day.meals) ? (
+                  <div className="space-y-4">
+                    {activeItinerary.days.map((day) => (
+                      <Card key={day.id} className="p-6 border border-border bg-card shadow-sm">
+                        <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+                          <div className="flex items-center gap-3">
+                            <span className="rounded-md bg-primary/10 px-2.5 py-1 text-xs font-bold text-primary font-mono">
+                              Day {day.dayNumber}
+                            </span>
+                            <h3 className="text-lg font-semibold text-foreground">{day.title}</h3>
+                          </div>
+                          {day.city ? (
+                            <span className="text-xs text-muted-foreground font-medium bg-muted px-2 py-0.5 rounded">
+                              {day.city}
+                            </span>
+                          ) : null}
+                        </div>
+
+                        <p className="text-sm leading-relaxed text-muted-foreground mt-2">{day.description}</p>
+
+                        {/* Activities */}
+                        {day.activities && day.activities.length > 0 ? (
+                          <div className="mt-4 pt-3 border-t border-border">
+                            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-2">
+                              Key Activities
+                            </span>
+                            <div className="flex flex-wrap gap-2">
+                              {day.activities.map((act) => (
+                                <Badge key={act.id} variant="secondary" className="text-xs">
+                                  {act.title} {act.timing ? `(${act.timing})` : ""}
+                                </Badge>
+                              ))}
+                            </div>
+                          </div>
+                        ) : null}
+
+                        {(day.hotel || day.meals || day.transfers) ? (
                           <div className="mt-4 flex flex-wrap gap-4 pt-3 border-t border-border text-xs text-muted-foreground">
-                            {day.accommodation ? (
-                              <span><strong>Stay:</strong> {day.accommodation}</span>
+                            {day.hotel ? (
+                              <span className="flex items-center gap-1">
+                                <Hotel className="size-3.5 text-primary" />
+                                <strong>Stay:</strong> {day.hotel}
+                              </span>
                             ) : null}
                             {day.meals ? (
-                              <span><strong>Meals:</strong> {day.meals}</span>
+                              <span className="flex items-center gap-1">
+                                <Utensils className="size-3.5 text-primary" />
+                                <strong>Meals:</strong> {day.meals}
+                              </span>
+                            ) : null}
+                            {day.transfers ? (
+                              <span className="flex items-center gap-1">
+                                <Car className="size-3.5 text-primary" />
+                                <strong>Transfers:</strong> {day.transfers}
+                              </span>
                             ) : null}
                           </div>
                         ) : null}

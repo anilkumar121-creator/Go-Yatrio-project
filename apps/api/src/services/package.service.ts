@@ -170,7 +170,20 @@ export const packageService = {
       },
       include: {
         destination: true,
-        itineraries: { orderBy: { dayNumber: "asc" } },
+        itineraries: {
+          where: { isActive: true },
+          orderBy: [{ isDefault: "desc" }, { createdAt: "desc" }],
+          include: {
+            days: {
+              orderBy: { sortOrder: "asc" },
+              include: {
+                activities: {
+                  orderBy: { sortOrder: "asc" },
+                },
+              },
+            },
+          },
+        },
       },
     });
   },
@@ -178,7 +191,23 @@ export const packageService = {
   get(id: string) {
     return prisma.tourPackage.findUnique({
       where: { id },
-      include: { destination: true, itineraries: { orderBy: { dayNumber: "asc" } } },
+      include: {
+        destination: true,
+        itineraries: {
+          where: { isActive: true },
+          orderBy: [{ isDefault: "desc" }, { createdAt: "desc" }],
+          include: {
+            days: {
+              orderBy: { sortOrder: "asc" },
+              include: {
+                activities: {
+                  orderBy: { sortOrder: "asc" },
+                },
+              },
+            },
+          },
+        },
+      },
     });
   },
 

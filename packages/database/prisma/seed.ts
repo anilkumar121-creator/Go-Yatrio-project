@@ -84,180 +84,110 @@ async function main() {
       featured: true,
       status: DestinationStatus.PUBLISHED,
       metaTitle: "Leh Ladakh Tour Packages | Ladakh Bike Tours | GoYatrio",
-      metaDescription: "Book Leh Ladakh tour packages with GoYatrio. Experience Pangong Lake, Nubra Valley, Khardung La, and Buddhist monasteries.",
+      metaDescription: "Book Leh Ladakh tour packages with GoYatrio. Experience Nubra Valley camel safaris, Pangong Tso camping, and Khardung La rides.",
     },
     {
-      slug: "jaipur",
-      name: "Jaipur",
+      slug: "rajasthan",
+      name: "Rajasthan",
       state: "Rajasthan",
-      shortDescription: "The Pink City of India with royal palaces, majestic forts, and vibrant bazaars.",
+      shortDescription: "Land of Kings with royal palaces, majestic desert forts, camel safaris, and rich folk culture.",
       description:
-        "Jaipur, the capital of Rajasthan, is known as the Pink City for its distinct terracotta-pink buildings. Explore the magnificent Amber Fort, the astronomical marvel of Jantar Mantar, the royal City Palace, and shop for traditional textiles and jewellery in the bustling bazaars.",
+        "Rajasthan is a land of royal splendour, featuring majestic fortresses in Jaipur and Jodhpur, romantic lakes in Udaipur, golden sand dunes in Jaisalmer, and colorful markets filled with handcrafted textiles and jewelry. Experience royal heritage hospitality and vibrant folk culture.",
       featuredImage: "",
       featured: true,
       status: DestinationStatus.PUBLISHED,
-      metaTitle: "Jaipur Tour Packages | Pink City Rajasthan Tours | GoYatrio",
-      metaDescription: "Discover Jaipur with GoYatrio. Book Pink City heritage tours, Amber Fort excursions, and Rajasthan royal experiences.",
-    },
-    {
-      slug: "varanasi",
-      name: "Varanasi",
-      state: "Uttar Pradesh",
-      shortDescription: "India's spiritual capital on the banks of the Ganges with ancient ghats and sacred rituals.",
-      description:
-        "Varanasi is one of the world's oldest living cities and India's spiritual capital. Witness the mesmerizing Ganga Aarti at Dashashwamedh Ghat, take a sunrise boat ride along the sacred Ganges, and explore the narrow lanes filled with ancient temples and traditional crafts.",
-      featuredImage: "",
-      featured: false,
-      status: DestinationStatus.PUBLISHED,
-      metaTitle: "Varanasi Tour Packages | Spiritual Ganges Tours | GoYatrio",
-      metaDescription: "Experience the spiritual heart of India with GoYatrio. Book Varanasi temple tours, Ganga Aarti experiences, and heritage walks.",
-    },
-    {
-      slug: "rann-of-kutch",
-      name: "Rann of Kutch",
-      state: "Gujarat",
-      shortDescription: "The Great White Desert with the spectacular Rann Utsav festival and vibrant craft villages.",
-      description:
-        "The Rann of Kutch is a seasonal salt marsh that transforms into the surreal Great White Desert. During the annual Rann Utsav, the region comes alive with cultural performances, traditional handicrafts, luxury tent stays, and unforgettable desert sunsets.",
-      featuredImage: "",
-      featured: false,
-      status: DestinationStatus.PUBLISHED,
-      metaTitle: "Rann of Kutch Tour Packages | Rann Utsav Gujarat | GoYatrio",
-      metaDescription: "Book Rann of Kutch packages with GoYatrio. Experience Rann Utsav, white desert sunsets, and Kutch craft villages.",
-    },
-    {
-      slug: "ooty",
-      name: "Ooty",
-      state: "Tamil Nadu",
-      shortDescription: "Queen of Hill Stations with rolling tea gardens, colonial charm, and scenic toy train rides.",
-      description:
-        "Ooty, nestled in the Nilgiri Hills, is a classic British-era hill station known for its lush tea gardens, serene lakes, botanical gardens, and the charming Nilgiri Mountain Railway toy train. A perfect escape for families and nature lovers.",
-      featuredImage: "",
-      featured: false,
-      status: DestinationStatus.PUBLISHED,
-      metaTitle: "Ooty Tour Packages | Nilgiri Hills Getaways | GoYatrio",
-      metaDescription: "Plan a relaxing Ooty hill station holiday with GoYatrio. Book tea garden tours, toy train rides, and lake resorts.",
-    },
-    {
-      slug: "darjeeling",
-      name: "Darjeeling",
-      state: "West Bengal",
-      shortDescription: "Tea capital of India with Himalayan views, heritage toy trains, and misty monasteries.",
-      description:
-        "Darjeeling is the tea capital of India, offering panoramic views of the Kanchenjunga range, lush tea estates, the heritage Darjeeling Himalayan Railway, and peaceful Buddhist monasteries. An unforgettable destination for tea lovers and mountain enthusiasts.",
-      featuredImage: "",
-      featured: false,
-      status: DestinationStatus.PUBLISHED,
-      metaTitle: "Darjeeling Tour Packages | Himalayan Tea Garden Tours | GoYatrio",
-      metaDescription: "Book Darjeeling tour packages with GoYatrio. Experience Himalayan views, heritage toy trains, and tea estate tours.",
+      metaTitle: "Rajasthan Tour Packages | Royal Forts & Palaces | GoYatrio",
+      metaDescription: "Explore Rajasthan with GoYatrio. Book Jaipur, Udaipur, and Jaisalmer heritage tours with royal stays and private transfers.",
     },
   ];
 
   const seededDestinations: Record<string, { id: string }> = {};
 
-  for (const destinationSeed of destinationSeeds) {
-    const destination = await prisma.destination.upsert({
-      where: { slug: destinationSeed.slug },
-      update: {
-        name: destinationSeed.name,
-        state: destinationSeed.state,
-        shortDescription: destinationSeed.shortDescription,
-        description: destinationSeed.description,
-        featured: destinationSeed.featured,
-        status: destinationSeed.status,
-        metaTitle: destinationSeed.metaTitle,
-        metaDescription: destinationSeed.metaDescription,
-        isActive: true,
-      },
-      create: {
-        ...destinationSeed,
-        country: "India",
-        galleryImages: [],
-      },
+  for (const dest of destinationSeeds) {
+    const record = await prisma.destination.upsert({
+      where: { slug: dest.slug },
+      update: dest,
+      create: dest,
     });
-
-    seededDestinations[destinationSeed.slug] = destination;
+    seededDestinations[dest.slug] = record;
   }
 
-  const kerala = await prisma.destination.findUniqueOrThrow({ where: { slug: "kerala" } });
+  const kerala = seededDestinations["kerala"];
 
   const packageSeeds = [
     {
-      slug: "kashmir-paradise-escape",
-      title: "Kashmir Paradise Escape",
-      shortDescription: "Experience Srinagar houseboats, Shikara rides on Dal Lake, and snow adventures in Gulmarg.",
-      description:
-        "Embark on a dream trip to Kashmir! Stay in luxury houseboats on Dal Lake, enjoy romantic Shikara rides, take the Asia's highest gondola ride in Gulmarg, and stroll through the Mughal gardens of Srinagar.",
-      destinationSlug: "kashmir",
-      durationDays: 6,
-      durationNights: 5,
-      priceFrom: 18999,
-      packageType: PackageType.DOMESTIC,
-      inclusions: ["5 Nights Accommodation", "Daily Breakfast & Dinner", "Airport Transfers in AC Cab", "Shikara Ride on Dal Lake", "Gondola Ticket Phase 1"],
-      exclusions: ["Airfare / Train tickets", "Personal expenses & tips", "Gondola Phase 2 Ticket"],
-      featured: true,
-      status: PackageStatus.PUBLISHED,
-      metaTitle: "Kashmir Paradise Escape 5N/6D Package | GoYatrio",
-      metaDescription: "Book Kashmir Paradise Escape with GoYatrio. Includes Srinagar houseboat stay, Gulmarg gondola, Shikara ride, and private transfers.",
-      itineraries: [
-        { dayNumber: 1, title: "Arrival in Srinagar & Dal Lake Shikara Ride", description: "Arrive at Srinagar airport. Transfer to luxury houseboat. Enjoy evening Shikara ride on Dal Lake.", accommodation: "Deluxe Houseboat", meals: "Dinner", activities: "Shikara Ride" },
-        { dayNumber: 2, title: "Srinagar Mughal Gardens Tour", description: "Visit Nishat Bagh, Shalimar Bagh, Chashme Shahi, and Shankaracharya Temple.", accommodation: "Srinagar Hotel", meals: "Breakfast & Dinner", activities: "Garden Sightseeing" },
-        { dayNumber: 3, title: "Excursion to Gulmarg", description: "Drive to Gulmarg. Take the world-famous Gulmarg Gondola ride to Kongdoori.", accommodation: "Gulmarg Resort", meals: "Breakfast & Dinner", activities: "Gondola Ride & Snow Sports" },
-        { dayNumber: 4, title: "Day Trip to Pahalgam Valley", description: "Drive to Pahalgam. Visit Betaab Valley, Aru Valley, and Chandanwari.", accommodation: "Pahalgam Hotel", meals: "Breakfast & Dinner", activities: "Valley Exploration" },
-        { dayNumber: 5, title: "Return to Srinagar & Shopping", description: "Return to Srinagar. Explore Lal Chowk bazaar for saffron, dry fruits, and pashmina shawls.", accommodation: "Srinagar Hotel", meals: "Breakfast & Dinner", activities: "Shopping" },
-        { dayNumber: 6, title: "Departure from Srinagar", description: "After breakfast, transfer to Srinagar airport for onward journey.", accommodation: "N/A", meals: "Breakfast", activities: "Departure Transfer" },
-      ],
-    },
-    {
       slug: "kerala-backwaters-and-hills",
-      title: "Kerala Backwaters & Hills",
-      shortDescription: "Explore Munnar tea hills, Alleppey backwater houseboats, and spice garden sanctuaries.",
-      description:
-        "Immerse yourself in God's Own Country. Explore tea plantations in Munnar, watch wildlife in Periyar, and cruise the peaceful backwaters of Alleppey in a private luxury houseboat.",
       destinationSlug: "kerala",
+      title: "Kerala Backwaters & Hill Station Escape",
+      shortDescription: "5 Days / 4 Nights exploring Munnar tea gardens, Thekkady wildlife, and Alleppey houseboat cruise.",
+      description: "Immerse yourself in God's Own Country. Start in Munnar amid cascading waterfalls and spice-scented hills, discover Periyar wildlife in Thekkady, and end with an unforgettable overnight houseboat stay on the tranquil backwaters of Alleppey.",
       durationDays: 5,
       durationNights: 4,
-      priceFrom: 15499,
+      priceFrom: 18999,
       packageType: PackageType.DOMESTIC,
-      inclusions: ["4 Nights Accommodation (1N Houseboat + 3N Hotel)", "All Meals on Houseboat", "Daily Breakfast at Hotels", "Private AC Cab for Transfers"],
-      exclusions: ["Airfare / Train tickets", "Entry fees to monuments", "Personal expenses"],
+      inclusions: ["Breakfast & Dinner", "AC Private Sedan Transfer", "Houseboat Cruise with all meals", "Sightseeing Entry Tickets"],
+      exclusions: ["Airfare/Trainfare", "Personal expenses", "Camera fees", "Travel Insurance"],
       featured: true,
       status: PackageStatus.PUBLISHED,
-      metaTitle: "Kerala Backwaters & Hills 4N/5D Tour Package | GoYatrio",
-      metaDescription: "Book Kerala Backwaters & Hills tour with GoYatrio. Experience Munnar tea hills, Periyar spice gardens, and Alleppey houseboats.",
+      metaTitle: "Kerala Backwaters & Hill Station Escape | 5D4N Package | GoYatrio",
+      metaDescription: "Book 5D/4N Kerala Tour with GoYatrio. Includes Munnar tea hills, Thekkady Periyar lake, and Alleppey houseboat experience.",
       itineraries: [
-        { dayNumber: 1, title: "Cochin to Munnar Tea Hills", description: "Arrive in Cochin and drive through scenic waterfalls to Munnar tea gardens.", accommodation: "Munnar Tea Resort", meals: "Dinner", activities: "Scenic Drive & Cheeyappara Waterfalls" },
-        { dayNumber: 2, title: "Munnar Sightseeing Tour", description: "Visit Eravikulam National Park (Nilgiri Tahr), Mattupetty Dam, and Tea Museum.", accommodation: "Munnar Tea Resort", meals: "Breakfast & Dinner", activities: "National Park & Tea Tasting" },
-        { dayNumber: 3, title: "Munnar to Thekkady (Periyar)", description: "Drive to Thekkady. Enjoy boat safari on Periyar Lake and spice plantation walk.", accommodation: "Thekkady Jungle Lodge", meals: "Breakfast & Dinner", activities: "Spice Plantation Tour & Boat Safari" },
-        { dayNumber: 4, title: "Thekkady to Alleppey Houseboat", description: "Board private houseboat in Alleppey. Cruise through serene backwaters.", accommodation: "Private Deluxe Houseboat", meals: "Breakfast, Lunch & Dinner", activities: "Backwater Cruise" },
-        { dayNumber: 5, title: "Alleppey to Cochin Departure", description: "After breakfast on houseboat, transfer to Cochin airport or railway station.", accommodation: "N/A", meals: "Breakfast", activities: "Departure Transfer" },
+        { dayNumber: 1, title: "Arrival in Cochin & Transfer to Munnar", description: "Arrive at Cochin Airport/Railway Station. Meet our representative and drive to Munnar. En route, enjoy Cheeyappara and Valara waterfalls.", city: "Munnar", accommodation: "Tea Valley Resort Munnar", meals: "Dinner", transfers: "Private AC Sedan", notes: "Check-in after 2 PM", activities: [{ title: "Waterfall stops at Cheeyappara & Valara", timing: "Morning / Afternoon" }] },
+        { dayNumber: 2, title: "Munnar Full Day Tea & Nature Sightseeing", description: "Full day sightseeing of Munnar including Mattupetty Dam, Echo Point, Kundala Lake, and Tea Museum with tea tasting.", city: "Munnar", accommodation: "Tea Valley Resort Munnar", meals: "Breakfast & Dinner", transfers: "Private AC Sedan", notes: "Tea Museum closed on Mondays", activities: [{ title: "Mattupetty Dam & Speed Boat Ride", timing: "09:30 AM" }, { title: "Echo Point & Kundala Lake Visit", timing: "01:30 PM" }] },
+        { dayNumber: 3, title: "Munnar to Thekkady Spice Plantation & Lake", description: "Morning scenic drive to Thekkady. Visit spice plantations and enjoy boat ride on Periyar Lake for wildlife viewing.", city: "Thekkady", accommodation: "Periyar Meadow Resort", meals: "Breakfast & Dinner", transfers: "Private AC Sedan", notes: "Boating tickets subject to online booking availability", activities: [{ title: "Spice Plantation Walk", timing: "11:00 AM" }, { title: "Periyar Wildlife Boat Safari", timing: "03:30 PM" }] },
+        { dayNumber: 4, title: "Thekkady to Alleppey Houseboat Check-in", description: "Drive to Alleppey backwaters. Board traditional deluxe houseboat at 12 PM. Cruise through narrow canals, paddy fields and palm groves.", city: "Alleppey", accommodation: "Deluxe Private Houseboat", meals: "Breakfast, Lunch, Evening Tea & Dinner", transfers: "Private AC Sedan", notes: "AC operates from 9 PM to 6 AM in deluxe category", activities: [{ title: "Backwater Cruise & Sunset Deck Experience", timing: "12:00 PM onwards" }] },
+        { dayNumber: 5, title: "Departure from Cochin", description: "Disembark houseboat after breakfast and transfer to Cochin Airport / Railway Station for departure.", city: "Cochin", accommodation: "N/A", meals: "Breakfast", transfers: "Private AC Sedan", notes: "Drop off according to flight schedule", activities: [{ title: "Cochin Fort Sightseeing (time permitting)", timing: "Morning" }] },
       ],
     },
     {
-      slug: "royal-rajasthan-heritage",
-      title: "Royal Rajasthan Heritage Trail",
-      shortDescription: "Discover royal palaces, Amber Fort, Lake Pichola in Udaipur, and desert culture.",
-      description:
-        "Experience the grand heritage of Rajasthan. Visit the iconic Pink City of Jaipur, explore Udaipur's romantic lakes, and admire majestic hill forts.",
-      destinationSlug: "jaipur",
-      durationDays: 7,
-      durationNights: 6,
-      priceFrom: 22500,
-      packageType: PackageType.LUXURY,
-      inclusions: ["6 Nights Royal Hotel Accommodation", "Daily Breakfast & Dinner", "Elephant Ride at Amber Fort", "Boat Cruise on Lake Pichola", "Private AC Sedan Transfer"],
-      exclusions: ["Airfare / Train tickets", "Camera fees", "Personal expenses"],
+      slug: "kashmir-paradise-experience",
+      destinationSlug: "kashmir",
+      title: "Kashmir Paradise & Gulmarg Gondola Experience",
+      shortDescription: "6 Days / 5 Nights covering Srinagar Dal Lake houseboat stay, Pahalgam valleys, and Gulmarg snow peaks.",
+      description: "Experience the magic of Kashmir with Dal Lake Shikara ride, overnight stay in a handcrafted wooden houseboat, meadow walks in Pahalgam, and high-altitude Gondola cable car ride in Gulmarg.",
+      durationDays: 6,
+      durationNights: 5,
+      priceFrom: 24999,
+      packageType: PackageType.DOMESTIC,
+      inclusions: ["Breakfast & Dinner", "Shikara Ride on Dal Lake", "Pahalgam & Gulmarg transfers", "Luxury Houseboat Stay"],
+      exclusions: ["Gondola Phase 2 tickets", "Personal Pony charges", "Airfare"],
       featured: true,
       status: PackageStatus.PUBLISHED,
-      metaTitle: "Royal Rajasthan Heritage Trail 6N/7D Package | GoYatrio",
-      metaDescription: "Discover Royal Rajasthan with GoYatrio. Includes Jaipur Pink City, Amber Fort, Udaipur Lake Pichola cruise, and heritage stays.",
+      metaTitle: "Kashmir Paradise & Gulmarg Gondola Tour | 6D5N Package | GoYatrio",
+      metaDescription: "Book 6D/5N Kashmir Holiday with GoYatrio. Includes Srinagar houseboat, Gulmarg gondola, and Pahalgam Betaab valley tour.",
       itineraries: [
-        { dayNumber: 1, title: "Arrival in Jaipur", description: "Arrive in Jaipur and check into heritage hotel. Visit Birla Temple in the evening.", accommodation: "Jaipur Heritage Hotel", meals: "Dinner", activities: "Temple Visit" },
-        { dayNumber: 2, title: "Jaipur Pink City Forts & Palaces", description: "Explore Amber Fort with elephant ride, City Palace, Hawa Mahal, and Jantar Mantar.", accommodation: "Jaipur Heritage Hotel", meals: "Breakfast & Dinner", activities: "Forts & Palaces Tour" },
-        { dayNumber: 3, title: "Jaipur to Ajmer/Pushkar to Jodhpur", description: "Drive via holy Pushkar Lake and Brahma Temple to the Blue City of Jodhpur.", accommodation: "Jodhpur Palace Hotel", meals: "Breakfast & Dinner", activities: "Pushkar Lake Visit" },
-        { dayNumber: 4, title: "Jodhpur Sightseeing & Drive to Udaipur", description: "Visit Mehrangarh Fort and Jaswant Thada, then drive to Udaipur City of Lakes.", accommodation: "Udaipur Lake Resort", meals: "Breakfast & Dinner", activities: "Mehrangarh Fort Tour" },
-        { dayNumber: 5, title: "Udaipur City Palace & Lake Pichola Cruise", description: "Visit City Palace, Saheliyon Ki Bari, and enjoy evening boat ride on Lake Pichola.", accommodation: "Udaipur Lake Resort", meals: "Breakfast & Dinner", activities: "Lake Pichola Boat Cruise" },
-        { dayNumber: 6, title: "Excursion to Chittorgarh Fort", description: "Day trip to historic Chittorgarh Fort, India's largest fort complex.", accommodation: "Udaipur Lake Resort", meals: "Breakfast & Dinner", activities: "Chittorgarh Fort Exploration" },
-        { dayNumber: 7, title: "Departure from Udaipur", description: "Transfer to Udaipur airport for your return flight.", accommodation: "N/A", meals: "Breakfast", activities: "Departure Transfer" },
+        { dayNumber: 1, title: "Arrival in Srinagar & Dal Lake Shikara Ride", description: "Arrive at Srinagar Airport. Transfer to houseboat on Dal Lake. Enjoy a serene 1-hour sunset Shikara ride.", city: "Srinagar", accommodation: "Luxury Dal Lake Houseboat", meals: "Dinner", transfers: "Private Sedan", notes: "Airport pickup included", activities: [{ title: "Sunset Shikara Ride on Dal Lake", timing: "05:00 PM" }] },
+        { dayNumber: 2, title: "Srinagar Mughal Gardens & Shankaracharya Temple", description: "Visit Nishat Bagh, Shalimar Bagh, Cheshma Shahi Mughal gardens, and Shankaracharya Temple.", city: "Srinagar", accommodation: "Srinagar City Hotel", meals: "Breakfast & Dinner", transfers: "Private Sedan", notes: "Wear comfortable walking shoes", activities: [{ title: "Mughal Gardens Tour", timing: "10:00 AM" }] },
+        { dayNumber: 3, title: "Srinagar to Pahalgam Valley of Shepherds", description: "Drive to Pahalgam via saffron fields of Pampore. Visit Aru Valley and Betaab Valley.", city: "Pahalgam", accommodation: "Pahalgam Pine Resort", meals: "Breakfast & Dinner", transfers: "Private Sedan", notes: "Local union cab for Betaab valley", activities: [{ title: "Betaab & Aru Valley Sightseeing", timing: "01:00 PM" }] },
+        { dayNumber: 4, title: "Pahalgam to Gulmarg Meadow of Flowers", description: "Drive to Gulmarg. Ride the world's second-highest Gondola cable car up to Kongdoori & Apharwat Peak.", city: "Gulmarg", accommodation: "Gulmarg Resort", meals: "Breakfast & Dinner", transfers: "Private Sedan", notes: "Gondola tickets booked in advance", activities: [{ title: "Gulmarg Gondola Ride Phase 1 & 2", timing: "10:30 AM" }] },
+        { dayNumber: 5, title: "Gulmarg to Srinagar Local Craft Shopping", description: "Return to Srinagar. Visit local handicraft centers for Pashmina shawls, carpets, and dry fruits.", city: "Srinagar", accommodation: "Srinagar Hotel", meals: "Breakfast & Dinner", transfers: "Private Sedan", notes: "Evening free for shopping", activities: [{ title: "Heritage Craft Shopping Walk", timing: "04:00 PM" }] },
+        { dayNumber: 6, title: "Srinagar Departure", description: "Transfer to Srinagar airport for departure with sweet memories of Kashmir.", city: "Srinagar", accommodation: "N/A", meals: "Breakfast", transfers: "Private Sedan", notes: "Arrive airport 3 hours prior", activities: [{ title: "Airport Transfer", timing: "Morning" }] },
+      ],
+    },
+    {
+      slug: "grand-rajasthan-heritage-tour",
+      destinationSlug: "rajasthan",
+      title: "Grand Rajasthan Heritage & Desert Safari",
+      shortDescription: "7 Days / 6 Nights across Jaipur Pink City, Jodhpur Blue City, and Udaipur City of Lakes.",
+      description: "Step into royal India with GoYatrio. Includes Jaipur Pink City, Amber Fort, Udaipur Lake Pichola cruise, and heritage stays.",
+      durationDays: 7,
+      durationNights: 6,
+      priceFrom: 29999,
+      packageType: PackageType.DOMESTIC,
+      inclusions: ["Breakfast & Dinner", "Heritage Hotel Stays", "AC SUV Transfer", "Lake Pichola Boat Cruise"],
+      exclusions: ["Monument Entry Fees", "Camera Charges", "Airfare"],
+      featured: true,
+      status: PackageStatus.PUBLISHED,
+      metaTitle: "Grand Rajasthan Heritage Tour | 7D6N Package | GoYatrio",
+      metaDescription: "Book 7D/6N Rajasthan Heritage Tour with GoYatrio. Includes Jaipur Amber Fort, Jodhpur Fort, and Udaipur Lake Pichola cruise.",
+      itineraries: [
+        { dayNumber: 1, title: "Arrival in Jaipur Pink City", description: "Arrive in Jaipur and check into heritage hotel. Visit Birla Temple in the evening.", city: "Jaipur", accommodation: "Jaipur Heritage Palace", meals: "Dinner", transfers: "Private AC SUV", notes: "Evening cultural show optional", activities: [{ title: "Birla Temple Visit", timing: "06:00 PM" }] },
+        { dayNumber: 2, title: "Jaipur Forts & Palaces Full Day Tour", description: "Explore Amber Fort with elephant ride, City Palace, Hawa Mahal, and Jantar Mantar observatory.", city: "Jaipur", accommodation: "Jaipur Heritage Palace", meals: "Breakfast & Dinner", transfers: "Private AC SUV", notes: "Guide included", activities: [{ title: "Amber Fort Exploration", timing: "09:00 AM" }, { title: "City Palace & Hawa Mahal Walk", timing: "02:00 PM" }] },
+        { dayNumber: 3, title: "Jaipur to Ajmer/Pushkar & Jodhpur", description: "Drive via holy Pushkar Lake and Brahma Temple to the Blue City of Jodhpur.", city: "Jodhpur", accommodation: "Jodhpur Palace Hotel", meals: "Breakfast & Dinner", transfers: "Private AC SUV", notes: "Pushkar stop 2 hours", activities: [{ title: "Pushkar Lake & Temple Visit", timing: "12:00 PM" }] },
+        { dayNumber: 4, title: "Jodhpur Sightseeing & Drive to Udaipur", description: "Visit Mehrangarh Fort and Jaswant Thada, then drive to Udaipur City of Lakes.", city: "Udaipur", accommodation: "Udaipur Lake Resort", meals: "Breakfast & Dinner", transfers: "Private AC SUV", notes: "Ranakpur Jain Temple stop en route", activities: [{ title: "Mehrangarh Fort Tour", timing: "09:30 AM" }] },
+        { dayNumber: 5, title: "Udaipur City Palace & Lake Pichola Cruise", description: "Visit City Palace, Saheliyon Ki Bari, and enjoy evening boat ride on Lake Pichola.", city: "Udaipur", accommodation: "Udaipur Lake Resort", meals: "Breakfast & Dinner", transfers: "Private AC SUV", notes: "Sunset boat cruise included", activities: [{ title: "Lake Pichola Boat Cruise", timing: "05:00 PM" }] },
+        { dayNumber: 6, title: "Excursion to Chittorgarh Fort", description: "Day trip to historic Chittorgarh Fort, India's largest fort complex.", city: "Udaipur", accommodation: "Udaipur Lake Resort", meals: "Breakfast & Dinner", transfers: "Private AC SUV", notes: "Full day excursion", activities: [{ title: "Chittorgarh Fort Guided Tour", timing: "10:00 AM" }] },
+        { dayNumber: 7, title: "Departure from Udaipur", description: "Transfer to Udaipur airport for your return flight.", city: "Udaipur", accommodation: "N/A", meals: "Breakfast", transfers: "Private AC SUV", notes: "Airport drop", activities: [{ title: "Airport Transfer", timing: "Morning" }] },
       ],
     },
   ];
@@ -294,26 +224,60 @@ async function main() {
       },
     });
 
-    for (const itin of itineraries) {
-      await prisma.itinerary.upsert({
+    const itinSlug = `${pkgSeed.slug}-standard-itinerary`;
+    const itinerary = await prisma.itinerary.upsert({
+      where: { slug: itinSlug },
+      update: {
+        title: `${pkgData.title} Standard Itinerary`,
+        description: `Complete ${pkgData.durationDays}D/${pkgData.durationNights}N day-by-day itinerary schedule.`,
+        packageId: tourPackage.id,
+        isDefault: true,
+        isActive: true,
+      },
+      create: {
+        packageId: tourPackage.id,
+        title: `${pkgData.title} Standard Itinerary`,
+        slug: itinSlug,
+        description: `Complete ${pkgData.durationDays}D/${pkgData.durationNights}N day-by-day itinerary schedule.`,
+        isDefault: true,
+        isActive: true,
+      },
+    });
+
+    for (const itinDay of itineraries) {
+      const { activities, ...dayFields } = itinDay;
+
+      const createdDay = await prisma.itineraryDay.upsert({
         where: {
-          packageId_dayNumber: {
-            packageId: tourPackage.id,
-            dayNumber: itin.dayNumber,
+          itineraryId_dayNumber: {
+            itineraryId: itinerary.id,
+            dayNumber: dayFields.dayNumber,
           },
         },
         update: {
-          title: itin.title,
-          description: itin.description,
-          accommodation: itin.accommodation,
-          meals: itin.meals,
-          activities: itin.activities,
+          ...dayFields,
+          sortOrder: dayFields.dayNumber,
         },
         create: {
-          packageId: tourPackage.id,
-          ...itin,
+          itineraryId: itinerary.id,
+          sortOrder: dayFields.dayNumber,
+          ...dayFields,
         },
       });
+
+      if (activities && activities.length > 0) {
+        for (let i = 0; i < activities.length; i++) {
+          const act = activities[i];
+          await prisma.dayActivity.create({
+            data: {
+              dayId: createdDay.id,
+              title: act.title,
+              timing: act.timing,
+              sortOrder: i + 1,
+            },
+          });
+        }
+      }
     }
   }
 

@@ -12,7 +12,7 @@ import { cabsRouter } from "./routes/cabs.js";
 import { adminDestinationsRouter, destinationsRouter } from "./routes/destinations.js";
 import { hotelsRouter } from "./routes/hotels.js";
 import { inquiriesRouter } from "./routes/inquiries.js";
-import { itinerariesRouter } from "./routes/itineraries.js";
+import { adminItinerariesRouter, itinerariesRouter } from "./routes/itineraries.js";
 import { mediaRouter } from "./routes/media.js";
 import { adminPackagesRouter, packagesRouter } from "./routes/packages.js";
 
@@ -40,6 +40,7 @@ export function createApp() {
   app.use("/api/packages", packagesRouter);
   app.use("/api/admin/packages", adminPackagesRouter);
   app.use("/api/itineraries", itinerariesRouter);
+  app.use("/api/admin/itineraries", adminItinerariesRouter);
   app.use("/api/hotels", hotelsRouter);
   app.use("/api/cabs", cabsRouter);
   app.use("/api/inquiries", inquiriesRouter);
