@@ -10,6 +10,11 @@
     "build": "pnpm -r build",
     "lint": "pnpm -r lint",
     "typecheck": "pnpm -r typecheck",
+    "db:generate": "pnpm --filter @goyatrio/database prisma:generate",
+    "db:validate": "pnpm --filter @goyatrio/database prisma:validate",
+    "db:migrate": "pnpm --filter @goyatrio/database prisma:migrate",
+    "db:studio": "pnpm --filter @goyatrio/database prisma:studio",
+    "db:seed": "pnpm --filter @goyatrio/database seed",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "prepare": "husky"

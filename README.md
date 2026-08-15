@@ -33,6 +33,15 @@ pnpm typecheck
 pnpm build
 ```
 
+Database:
+
+```bash
+pnpm db:generate
+pnpm db:validate
+pnpm db:migrate
+pnpm db:seed
+```
+
 ## Branding
 
 The provided original PNG logo assets are stored in:
@@ -50,6 +59,7 @@ Completed foundation areas:
 - Monorepo structure
 - Web app shell
 - API app shell
+- PostgreSQL Prisma schema and backend API foundation
 - Shared package boundaries
 - Global design tokens
 - Global reusable components

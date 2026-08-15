@@ -15,3 +15,10 @@ All notable changes to GoYatrio will be documented in this file.
 - Added original GoYatrio logo assets for brand, mark, favicon, and Open Graph usage.
 - Added ESLint, Prettier, EditorConfig, Husky, lint-staged, commitlint, `.env.example`, and CI workflow.
 - Added project documentation.
+
+### Phase 2
+
+- Added PostgreSQL Prisma schema for admin users, destinations, tour packages, itineraries, hotels, vehicles, inquiries, blogs, media, and SEO metadata.
+- Added reusable Prisma client and development seed script.
+- Added Express API foundation under `/api` with auth, health, CRUD route modules, validation, centralized error handling, and admin middleware.
+- Added backend API documentation.
