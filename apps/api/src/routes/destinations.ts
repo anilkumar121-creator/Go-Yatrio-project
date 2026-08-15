@@ -1,10 +1,29 @@
-import { Router } from "express";
-import { createCrudController } from "../controllers/crud.controller.js";
-import { destinationService } from "../services/destination.service.js";
-import { destinationCreateSchema, destinationUpdateSchema } from "../validators/schemas.js";
-import { registerCrudRoutes } from "./resource.js";
+﻿import { Router } from "express";
+import { authenticate, requireAdmin } from "../middleware/auth.js";
+import {
+  adminListDestinations,
+  createDestination,
+  deleteDestination,
+  getDestinationBySlug,
+  listDestinations,
+  updateDestination,
+  updateDestinationFeatured,
+  updateDestinationStatus,
+} from "../controllers/destination.controller.js";
 
 export const destinationsRouter = Router();
-const controller = createCrudController(destinationService, destinationCreateSchema, destinationUpdateSchema);
 
-registerCrudRoutes(destinationsRouter, controller);
+// Public routes
+destinationsRouter.get("/", listDestinations);
+destinationsRouter.get("/:slug", getDestinationBySlug);
+
+// Admin-only routes
+export const adminDestinationsRouter = Router();
+adminDestinationsRouter.use(authenticate, requireAdmin);
+
+adminDestinationsRouter.get("/", adminListDestinations);
+adminDestinationsRouter.post("/", createDestination);
+adminDestinationsRouter.put("/:id", updateDestination);
+adminDestinationsRouter.delete("/:id", deleteDestination);
+adminDestinationsRouter.patch("/:id/status", updateDestinationStatus);
+adminDestinationsRouter.patch("/:id/featured", updateDestinationFeatured);

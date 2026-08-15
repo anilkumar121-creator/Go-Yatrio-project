@@ -1,5 +1,4 @@
-import { PrismaClient } from "@prisma/client";
-export * from "./enums.js";
+﻿import { PrismaClient } from "@prisma/client";
 
 const globalForPrisma = globalThis as typeof globalThis & {
   goYatrioPrisma?: PrismaClient;

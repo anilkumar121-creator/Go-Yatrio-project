@@ -1,4 +1,4 @@
-﻿export const UserRole = {
+export const UserRole = {
   ADMIN: "ADMIN",
   CUSTOMER: "CUSTOMER",
 } as const;
@@ -46,3 +46,9 @@ export const MediaResourceType = {
   VIDEO: "VIDEO",
   RAW: "RAW",
 } as const;
+export const DestinationStatus = {
+  DRAFT: "DRAFT",
+  PUBLISHED: "PUBLISHED",
+} as const;
+
+export type DestinationStatus = (typeof DestinationStatus)[keyof typeof DestinationStatus];

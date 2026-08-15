@@ -1,4 +1,4 @@
-﻿generator client {
+generator client {
   provider = "prisma-client-js"
 }
 
@@ -53,6 +53,10 @@ enum MediaResourceType {
   VIDEO
   RAW
 }
+enum DestinationStatus {
+  DRAFT
+  PUBLISHED
+}
 
 model User {
   id            String         @id @default(cuid())
@@ -84,25 +88,26 @@ model RefreshToken {
 }
 
 model Destination {
-  id               String        @id @default(cuid())
+  id               String            @id @default(cuid())
   name             String
-  slug             String        @unique
+  slug             String            @unique
   shortDescription String
   description      String
-  country          String        @default("India")
   state            String?
-  city             String?
+  country          String            @default("India")
   featuredImage    String?
-  isFeatured       Boolean       @default(false)
-  isActive         Boolean       @default(true)
-  seoTitle         String?
-  seoDescription   String?
-  createdAt        DateTime      @default(now())
-  updatedAt        DateTime      @updatedAt
+  galleryImages    String[]
+  featured         Boolean           @default(false)
+  status           DestinationStatus @default(DRAFT)
+  metaTitle        String?
+  metaDescription  String?
+  isActive         Boolean           @default(true)
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
   packages         TourPackage[]
   hotels           Hotel[]
 
-  @@index([isActive, isFeatured])
+  @@index([status, featured, isActive])
   @@map("destinations")
 }
 

@@ -9,7 +9,7 @@ import { notFound } from "./middleware/not-found.js";
 import { authRouter } from "./routes/auth.js";
 import { blogsRouter } from "./routes/blogs.js";
 import { cabsRouter } from "./routes/cabs.js";
-import { destinationsRouter } from "./routes/destinations.js";
+import { adminDestinationsRouter, destinationsRouter } from "./routes/destinations.js";
 import { hotelsRouter } from "./routes/hotels.js";
 import { inquiriesRouter } from "./routes/inquiries.js";
 import { itinerariesRouter } from "./routes/itineraries.js";
@@ -36,6 +36,7 @@ export function createApp() {
   // Core domain API routes
   app.use("/api/auth", authRouter);
   app.use("/api/destinations", destinationsRouter);
+  app.use("/api/admin/destinations", adminDestinationsRouter);
   app.use("/api/packages", packagesRouter);
   app.use("/api/itineraries", itinerariesRouter);
   app.use("/api/hotels", hotelsRouter);

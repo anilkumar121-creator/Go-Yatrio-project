@@ -1,4 +1,5 @@
 ﻿import {
+  DestinationStatus,
   InquiryServiceType,
   InquiryStatus,
   MediaResourceType,
@@ -30,20 +31,29 @@ export const refreshTokenSchema = z.object({
 
 export const destinationCreateSchema = z.object({
   name: stringField(120),
-  slug: slugSchema,
+  slug: slugSchema.optional(),
   shortDescription: stringField(300),
   description: stringField(5000),
-  country: stringField(80).default("India"),
   state: optionalStringField(80),
-  city: optionalStringField(80),
+  country: stringField(80).default("India"),
   featuredImage: optionalStringField(500),
-  isFeatured: z.boolean().optional(),
+  galleryImages: z.array(z.string().trim().min(1).max(500)).max(20).optional(),
+  featured: z.boolean().optional(),
+  status: z.enum(DestinationStatus).optional(),
+  metaTitle: optionalStringField(120),
+  metaDescription: optionalStringField(180),
   isActive: z.boolean().optional(),
-  seoTitle: optionalStringField(120),
-  seoDescription: optionalStringField(180),
 });
 
 export const destinationUpdateSchema = destinationCreateSchema.partial();
+
+export const destinationStatusSchema = z.object({
+  status: z.enum(DestinationStatus),
+});
+
+export const destinationFeaturedSchema = z.object({
+  featured: z.boolean(),
+});
 
 export const packageCreateSchema = z.object({
   title: stringField(140),
