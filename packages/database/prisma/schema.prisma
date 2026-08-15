@@ -19,6 +19,10 @@ enum PackageType {
   ADVENTURE
   PILGRIMAGE
 }
+enum PackageStatus {
+  DRAFT
+  PUBLISHED
+}
 
 enum InquiryStatus {
   NEW
@@ -123,11 +127,15 @@ model TourPackage {
   priceFrom        Decimal         @db.Decimal(12, 2)
   currency         String          @default("INR")
   packageType      PackageType
+  inclusions       String[]
+  exclusions       String[]
   featuredImage    String?
-  isFeatured       Boolean         @default(false)
+  galleryImages    String[]
+  featured         Boolean         @default(false)
+  status           PackageStatus   @default(DRAFT)
+  metaTitle        String?
+  metaDescription  String?
   isActive         Boolean         @default(true)
-  seoTitle         String?
-  seoDescription   String?
   createdAt        DateTime        @default(now())
   updatedAt        DateTime        @updatedAt
   destination      Destination     @relation(fields: [destinationId], references: [id], onDelete: Restrict, onUpdate: Cascade)
@@ -135,7 +143,7 @@ model TourPackage {
   inquiries        TravelInquiry[]
 
   @@index([destinationId])
-  @@index([isActive, isFeatured, packageType])
+  @@index([status, featured, isActive, packageType])
   @@map("tour_packages")
 }
 

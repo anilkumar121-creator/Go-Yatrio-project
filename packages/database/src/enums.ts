@@ -52,3 +52,9 @@ export const DestinationStatus = {
 } as const;
 
 export type DestinationStatus = (typeof DestinationStatus)[keyof typeof DestinationStatus];
+export const PackageStatus = {
+  DRAFT: "DRAFT",
+  PUBLISHED: "PUBLISHED",
+} as const;
+
+export type PackageStatus = (typeof PackageStatus)[keyof typeof PackageStatus];

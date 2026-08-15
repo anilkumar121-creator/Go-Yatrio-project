@@ -1,0 +1,111 @@
+import type { Metadata } from "next";
+import Link from "next/link";
+import { ArrowRight } from "lucide-react";
+import { Container } from "@/components/common/container";
+import { SectionTitle } from "@/components/common/section-title";
+import { Button } from "@/components/common/button";
+import { PackageCard } from "@/components/cards/package-card";
+import { PageWrapper } from "@/components/layout/page-wrapper";
+import { EmptyState } from "@/components/admin/empty-state";
+
+export const metadata: Metadata = {
+  title: "All Tour Packages | GoYatrio",
+  description:
+    "Explore best-selling all-inclusive tour packages across India with GoYatrio. Customized holiday itineraries for couples, families, and solo travelers.",
+  openGraph: {
+    title: "All Tour Packages | GoYatrio",
+    description:
+      "Explore best-selling all-inclusive tour packages across India with GoYatrio. Customized holiday itineraries for couples, families, and solo travelers.",
+    type: "website",
+    locale: "en_IN",
+  },
+};
+
+type PackageSummary = {
+  id: string;
+  title: string;
+  slug: string;
+  shortDescription: string;
+  durationDays: number;
+  durationNights: number;
+  priceFrom: number | string;
+  currency: string;
+  packageType: string;
+  featuredImage: string | null;
+  featured: boolean;
+  destination?: { name: string; slug: string };
+};
+
+async function getPackages(): Promise<PackageSummary[]> {
+  try {
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+    const response = await fetch(`${baseUrl}/api/packages?take=50`, {
+      cache: "no-store",
+    });
+
+    if (!response.ok) return [];
+
+    const payload = await response.json();
+    return payload?.data?.data ?? [];
+  } catch {
+    return [];
+  }
+}
+
+export default async function PackagesPage() {
+  const packages = await getPackages();
+
+  return (
+    <PageWrapper>
+      <section className="bg-muted/20 py-16 tablet:py-20">
+        <Container>
+          <SectionTitle
+            eyebrow="Handcrafted Holidays"
+            title="All Tour Packages"
+            description="Browse all-inclusive travel packages curated by local travel experts with best price guarantees."
+            align="center"
+          />
+        </Container>
+      </section>
+
+      <section className="py-14 tablet:py-20">
+        <Container>
+          {packages.length === 0 ? (
+            <EmptyState
+              title="No tour packages available"
+              description="Check back soon — we are adding exciting new packages daily."
+            />
+          ) : (
+            <div className="grid grid-cols-1 gap-6 tablet:grid-cols-2 desktop:grid-cols-3">
+              {packages.map((pkg) => (
+                <PackageCard
+                  key={pkg.id}
+                  title={pkg.title}
+                  destination={pkg.destination?.name ?? "India"}
+                  duration={`${pkg.durationDays}D / ${pkg.durationNights}N`}
+                  price={Number(pkg.priceFrom)}
+                  badge={pkg.featured ? "Featured" : pkg.packageType}
+                  image={
+                    pkg.featuredImage
+                      ? { src: pkg.featuredImage, alt: pkg.title }
+                      : undefined
+                  }
+                  ctaHref={`/packages/${pkg.slug}`}
+                />
+              ))}
+            </div>
+          )}
+
+          <div className="mt-12 flex justify-center">
+            <Button asChild size="lg">
+              <Link href="/destinations" className="inline-flex items-center gap-1.5">
+                Explore All Destinations
+                <ArrowRight className="size-4" aria-hidden="true" />
+              </Link>
+            </Button>
+          </div>
+        </Container>
+      </section>
+    </PageWrapper>
+  );
+}

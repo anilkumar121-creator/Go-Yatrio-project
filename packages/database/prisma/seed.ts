@@ -1,4 +1,4 @@
-﻿import { PrismaClient, DestinationStatus, PackageType, VehicleType, UserRole } from "@prisma/client";
+import { PrismaClient, DestinationStatus, PackageStatus, PackageType, VehicleType, UserRole } from "@prisma/client";
 import { hash } from "bcryptjs";
 
 const prisma = new PrismaClient();
@@ -180,61 +180,142 @@ async function main() {
   }
 
   const kerala = await prisma.destination.findUniqueOrThrow({ where: { slug: "kerala" } });
-  const rajasthan = await prisma.destination.findUniqueOrThrow({ where: { slug: "jaipur" } });
 
-  const keralaPackage = await prisma.tourPackage.upsert({
-    where: { slug: "demo-kerala-escape" },
-    update: {},
-    create: {
-      title: "Demo Kerala Escape",
-      slug: "demo-kerala-escape",
-      shortDescription: "Development sample domestic package.",
-      description: "Demo package data for backend development only.",
-      destinationId: kerala.id,
-      durationDays: 5,
-      durationNights: 4,
-      priceFrom: 24999,
-      packageType: PackageType.DOMESTIC,
-      isFeatured: true,
-    },
-  });
-
-  await prisma.tourPackage.upsert({
-    where: { slug: "demo-rajasthan-royal-trail" },
-    update: {},
-    create: {
-      title: "Demo Rajasthan Royal Trail",
-      slug: "demo-rajasthan-royal-trail",
-      shortDescription: "Development sample luxury package.",
-      description: "Demo package data for backend development only.",
-      destinationId: rajasthan.id,
+  const packageSeeds = [
+    {
+      slug: "kashmir-paradise-escape",
+      title: "Kashmir Paradise Escape",
+      shortDescription: "Experience Srinagar houseboats, Shikara rides on Dal Lake, and snow adventures in Gulmarg.",
+      description:
+        "Embark on a dream trip to Kashmir! Stay in luxury houseboats on Dal Lake, enjoy romantic Shikara rides, take the Asia's highest gondola ride in Gulmarg, and stroll through the Mughal gardens of Srinagar.",
+      destinationSlug: "kashmir",
       durationDays: 6,
       durationNights: 5,
-      priceFrom: 34999,
-      packageType: PackageType.LUXURY,
-      isFeatured: false,
+      priceFrom: 18999,
+      packageType: PackageType.DOMESTIC,
+      inclusions: ["5 Nights Accommodation", "Daily Breakfast & Dinner", "Airport Transfers in AC Cab", "Shikara Ride on Dal Lake", "Gondola Ticket Phase 1"],
+      exclusions: ["Airfare / Train tickets", "Personal expenses & tips", "Gondola Phase 2 Ticket"],
+      featured: true,
+      status: PackageStatus.PUBLISHED,
+      metaTitle: "Kashmir Paradise Escape 5N/6D Package | GoYatrio",
+      metaDescription: "Book Kashmir Paradise Escape with GoYatrio. Includes Srinagar houseboat stay, Gulmarg gondola, Shikara ride, and private transfers.",
+      itineraries: [
+        { dayNumber: 1, title: "Arrival in Srinagar & Dal Lake Shikara Ride", description: "Arrive at Srinagar airport. Transfer to luxury houseboat. Enjoy evening Shikara ride on Dal Lake.", accommodation: "Deluxe Houseboat", meals: "Dinner", activities: "Shikara Ride" },
+        { dayNumber: 2, title: "Srinagar Mughal Gardens Tour", description: "Visit Nishat Bagh, Shalimar Bagh, Chashme Shahi, and Shankaracharya Temple.", accommodation: "Srinagar Hotel", meals: "Breakfast & Dinner", activities: "Garden Sightseeing" },
+        { dayNumber: 3, title: "Excursion to Gulmarg", description: "Drive to Gulmarg. Take the world-famous Gulmarg Gondola ride to Kongdoori.", accommodation: "Gulmarg Resort", meals: "Breakfast & Dinner", activities: "Gondola Ride & Snow Sports" },
+        { dayNumber: 4, title: "Day Trip to Pahalgam Valley", description: "Drive to Pahalgam. Visit Betaab Valley, Aru Valley, and Chandanwari.", accommodation: "Pahalgam Hotel", meals: "Breakfast & Dinner", activities: "Valley Exploration" },
+        { dayNumber: 5, title: "Return to Srinagar & Shopping", description: "Return to Srinagar. Explore Lal Chowk bazaar for saffron, dry fruits, and pashmina shawls.", accommodation: "Srinagar Hotel", meals: "Breakfast & Dinner", activities: "Shopping" },
+        { dayNumber: 6, title: "Departure from Srinagar", description: "After breakfast, transfer to Srinagar airport for onward journey.", accommodation: "N/A", meals: "Breakfast", activities: "Departure Transfer" },
+      ],
     },
-  });
+    {
+      slug: "kerala-backwaters-and-hills",
+      title: "Kerala Backwaters & Hills",
+      shortDescription: "Explore Munnar tea hills, Alleppey backwater houseboats, and spice garden sanctuaries.",
+      description:
+        "Immerse yourself in God's Own Country. Explore tea plantations in Munnar, watch wildlife in Periyar, and cruise the peaceful backwaters of Alleppey in a private luxury houseboat.",
+      destinationSlug: "kerala",
+      durationDays: 5,
+      durationNights: 4,
+      priceFrom: 15499,
+      packageType: PackageType.DOMESTIC,
+      inclusions: ["4 Nights Accommodation (1N Houseboat + 3N Hotel)", "All Meals on Houseboat", "Daily Breakfast at Hotels", "Private AC Cab for Transfers"],
+      exclusions: ["Airfare / Train tickets", "Entry fees to monuments", "Personal expenses"],
+      featured: true,
+      status: PackageStatus.PUBLISHED,
+      metaTitle: "Kerala Backwaters & Hills 4N/5D Tour Package | GoYatrio",
+      metaDescription: "Book Kerala Backwaters & Hills tour with GoYatrio. Experience Munnar tea hills, Periyar spice gardens, and Alleppey houseboats.",
+      itineraries: [
+        { dayNumber: 1, title: "Cochin to Munnar Tea Hills", description: "Arrive in Cochin and drive through scenic waterfalls to Munnar tea gardens.", accommodation: "Munnar Tea Resort", meals: "Dinner", activities: "Scenic Drive & Cheeyappara Waterfalls" },
+        { dayNumber: 2, title: "Munnar Sightseeing Tour", description: "Visit Eravikulam National Park (Nilgiri Tahr), Mattupetty Dam, and Tea Museum.", accommodation: "Munnar Tea Resort", meals: "Breakfast & Dinner", activities: "National Park & Tea Tasting" },
+        { dayNumber: 3, title: "Munnar to Thekkady (Periyar)", description: "Drive to Thekkady. Enjoy boat safari on Periyar Lake and spice plantation walk.", accommodation: "Thekkady Jungle Lodge", meals: "Breakfast & Dinner", activities: "Spice Plantation Tour & Boat Safari" },
+        { dayNumber: 4, title: "Thekkady to Alleppey Houseboat", description: "Board private houseboat in Alleppey. Cruise through serene backwaters.", accommodation: "Private Deluxe Houseboat", meals: "Breakfast, Lunch & Dinner", activities: "Backwater Cruise" },
+        { dayNumber: 5, title: "Alleppey to Cochin Departure", description: "After breakfast on houseboat, transfer to Cochin airport or railway station.", accommodation: "N/A", meals: "Breakfast", activities: "Departure Transfer" },
+      ],
+    },
+    {
+      slug: "royal-rajasthan-heritage",
+      title: "Royal Rajasthan Heritage Trail",
+      shortDescription: "Discover royal palaces, Amber Fort, Lake Pichola in Udaipur, and desert culture.",
+      description:
+        "Experience the grand heritage of Rajasthan. Visit the iconic Pink City of Jaipur, explore Udaipur's romantic lakes, and admire majestic hill forts.",
+      destinationSlug: "jaipur",
+      durationDays: 7,
+      durationNights: 6,
+      priceFrom: 22500,
+      packageType: PackageType.LUXURY,
+      inclusions: ["6 Nights Royal Hotel Accommodation", "Daily Breakfast & Dinner", "Elephant Ride at Amber Fort", "Boat Cruise on Lake Pichola", "Private AC Sedan Transfer"],
+      exclusions: ["Airfare / Train tickets", "Camera fees", "Personal expenses"],
+      featured: true,
+      status: PackageStatus.PUBLISHED,
+      metaTitle: "Royal Rajasthan Heritage Trail 6N/7D Package | GoYatrio",
+      metaDescription: "Discover Royal Rajasthan with GoYatrio. Includes Jaipur Pink City, Amber Fort, Udaipur Lake Pichola cruise, and heritage stays.",
+      itineraries: [
+        { dayNumber: 1, title: "Arrival in Jaipur", description: "Arrive in Jaipur and check into heritage hotel. Visit Birla Temple in the evening.", accommodation: "Jaipur Heritage Hotel", meals: "Dinner", activities: "Temple Visit" },
+        { dayNumber: 2, title: "Jaipur Pink City Forts & Palaces", description: "Explore Amber Fort with elephant ride, City Palace, Hawa Mahal, and Jantar Mantar.", accommodation: "Jaipur Heritage Hotel", meals: "Breakfast & Dinner", activities: "Forts & Palaces Tour" },
+        { dayNumber: 3, title: "Jaipur to Ajmer/Pushkar to Jodhpur", description: "Drive via holy Pushkar Lake and Brahma Temple to the Blue City of Jodhpur.", accommodation: "Jodhpur Palace Hotel", meals: "Breakfast & Dinner", activities: "Pushkar Lake Visit" },
+        { dayNumber: 4, title: "Jodhpur Sightseeing & Drive to Udaipur", description: "Visit Mehrangarh Fort and Jaswant Thada, then drive to Udaipur City of Lakes.", accommodation: "Udaipur Lake Resort", meals: "Breakfast & Dinner", activities: "Mehrangarh Fort Tour" },
+        { dayNumber: 5, title: "Udaipur City Palace & Lake Pichola Cruise", description: "Visit City Palace, Saheliyon Ki Bari, and enjoy evening boat ride on Lake Pichola.", accommodation: "Udaipur Lake Resort", meals: "Breakfast & Dinner", activities: "Lake Pichola Boat Cruise" },
+        { dayNumber: 6, title: "Excursion to Chittorgarh Fort", description: "Day trip to historic Chittorgarh Fort, India's largest fort complex.", accommodation: "Udaipur Lake Resort", meals: "Breakfast & Dinner", activities: "Chittorgarh Fort Exploration" },
+        { dayNumber: 7, title: "Departure from Udaipur", description: "Transfer to Udaipur airport for your return flight.", accommodation: "N/A", meals: "Breakfast", activities: "Departure Transfer" },
+      ],
+    },
+  ];
 
-  await prisma.itinerary.createMany({
-    data: [
-      {
-        packageId: keralaPackage.id,
-        dayNumber: 1,
-        title: "Demo Arrival",
-        description: "Development sample itinerary day.",
-        meals: "Dinner",
+  for (const pkgSeed of packageSeeds) {
+    const dest = seededDestinations[pkgSeed.destinationSlug] ?? kerala;
+    const { itineraries, ...pkgData } = pkgSeed;
+
+    const tourPackage = await prisma.tourPackage.upsert({
+      where: { slug: pkgSeed.slug },
+      update: {
+        title: pkgData.title,
+        shortDescription: pkgData.shortDescription,
+        description: pkgData.description,
+        destinationId: dest.id,
+        durationDays: pkgData.durationDays,
+        durationNights: pkgData.durationNights,
+        priceFrom: pkgData.priceFrom,
+        packageType: pkgData.packageType,
+        inclusions: pkgData.inclusions,
+        exclusions: pkgData.exclusions,
+        featured: pkgData.featured,
+        status: pkgData.status,
+        metaTitle: pkgData.metaTitle,
+        metaDescription: pkgData.metaDescription,
+        isActive: true,
       },
-      {
-        packageId: keralaPackage.id,
-        dayNumber: 2,
-        title: "Demo Local Experience",
-        description: "Development sample itinerary day.",
-        meals: "Breakfast",
+      create: {
+        ...pkgData,
+        destinationId: dest.id,
+        currency: "INR",
+        galleryImages: [],
+        isActive: true,
       },
-    ],
-    skipDuplicates: true,
-  });
+    });
+
+    for (const itin of itineraries) {
+      await prisma.itinerary.upsert({
+        where: {
+          packageId_dayNumber: {
+            packageId: tourPackage.id,
+            dayNumber: itin.dayNumber,
+          },
+        },
+        update: {
+          title: itin.title,
+          description: itin.description,
+          accommodation: itin.accommodation,
+          meals: itin.meals,
+          activities: itin.activities,
+        },
+        create: {
+          packageId: tourPackage.id,
+          ...itin,
+        },
+      });
+    }
+  }
 
   await prisma.hotel.upsert({
     where: { slug: "demo-kerala-resort" },

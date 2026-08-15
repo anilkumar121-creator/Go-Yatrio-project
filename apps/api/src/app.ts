@@ -1,4 +1,4 @@
-﻿import cors from "cors";
+import cors from "cors";
 import express from "express";
 import helmet from "helmet";
 import { env } from "./config/env.js";
@@ -14,7 +14,7 @@ import { hotelsRouter } from "./routes/hotels.js";
 import { inquiriesRouter } from "./routes/inquiries.js";
 import { itinerariesRouter } from "./routes/itineraries.js";
 import { mediaRouter } from "./routes/media.js";
-import { packagesRouter } from "./routes/packages.js";
+import { adminPackagesRouter, packagesRouter } from "./routes/packages.js";
 
 export function createApp() {
   const app = express();
@@ -38,6 +38,7 @@ export function createApp() {
   app.use("/api/destinations", destinationsRouter);
   app.use("/api/admin/destinations", adminDestinationsRouter);
   app.use("/api/packages", packagesRouter);
+  app.use("/api/admin/packages", adminPackagesRouter);
   app.use("/api/itineraries", itinerariesRouter);
   app.use("/api/hotels", hotelsRouter);
   app.use("/api/cabs", cabsRouter);

@@ -1,8 +1,9 @@
-﻿import {
+import {
   DestinationStatus,
   InquiryServiceType,
   InquiryStatus,
   MediaResourceType,
+  PackageStatus,
   PackageType,
   VehicleType,
 } from "@goyatrio/database";
@@ -57,7 +58,7 @@ export const destinationFeaturedSchema = z.object({
 
 export const packageCreateSchema = z.object({
   title: stringField(140),
-  slug: slugSchema,
+  slug: slugSchema.optional(),
   shortDescription: stringField(300),
   description: stringField(6000),
   destinationId: z.string().min(1),
@@ -66,14 +67,26 @@ export const packageCreateSchema = z.object({
   priceFrom: moneySchema,
   currency: z.string().length(3).default("INR"),
   packageType: z.enum(PackageType),
+  inclusions: z.array(z.string().trim().min(1).max(300)).max(50).optional(),
+  exclusions: z.array(z.string().trim().min(1).max(300)).max(50).optional(),
   featuredImage: optionalStringField(500),
-  isFeatured: z.boolean().optional(),
+  galleryImages: z.array(z.string().trim().min(1).max(500)).max(20).optional(),
+  featured: z.boolean().optional(),
+  status: z.enum(PackageStatus).optional(),
+  metaTitle: optionalStringField(120),
+  metaDescription: optionalStringField(180),
   isActive: z.boolean().optional(),
-  seoTitle: optionalStringField(120),
-  seoDescription: optionalStringField(180),
 });
 
 export const packageUpdateSchema = packageCreateSchema.partial();
+
+export const packageStatusSchema = z.object({
+  status: z.enum(PackageStatus),
+});
+
+export const packageFeaturedSchema = z.object({
+  featured: z.boolean(),
+});
 
 export const itineraryCreateSchema = z.object({
   packageId: z.string().min(1),
