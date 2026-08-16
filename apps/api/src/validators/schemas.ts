@@ -1,5 +1,8 @@
 import {
   DestinationStatus,
+  HotelCategory,
+  HotelInquiryStatus,
+  HotelStatus,
   InquiryServiceType,
   InquiryStatus,
   MediaResourceType,
@@ -135,20 +138,63 @@ export const itineraryCreateSchema = z.object({
 
 export const itineraryUpdateSchema = itineraryCreateSchema.partial();
 
+export const hotelRoomCreateSchema = z.object({
+  roomName: stringField(140),
+  roomDescription: stringField(2000),
+  maxGuests: z.coerce.number().int().positive().max(20).default(2),
+  bedType: stringField(80),
+  roomSize: optionalStringField(80),
+  priceFrom: moneySchema,
+  active: z.boolean().optional(),
+});
+
+export const hotelRoomUpdateSchema = hotelRoomCreateSchema.partial();
+
+export const hotelImageCreateSchema = z.object({
+  imageUrl: z.url().max(1000),
+  altText: optionalStringField(180),
+  sortOrder: z.coerce.number().int().min(0).optional(),
+});
+
 export const hotelCreateSchema = z.object({
   name: stringField(140),
-  slug: slugSchema,
+  slug: slugSchema.optional(),
+  shortDescription: stringField(300),
+  fullDescription: stringField(8000),
   destinationId: z.string().min(1),
-  description: stringField(4000),
-  address: stringField(500),
-  category: stringField(80),
-  priceFrom: moneySchema,
-  currency: z.string().length(3).default("INR"),
-  featuredImage: optionalStringField(500),
-  isActive: z.boolean().optional(),
+  address: stringField(300),
+  city: stringField(100),
+  state: optionalStringField(80),
+  country: stringField(80).default("India"),
+  latitude: z.coerce.number().optional(),
+  longitude: z.coerce.number().optional(),
+  hotelCategory: z.enum(HotelCategory).default("STANDARD"),
+  starRating: z.coerce.number().int().min(1).max(5).default(3),
+  featured: z.boolean().optional(),
+  status: z.enum(HotelStatus).optional(),
+  amenities: z.array(z.string().min(1)).optional(),
+  images: z.array(hotelImageCreateSchema).optional(),
+  roomTypes: z.array(hotelRoomCreateSchema).optional(),
 });
 
 export const hotelUpdateSchema = hotelCreateSchema.partial();
+
+export const hotelStatusSchema = z.object({
+  status: z.enum(HotelStatus),
+});
+
+export const hotelInquiryCreateSchema = z.object({
+  customerName: stringField(120),
+  email: z.string().email().max(255),
+  phone: stringField(30),
+  checkInDate: z.coerce.date(),
+  checkOutDate: z.coerce.date(),
+  guests: z.coerce.number().int().positive().max(50).default(1),
+  message: optionalStringField(2000),
+  status: z.enum(HotelInquiryStatus).optional(),
+});
+
+export const hotelInquiryUpdateSchema = hotelInquiryCreateSchema.partial();
 
 export const vehicleCreateSchema = z.object({
   vehicleName: stringField(140),

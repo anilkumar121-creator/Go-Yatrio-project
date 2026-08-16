@@ -2,13 +2,27 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import { MapPin, ImageIcon, ArrowRight, Calendar, IndianRupee } from "lucide-react";
+import { MapPin, ImageIcon, ArrowRight, Calendar, IndianRupee, Star, Building2 } from "lucide-react";
 import { Container } from "@/components/common/container";
 import { Button } from "@/components/common/button";
 import { Badge } from "@/components/common/badge";
 import { Card } from "@/components/common/card";
+import { Price } from "@/components/common/price";
 import { PageWrapper } from "@/components/layout/page-wrapper";
 import { CardMedia } from "@/components/cards/card-media";
+
+type DestinationHotel = {
+  id: string;
+  name: string;
+  slug: string;
+  shortDescription: string;
+  city: string;
+  hotelCategory: string;
+  starRating: number;
+  featured: boolean;
+  images: { id: string; imageUrl: string }[];
+  roomTypes: { id: string; priceFrom: number }[];
+};
 
 type DestinationDetail = {
   id: string;
@@ -32,6 +46,7 @@ type DestinationDetail = {
     priceFrom: number | string;
     currency: string;
   }[];
+  hotels: DestinationHotel[];
 };
 
 async function getDestination(slug: string): Promise<DestinationDetail | null> {
@@ -100,6 +115,9 @@ export default async function DestinationDetailPage({ params }: Props) {
     : destination.featuredImage
       ? [destination.featuredImage]
       : [];
+
+  const featuredHotels = destination.hotels.filter((h) => h.featured);
+  const otherHotels = destination.hotels.filter((h) => !h.featured);
 
   return (
     <PageWrapper>
@@ -175,6 +193,47 @@ export default async function DestinationDetailPage({ params }: Props) {
                   </div>
                 </div>
               ) : null}
+
+              {/* Hotels in Destination */}
+              {destination.hotels.length > 0 ? (
+                <div className="mt-10">
+                  <div className="flex items-center justify-between">
+                    <h2 className="text-2xl font-semibold text-foreground flex items-center gap-2">
+                      <Building2 className="size-6 text-primary" />
+                      Stay Options in {destination.name}
+                    </h2>
+                    <Button asChild variant="outline" size="sm" className="gap-1">
+                      <Link href={`/hotels?destination=${destination.slug}`}>
+                        View All Hotels
+                        <ArrowRight className="size-3.5" />
+                      </Link>
+                    </Button>
+                  </div>
+
+                  {/* Featured Hotels */}
+                  {featuredHotels.length > 0 ? (
+                    <div className="mt-6">
+                      <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Featured Stays</span>
+                      <div className="mt-3 grid grid-cols-1 gap-5 tablet:grid-cols-2">
+                        {featuredHotels.map((hotel) => (
+                          <HotelCard key={hotel.id} hotel={hotel} />
+                        ))}
+                      </div>
+                    </div>
+                  ) : null}
+
+                  {otherHotels.length > 0 ? (
+                    <div className="mt-6">
+                      <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">More Hotels</span>
+                      <div className="mt-3 grid grid-cols-1 gap-5 tablet:grid-cols-2">
+                        {otherHotels.map((hotel) => (
+                          <HotelCard key={hotel.id} hotel={hotel} />
+                        ))}
+                      </div>
+                    </div>
+                  ) : null}
+                </div>
+              ) : null}
             </div>
 
             {/* Highlights sidebar */}
@@ -197,6 +256,10 @@ export default async function DestinationDetailPage({ params }: Props) {
                   <li className="flex items-center gap-2">
                     <Badge variant="accent" className="shrink-0">Packages</Badge>
                     {destination.packages.length} Available
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Badge variant="accent" className="shrink-0">Hotels</Badge>
+                    {destination.hotels.length} Stays
                   </li>
                 </ul>
                 <Button asChild className="mt-6 w-full">
@@ -225,5 +288,56 @@ export default async function DestinationDetailPage({ params }: Props) {
         </Container>
       </section>
     </PageWrapper>
+  );
+}
+
+function HotelCard({ hotel }: { hotel: DestinationHotel }) {
+  const minPrice = hotel.roomTypes[0]?.priceFrom ?? 0;
+  const imageUrl = hotel.images[0]?.imageUrl ?? "";
+
+  return (
+    <Card className="overflow-hidden border border-border bg-card shadow-sm transition-all hover:shadow-md">
+      <div className="relative aspect-[16/10]">
+        {imageUrl ? (
+          <CardMedia src={imageUrl} alt={hotel.name} className="h-full w-full" />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center bg-primary/10 text-primary">
+            <Building2 className="size-6" />
+          </div>
+        )}
+        {hotel.featured ? <Badge variant="accent" className="absolute left-3 top-3">Featured</Badge> : null}
+      </div>
+      <div className="p-5">
+        <div className="flex items-center justify-between gap-2">
+          <Link href={`/hotels/${hotel.slug}`} className="text-lg font-semibold text-foreground hover:text-primary">
+            {hotel.name}
+          </Link>
+          <div className="flex items-center gap-0.5 text-amber-500">
+            {Array.from({ length: hotel.starRating }).map((_, idx) => (
+              <Star key={idx} className="size-3 fill-amber-500" />
+            ))}
+          </div>
+        </div>
+        <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
+          <MapPin className="size-3.5 text-primary" />
+          {hotel.city}, {hotel.hotelCategory}
+        </p>
+        <p className="mt-2 text-sm text-muted-foreground line-clamp-2">{hotel.shortDescription}</p>
+        <div className="mt-3 flex items-center justify-between border-t border-border pt-3">
+          {minPrice ? (
+            <div>
+              <span className="block text-[11px] text-muted-foreground">Starting from / night</span>
+              <Price amount={minPrice} size="sm" />
+            </div>
+          ) : null}
+          <Button asChild size="sm" variant="outline" className="gap-1">
+            <Link href={`/hotels/${hotel.slug}`}>
+              View Hotel
+              <ArrowRight className="size-3.5" />
+            </Link>
+          </Button>
+        </div>
+      </div>
+    </Card>
   );
 }

@@ -10,7 +10,7 @@ import { authRouter } from "./routes/auth.js";
 import { blogsRouter } from "./routes/blogs.js";
 import { cabsRouter } from "./routes/cabs.js";
 import { adminDestinationsRouter, destinationsRouter } from "./routes/destinations.js";
-import { hotelsRouter } from "./routes/hotels.js";
+import { adminHotelsRouter, hotelsRouter } from "./routes/hotels.js";
 import { inquiriesRouter } from "./routes/inquiries.js";
 import { adminItinerariesRouter, itinerariesRouter } from "./routes/itineraries.js";
 import { mediaRouter } from "./routes/media.js";
@@ -42,6 +42,7 @@ export function createApp() {
   app.use("/api/itineraries", itinerariesRouter);
   app.use("/api/admin/itineraries", adminItinerariesRouter);
   app.use("/api/hotels", hotelsRouter);
+  app.use("/api/admin/hotels", adminHotelsRouter);
   app.use("/api/cabs", cabsRouter);
   app.use("/api/inquiries", inquiriesRouter);
   app.use("/api/blogs", blogsRouter);

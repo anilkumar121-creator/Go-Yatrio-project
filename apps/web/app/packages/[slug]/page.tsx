@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import { MapPin, Calendar, CheckCircle2, XCircle, ImageIcon, Hotel, Utensils, Car, Clock, ArrowRight } from "lucide-react";
+import { MapPin, Calendar, CheckCircle2, XCircle, ImageIcon, Hotel, Utensils, Car, Clock, ArrowRight, Star, Building2 } from "lucide-react";
 import { Container } from "@/components/common/container";
 import { Badge } from "@/components/common/badge";
 import { Card } from "@/components/common/card";
@@ -43,6 +43,20 @@ type Itinerary = {
   days: ItineraryDay[];
 };
 
+type PackageHotel = {
+  id: string;
+  name: string;
+  slug: string;
+  shortDescription: string;
+  city: string;
+  hotelCategory: string;
+  starRating: number;
+  featured: boolean;
+  images: { id: string; imageUrl: string }[];
+  amenities: { id: string; name: string }[];
+  roomTypes: { id: string; priceFrom: number }[];
+};
+
 type PackageDetail = {
   id: string;
   title: string;
@@ -70,6 +84,7 @@ type PackageDetail = {
     state: string | null;
   };
   itineraries: Itinerary[];
+  hotels: PackageHotel[];
 };
 
 async function getPackage(slug: string): Promise<PackageDetail | null> {
@@ -315,6 +330,72 @@ export default async function PackageDetailPage({ params }: Props) {
                         ) : null}
                       </Card>
                     ))}
+                  </div>
+                </div>
+              ) : null}
+
+              {/* Associated Hotels */}
+              {pkg.hotels.length > 0 ? (
+                <div>
+                  <h2 className="text-2xl font-semibold text-foreground mb-5 flex items-center gap-2">
+                    <Building2 className="size-6 text-primary" />
+                    Handpicked Stays in This Package
+                  </h2>
+                  <div className="grid grid-cols-1 gap-5 tablet:grid-cols-2">
+                    {pkg.hotels.map((hotel) => {
+                      const minPrice = hotel.roomTypes[0]?.priceFrom ?? 0;
+                      const imageUrl = hotel.images[0]?.imageUrl ?? "";
+                      return (
+                        <Card key={hotel.id} className="overflow-hidden border border-border bg-card shadow-sm transition-all hover:shadow-md">
+                          <div className="relative aspect-[16/9]">
+                            {imageUrl ? (
+                              <CardMedia src={imageUrl} alt={hotel.name} className="h-full w-full" />
+                            ) : (
+                              <div className="flex h-full w-full items-center justify-center bg-primary/10 text-primary">
+                                <Building2 className="size-6" />
+                              </div>
+                            )}
+                            {hotel.featured ? <Badge variant="accent" className="absolute left-3 top-3">Featured</Badge> : null}
+                          </div>
+                          <div className="p-5">
+                            <div className="flex items-center justify-between gap-2">
+                              <Link href={`/hotels/${hotel.slug}`} className="text-lg font-semibold text-foreground hover:text-primary">
+                                {hotel.name}
+                              </Link>
+                              <div className="flex items-center gap-0.5 text-amber-500 shrink-0">
+                                {Array.from({ length: hotel.starRating }).map((_, idx) => (
+                                  <Star key={idx} className="size-3 fill-amber-500" />
+                                ))}
+                              </div>
+                            </div>
+                            <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
+                              <MapPin className="size-3.5 text-primary" />
+                              {hotel.city} • {hotel.hotelCategory}
+                            </p>
+                            <p className="mt-2 text-sm text-muted-foreground line-clamp-2">{hotel.shortDescription}</p>
+                            <div className="mt-3 flex flex-wrap gap-1.5">
+                              {hotel.amenities.slice(0, 3).map((am) => (
+                                <Badge key={am.id} variant="outline" className="text-[11px] font-normal">{am.name}</Badge>
+                              ))}
+                            </div>
+                            <div className="mt-4 flex items-center justify-between border-t border-border pt-3">
+                              {minPrice ? (
+                                <div>
+                                  <span className="block text-[11px] text-muted-foreground">From / night</span>
+                                  <Price amount={minPrice} size="sm" />
+                                </div>
+                              ) : null}
+                              <Button asChild size="sm" variant="outline" className="gap-1">
+                                <Link href={`/hotels/${hotel.slug}`}>
+                                  View Hotel
+                                  <ArrowRight className="size-3.5" />
+                                </Link>
+                              </Button>
+                            </div>
+                          </div>
+                        </Card>
+                      );
+                    })}
                   </div>
                 </div>
               ) : null}

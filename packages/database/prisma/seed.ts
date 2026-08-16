@@ -1,4 +1,13 @@
-import { PrismaClient, DestinationStatus, PackageStatus, PackageType, VehicleType, UserRole } from "@prisma/client";
+import {
+  PrismaClient,
+  DestinationStatus,
+  PackageStatus,
+  PackageType,
+  VehicleType,
+  UserRole,
+  HotelCategory,
+  HotelStatus,
+} from "@prisma/client";
 import { hash } from "bcryptjs";
 
 const prisma = new PrismaClient();
@@ -112,224 +121,512 @@ async function main() {
     seededDestinations[dest.slug] = record;
   }
 
-  const kerala = seededDestinations["kerala"];
+  // Seed Amenities
+  const amenitySeeds = [
+    { name: "Free High-Speed Wi-Fi", icon: "Wifi" },
+    { name: "Swimming Pool", icon: "Waves" },
+    { name: "Ayurveda & Wellness Spa", icon: "Sparkles" },
+    { name: "Multi-Cuisine Restaurant", icon: "Utensils" },
+    { name: "Fitness Center / Gym", icon: "Dumbbell" },
+    { name: "24/7 Room Service", icon: "Clock" },
+    { name: "Free Airport Transfer", icon: "Car" },
+    { name: "Beach Access", icon: "Sun" },
+    { name: "Valet Parking", icon: "Parking" },
+    { name: "Conference & Event Hall", icon: "Users" },
+  ];
 
-  const packageSeeds = [
+  const seededAmenities: Record<string, { id: string; name: string }> = {};
+  for (const am of amenitySeeds) {
+    const record = await prisma.hotelAmenity.upsert({
+      where: { name: am.name },
+      update: { icon: am.icon, active: true },
+      create: { name: am.name, icon: am.icon, active: true },
+    });
+    seededAmenities[am.name] = record;
+  }
+
+  const kerala = seededDestinations["kerala"];
+  const goa = seededDestinations["goa"];
+  const kashmir = seededDestinations["kashmir"];
+  const rajasthan = seededDestinations["rajasthan"];
+  const andaman = seededDestinations["andaman"];
+  const ladakh = seededDestinations["leh-ladakh"];
+
+  // Seed 20 Hotels
+  const hotelSeeds = [
     {
-      slug: "kerala-backwaters-and-hills",
+      slug: "tea-valley-resort-munnar",
+      name: "Tea Valley Resort Munnar",
+      shortDescription: "Charming hillside retreat nestled inside a 25-acre tea estate in Munnar.",
+      fullDescription: "Tea Valley Resort offers executive wooden cottages overlooking lush green valleys. Enjoy morning nature walks, bonfires, traditional Keralite dining, and misty mountain views.",
       destinationSlug: "kerala",
-      title: "Kerala Backwaters & Hill Station Escape",
-      shortDescription: "5 Days / 4 Nights exploring Munnar tea gardens, Thekkady wildlife, and Alleppey houseboat cruise.",
-      description: "Immerse yourself in God's Own Country. Start in Munnar amid cascading waterfalls and spice-scented hills, discover Periyar wildlife in Thekkady, and end with an unforgettable overnight houseboat stay on the tranquil backwaters of Alleppey.",
-      durationDays: 5,
-      durationNights: 4,
-      priceFrom: 18999,
-      packageType: PackageType.DOMESTIC,
-      inclusions: ["Breakfast & Dinner", "AC Private Sedan Transfer", "Houseboat Cruise with all meals", "Sightseeing Entry Tickets"],
-      exclusions: ["Airfare/Trainfare", "Personal expenses", "Camera fees", "Travel Insurance"],
+      address: "Pothamedu, Munnar, Idukki District",
+      city: "Munnar",
+      state: "Kerala",
+      country: "India",
+      hotelCategory: HotelCategory.PREMIUM,
+      starRating: 4,
       featured: true,
-      status: PackageStatus.PUBLISHED,
-      metaTitle: "Kerala Backwaters & Hill Station Escape | 5D4N Package | GoYatrio",
-      metaDescription: "Book 5D/4N Kerala Tour with GoYatrio. Includes Munnar tea hills, Thekkady Periyar lake, and Alleppey houseboat experience.",
-      itineraries: [
-        { dayNumber: 1, title: "Arrival in Cochin & Transfer to Munnar", description: "Arrive at Cochin Airport/Railway Station. Meet our representative and drive to Munnar. En route, enjoy Cheeyappara and Valara waterfalls.", city: "Munnar", accommodation: "Tea Valley Resort Munnar", meals: "Dinner", transfers: "Private AC Sedan", notes: "Check-in after 2 PM", activities: [{ title: "Waterfall stops at Cheeyappara & Valara", timing: "Morning / Afternoon" }] },
-        { dayNumber: 2, title: "Munnar Full Day Tea & Nature Sightseeing", description: "Full day sightseeing of Munnar including Mattupetty Dam, Echo Point, Kundala Lake, and Tea Museum with tea tasting.", city: "Munnar", accommodation: "Tea Valley Resort Munnar", meals: "Breakfast & Dinner", transfers: "Private AC Sedan", notes: "Tea Museum closed on Mondays", activities: [{ title: "Mattupetty Dam & Speed Boat Ride", timing: "09:30 AM" }, { title: "Echo Point & Kundala Lake Visit", timing: "01:30 PM" }] },
-        { dayNumber: 3, title: "Munnar to Thekkady Spice Plantation & Lake", description: "Morning scenic drive to Thekkady. Visit spice plantations and enjoy boat ride on Periyar Lake for wildlife viewing.", city: "Thekkady", accommodation: "Periyar Meadow Resort", meals: "Breakfast & Dinner", transfers: "Private AC Sedan", notes: "Boating tickets subject to online booking availability", activities: [{ title: "Spice Plantation Walk", timing: "11:00 AM" }, { title: "Periyar Wildlife Boat Safari", timing: "03:30 PM" }] },
-        { dayNumber: 4, title: "Thekkady to Alleppey Houseboat Check-in", description: "Drive to Alleppey backwaters. Board traditional deluxe houseboat at 12 PM. Cruise through narrow canals, paddy fields and palm groves.", city: "Alleppey", accommodation: "Deluxe Private Houseboat", meals: "Breakfast, Lunch, Evening Tea & Dinner", transfers: "Private AC Sedan", notes: "AC operates from 9 PM to 6 AM in deluxe category", activities: [{ title: "Backwater Cruise & Sunset Deck Experience", timing: "12:00 PM onwards" }] },
-        { dayNumber: 5, title: "Departure from Cochin", description: "Disembark houseboat after breakfast and transfer to Cochin Airport / Railway Station for departure.", city: "Cochin", accommodation: "N/A", meals: "Breakfast", transfers: "Private AC Sedan", notes: "Drop off according to flight schedule", activities: [{ title: "Cochin Fort Sightseeing (time permitting)", timing: "Morning" }] },
+      status: HotelStatus.ACTIVE,
+      amenities: ["Free High-Speed Wi-Fi", "Multi-Cuisine Restaurant", "24/7 Room Service", "Ayurveda & Wellness Spa"],
+      roomTypes: [
+        { roomName: "Executive Tea View Cottage", roomDescription: "Spacious wooden cottage with private balcony facing tea gardens.", maxGuests: 3, bedType: "King Bed", roomSize: "380 sq ft", priceFrom: 5500 },
+        { roomName: "Luxury Suite", roomDescription: "Premium suite with panoramic valley view and living room.", maxGuests: 4, bedType: "King Bed + Extra Bed", roomSize: "520 sq ft", priceFrom: 8500 },
       ],
     },
     {
-      slug: "kashmir-paradise-experience",
+      slug: "royal-houseboat-alleppey",
+      name: "Royal Backwater Houseboat Alleppey",
+      shortDescription: "Luxury handcrafted wooden houseboat floating through tranquil Alleppey backwaters.",
+      fullDescription: "Experience authentic Keralite hospitality on an exclusive private houseboat. Includes air-conditioned bedrooms, sun deck, private chef serving fresh seafood, and evening backwater cruises.",
+      destinationSlug: "kerala",
+      address: "Finishing Point Jetty, Punnamada, Alleppey",
+      city: "Alleppey",
+      state: "Kerala",
+      country: "India",
+      hotelCategory: HotelCategory.PREMIUM,
+      starRating: 4,
+      featured: true,
+      status: HotelStatus.ACTIVE,
+      amenities: ["Multi-Cuisine Restaurant", "24/7 Room Service"],
+      roomTypes: [
+        { roomName: "Deluxe AC Bedroom", roomDescription: "Air-conditioned bedroom with attached bathroom and large window view.", maxGuests: 2, bedType: "Double Bed", roomSize: "220 sq ft", priceFrom: 7500 },
+        { roomName: "Luxury Glass Houseboat Suite", roomDescription: "Upper deck glass-walled suite offering 360-degree backwater views.", maxGuests: 3, bedType: "King Bed", roomSize: "320 sq ft", priceFrom: 12000 },
+      ],
+    },
+    {
+      slug: "taj-fort-aguada-resort-goa",
+      name: "Taj Fort Aguada Resort & Spa",
+      shortDescription: "Iconic 5-star beachfront heritage resort overlooking Sinquerim Beach in Goa.",
+      fullDescription: "Built on the ramparts of a 16th-century Portuguese fortress, Taj Fort Aguada blends colonial history with luxury amenities, oceanfront infinity pools, and Jiva Spa treatments.",
+      destinationSlug: "goa",
+      address: "Sinquerim, Candolim, Bardez",
+      city: "Goa",
+      state: "Goa",
+      country: "India",
+      hotelCategory: HotelCategory.LUXURY,
+      starRating: 5,
+      featured: true,
+      status: HotelStatus.ACTIVE,
+      amenities: ["Free High-Speed Wi-Fi", "Swimming Pool", "Ayurveda & Wellness Spa", "Multi-Cuisine Restaurant", "Fitness Center / Gym", "Beach Access", "Valet Parking"],
+      roomTypes: [
+        { roomName: "Superior Sea View Room", roomDescription: "Elegantly furnished room with private balcony overlooking the Arabian Sea.", maxGuests: 3, bedType: "King Bed", roomSize: "420 sq ft", priceFrom: 18500 },
+        { roomName: "Hermitage Villa", roomDescription: "Exclusive private villa with plunge pool and private garden.", maxGuests: 4, bedType: "King Bed", roomSize: "850 sq ft", priceFrom: 35000 },
+      ],
+    },
+    {
+      slug: "calangute-grand-beach-resort",
+      name: "Calangute Grand Beach Resort",
+      shortDescription: "Vibrant family resort just 300 meters from Calangute Beach in North Goa.",
+      fullDescription: "Calangute Grand features outdoor swimming pools, poolbar shacks, live Goan music evenings, and spacious rooms close to famous night markets and beach shacks.",
+      destinationSlug: "goa",
+      address: "Naika Vaddo, Calangute, North Goa",
+      city: "Goa",
+      state: "Goa",
+      country: "India",
+      hotelCategory: HotelCategory.STANDARD,
+      starRating: 3,
+      featured: false,
+      status: HotelStatus.ACTIVE,
+      amenities: ["Free High-Speed Wi-Fi", "Swimming Pool", "Multi-Cuisine Restaurant", "24/7 Room Service"],
+      roomTypes: [
+        { roomName: "Deluxe Pool View Room", roomDescription: "Comfortable air-conditioned room with pool balcony.", maxGuests: 3, bedType: "Queen Bed", roomSize: "280 sq ft", priceFrom: 3800 },
+      ],
+    },
+    {
+      slug: "srinagar-grand-houseboat",
+      name: "Grand Palace Houseboat Dal Lake",
+      shortDescription: "Heritage cedarwood houseboat anchored on the serene waters of Dal Lake in Srinagar.",
+      fullDescription: "Crafted from fragrant cedarwood with hand-carved Kashmir walnut furniture and silk carpets. Enjoy Shikara transfers, traditional Wazwan dinners, and views of Shankaracharya hill.",
       destinationSlug: "kashmir",
-      title: "Kashmir Paradise & Gulmarg Gondola Experience",
-      shortDescription: "6 Days / 5 Nights covering Srinagar Dal Lake houseboat stay, Pahalgam valleys, and Gulmarg snow peaks.",
-      description: "Experience the magic of Kashmir with Dal Lake Shikara ride, overnight stay in a handcrafted wooden houseboat, meadow walks in Pahalgam, and high-altitude Gondola cable car ride in Gulmarg.",
-      durationDays: 6,
-      durationNights: 5,
-      priceFrom: 24999,
-      packageType: PackageType.DOMESTIC,
-      inclusions: ["Breakfast & Dinner", "Shikara Ride on Dal Lake", "Pahalgam & Gulmarg transfers", "Luxury Houseboat Stay"],
-      exclusions: ["Gondola Phase 2 tickets", "Personal Pony charges", "Airfare"],
+      address: "Boulevard Road, Gate No 9, Dal Lake, Srinagar",
+      city: "Srinagar",
+      state: "Jammu & Kashmir",
+      country: "India",
+      hotelCategory: HotelCategory.PREMIUM,
+      starRating: 4,
       featured: true,
-      status: PackageStatus.PUBLISHED,
-      metaTitle: "Kashmir Paradise & Gulmarg Gondola Tour | 6D5N Package | GoYatrio",
-      metaDescription: "Book 6D/5N Kashmir Holiday with GoYatrio. Includes Srinagar houseboat, Gulmarg gondola, and Pahalgam Betaab valley tour.",
-      itineraries: [
-        { dayNumber: 1, title: "Arrival in Srinagar & Dal Lake Shikara Ride", description: "Arrive at Srinagar Airport. Transfer to houseboat on Dal Lake. Enjoy a serene 1-hour sunset Shikara ride.", city: "Srinagar", accommodation: "Luxury Dal Lake Houseboat", meals: "Dinner", transfers: "Private Sedan", notes: "Airport pickup included", activities: [{ title: "Sunset Shikara Ride on Dal Lake", timing: "05:00 PM" }] },
-        { dayNumber: 2, title: "Srinagar Mughal Gardens & Shankaracharya Temple", description: "Visit Nishat Bagh, Shalimar Bagh, Cheshma Shahi Mughal gardens, and Shankaracharya Temple.", city: "Srinagar", accommodation: "Srinagar City Hotel", meals: "Breakfast & Dinner", transfers: "Private Sedan", notes: "Wear comfortable walking shoes", activities: [{ title: "Mughal Gardens Tour", timing: "10:00 AM" }] },
-        { dayNumber: 3, title: "Srinagar to Pahalgam Valley of Shepherds", description: "Drive to Pahalgam via saffron fields of Pampore. Visit Aru Valley and Betaab Valley.", city: "Pahalgam", accommodation: "Pahalgam Pine Resort", meals: "Breakfast & Dinner", transfers: "Private Sedan", notes: "Local union cab for Betaab valley", activities: [{ title: "Betaab & Aru Valley Sightseeing", timing: "01:00 PM" }] },
-        { dayNumber: 4, title: "Pahalgam to Gulmarg Meadow of Flowers", description: "Drive to Gulmarg. Ride the world's second-highest Gondola cable car up to Kongdoori & Apharwat Peak.", city: "Gulmarg", accommodation: "Gulmarg Resort", meals: "Breakfast & Dinner", transfers: "Private Sedan", notes: "Gondola tickets booked in advance", activities: [{ title: "Gulmarg Gondola Ride Phase 1 & 2", timing: "10:30 AM" }] },
-        { dayNumber: 5, title: "Gulmarg to Srinagar Local Craft Shopping", description: "Return to Srinagar. Visit local handicraft centers for Pashmina shawls, carpets, and dry fruits.", city: "Srinagar", accommodation: "Srinagar Hotel", meals: "Breakfast & Dinner", transfers: "Private Sedan", notes: "Evening free for shopping", activities: [{ title: "Heritage Craft Shopping Walk", timing: "04:00 PM" }] },
-        { dayNumber: 6, title: "Srinagar Departure", description: "Transfer to Srinagar airport for departure with sweet memories of Kashmir.", city: "Srinagar", accommodation: "N/A", meals: "Breakfast", transfers: "Private Sedan", notes: "Arrive airport 3 hours prior", activities: [{ title: "Airport Transfer", timing: "Morning" }] },
+      status: HotelStatus.ACTIVE,
+      amenities: ["Free High-Speed Wi-Fi", "Multi-Cuisine Restaurant", "24/7 Room Service", "Free Airport Transfer"],
+      roomTypes: [
+        { roomName: "Royal Heritage Suite", roomDescription: "Carved walnut furniture suite with lake-facing balcony.", maxGuests: 3, bedType: "King Bed", roomSize: "350 sq ft", priceFrom: 6800 },
       ],
     },
     {
-      slug: "grand-rajasthan-heritage-tour",
-      destinationSlug: "rajasthan",
-      title: "Grand Rajasthan Heritage & Desert Safari",
-      shortDescription: "7 Days / 6 Nights across Jaipur Pink City, Jodhpur Blue City, and Udaipur City of Lakes.",
-      description: "Step into royal India with GoYatrio. Includes Jaipur Pink City, Amber Fort, Udaipur Lake Pichola cruise, and heritage stays.",
-      durationDays: 7,
-      durationNights: 6,
-      priceFrom: 29999,
-      packageType: PackageType.DOMESTIC,
-      inclusions: ["Breakfast & Dinner", "Heritage Hotel Stays", "AC SUV Transfer", "Lake Pichola Boat Cruise"],
-      exclusions: ["Monument Entry Fees", "Camera Charges", "Airfare"],
+      slug: "gulmarg-alpine-resort",
+      name: "Gulmarg Alpine Snow Resort",
+      shortDescription: "Luxury ski-in ski-out resort near Gulmarg Gondola Base Station.",
+      fullDescription: "Surrounded by snow-capped Himalayan peaks, Gulmarg Alpine Resort features heated rooms, indoor spa pools, ski equipment rentals, and fire-lit dining lounges.",
+      destinationSlug: "kashmir",
+      address: "Near Gondola Base Station, Gulmarg",
+      city: "Gulmarg",
+      state: "Jammu & Kashmir",
+      country: "India",
+      hotelCategory: HotelCategory.LUXURY,
+      starRating: 5,
       featured: true,
-      status: PackageStatus.PUBLISHED,
-      metaTitle: "Grand Rajasthan Heritage Tour | 7D6N Package | GoYatrio",
-      metaDescription: "Book 7D/6N Rajasthan Heritage Tour with GoYatrio. Includes Jaipur Amber Fort, Jodhpur Fort, and Udaipur Lake Pichola cruise.",
-      itineraries: [
-        { dayNumber: 1, title: "Arrival in Jaipur Pink City", description: "Arrive in Jaipur and check into heritage hotel. Visit Birla Temple in the evening.", city: "Jaipur", accommodation: "Jaipur Heritage Palace", meals: "Dinner", transfers: "Private AC SUV", notes: "Evening cultural show optional", activities: [{ title: "Birla Temple Visit", timing: "06:00 PM" }] },
-        { dayNumber: 2, title: "Jaipur Forts & Palaces Full Day Tour", description: "Explore Amber Fort with elephant ride, City Palace, Hawa Mahal, and Jantar Mantar observatory.", city: "Jaipur", accommodation: "Jaipur Heritage Palace", meals: "Breakfast & Dinner", transfers: "Private AC SUV", notes: "Guide included", activities: [{ title: "Amber Fort Exploration", timing: "09:00 AM" }, { title: "City Palace & Hawa Mahal Walk", timing: "02:00 PM" }] },
-        { dayNumber: 3, title: "Jaipur to Ajmer/Pushkar & Jodhpur", description: "Drive via holy Pushkar Lake and Brahma Temple to the Blue City of Jodhpur.", city: "Jodhpur", accommodation: "Jodhpur Palace Hotel", meals: "Breakfast & Dinner", transfers: "Private AC SUV", notes: "Pushkar stop 2 hours", activities: [{ title: "Pushkar Lake & Temple Visit", timing: "12:00 PM" }] },
-        { dayNumber: 4, title: "Jodhpur Sightseeing & Drive to Udaipur", description: "Visit Mehrangarh Fort and Jaswant Thada, then drive to Udaipur City of Lakes.", city: "Udaipur", accommodation: "Udaipur Lake Resort", meals: "Breakfast & Dinner", transfers: "Private AC SUV", notes: "Ranakpur Jain Temple stop en route", activities: [{ title: "Mehrangarh Fort Tour", timing: "09:30 AM" }] },
-        { dayNumber: 5, title: "Udaipur City Palace & Lake Pichola Cruise", description: "Visit City Palace, Saheliyon Ki Bari, and enjoy evening boat ride on Lake Pichola.", city: "Udaipur", accommodation: "Udaipur Lake Resort", meals: "Breakfast & Dinner", transfers: "Private AC SUV", notes: "Sunset boat cruise included", activities: [{ title: "Lake Pichola Boat Cruise", timing: "05:00 PM" }] },
-        { dayNumber: 6, title: "Excursion to Chittorgarh Fort", description: "Day trip to historic Chittorgarh Fort, India's largest fort complex.", city: "Udaipur", accommodation: "Udaipur Lake Resort", meals: "Breakfast & Dinner", transfers: "Private AC SUV", notes: "Full day excursion", activities: [{ title: "Chittorgarh Fort Guided Tour", timing: "10:00 AM" }] },
-        { dayNumber: 7, title: "Departure from Udaipur", description: "Transfer to Udaipur airport for your return flight.", city: "Udaipur", accommodation: "N/A", meals: "Breakfast", transfers: "Private AC SUV", notes: "Airport drop", activities: [{ title: "Airport Transfer", timing: "Morning" }] },
+      status: HotelStatus.ACTIVE,
+      amenities: ["Free High-Speed Wi-Fi", "Multi-Cuisine Restaurant", "Fitness Center / Gym", "Valet Parking"],
+      roomTypes: [
+        { roomName: "Heated Snow View Room", roomDescription: "Centralized heating room with dramatic views of Apharwat peak.", maxGuests: 3, bedType: "King Bed", roomSize: "400 sq ft", priceFrom: 14500 },
+      ],
+    },
+    {
+      slug: "jaipur-heritage-palace-hotel",
+      name: "Jaipur Royal Heritage Palace",
+      shortDescription: "Converted 19th-century royal Haveli featuring courtyard dining and Rajasthani folk dances.",
+      fullDescription: "Immerse in royal grandeur with traditional fresco paintings, marble courtyards, rooftop fort views, Ayurvedic massages, and authentic Marwari dining.",
+      destinationSlug: "rajasthan",
+      address: "Amber Road, Near Jal Mahal, Jaipur",
+      city: "Jaipur",
+      state: "Rajasthan",
+      country: "India",
+      hotelCategory: HotelCategory.PREMIUM,
+      starRating: 4,
+      featured: true,
+      status: HotelStatus.ACTIVE,
+      amenities: ["Free High-Speed Wi-Fi", "Swimming Pool", "Multi-Cuisine Restaurant", "Ayurveda & Wellness Spa", "Valet Parking"],
+      roomTypes: [
+        { roomName: "Heritage Royal Room", roomDescription: "Traditional Rajasthani decor with king canopy bed.", maxGuests: 3, bedType: "King Canopy Bed", roomSize: "360 sq ft", priceFrom: 6200 },
+        { roomName: "Maharaja Suite", roomDescription: "Opulent suite with private terrace view of Jal Mahal.", maxGuests: 4, bedType: "King Bed", roomSize: "700 sq ft", priceFrom: 12500 },
+      ],
+    },
+    {
+      slug: "udaipur-lake-pichola-resort",
+      name: "Udaipur Lake Pichola Palace Resort",
+      shortDescription: "Boutique lakeside resort offering romantic boat rides and City Palace views.",
+      fullDescription: "Located on the banks of Lake Pichola, this palace resort offers candlelit dining on floating pontoon decks, rooftop pool lounges, and luxury heritage rooms.",
+      destinationSlug: "rajasthan",
+      address: "Hanuman Ghat, Outside Chandpole, Udaipur",
+      city: "Udaipur",
+      state: "Rajasthan",
+      country: "India",
+      hotelCategory: HotelCategory.LUXURY,
+      starRating: 5,
+      featured: true,
+      status: HotelStatus.ACTIVE,
+      amenities: ["Free High-Speed Wi-Fi", "Swimming Pool", "Multi-Cuisine Restaurant", "Ayurveda & Wellness Spa"],
+      roomTypes: [
+        { roomName: "Lakefront Suite", roomDescription: "Direct views of Lake Pichola and Taj Lake Palace.", maxGuests: 3, bedType: "King Bed", roomSize: "450 sq ft", priceFrom: 16000 },
+      ],
+    },
+    {
+      slug: "havelock-beach-resort-andaman",
+      name: "Barefoot Beach Resort Havelock",
+      shortDescription: "Eco-luxury beach resort hidden inside tropical rainforest at Radhanagar Beach.",
+      fullDescription: "Constructed with indigenous timber and thatch roofs, Barefoot Resort provides direct beach access, scuba diving center, sea-view cottages, and organic dining.",
+      destinationSlug: "andaman",
+      address: "Beach No 7, Radhanagar Beach, Havelock Island",
+      city: "Havelock Island",
+      state: "Andaman & Nicobar Islands",
+      country: "India",
+      hotelCategory: HotelCategory.LUXURY,
+      starRating: 5,
+      featured: true,
+      status: HotelStatus.ACTIVE,
+      amenities: ["Free High-Speed Wi-Fi", "Beach Access", "Multi-Cuisine Restaurant", "Ayurveda & Wellness Spa"],
+      roomTypes: [
+        { roomName: "Rainforest Andaman Villa", roomDescription: "Eco-friendly wooden villa surrounded by lush foliage.", maxGuests: 3, bedType: "King Bed", roomSize: "500 sq ft", priceFrom: 14000 },
+      ],
+    },
+    {
+      slug: "port-blair-bay-view-hotel",
+      name: "Port Blair Bay View Hotel",
+      shortDescription: "Modern sea-facing hotel close to Cellular Jail and Port Blair Jetty.",
+      fullDescription: "Conveniently situated near Port Blair harbour, offering comfortable sea-facing rooms, rooftop seafood restaurant, and island hopping travel desk.",
+      destinationSlug: "andaman",
+      address: "Marine Hill, Port Blair",
+      city: "Port Blair",
+      state: "Andaman & Nicobar Islands",
+      country: "India",
+      hotelCategory: HotelCategory.STANDARD,
+      starRating: 3,
+      featured: false,
+      status: HotelStatus.ACTIVE,
+      amenities: ["Free High-Speed Wi-Fi", "Multi-Cuisine Restaurant", "24/7 Room Service", "Free Airport Transfer"],
+      roomTypes: [
+        { roomName: "Standard Sea View Room", roomDescription: "Comfortable room overlooking Ross Island bay.", maxGuests: 2, bedType: "Queen Bed", roomSize: "260 sq ft", priceFrom: 3200 },
+      ],
+    },
+    {
+      slug: "leh-grand-dragon-hotel",
+      name: "The Grand Dragon Ladakh",
+      shortDescription: "Premier 5-star solar-powered eco-hotel in Leh with Himalayan views.",
+      fullDescription: "The Grand Dragon Ladakh features solar heating, handcrafted Tibetan wood carvings, oxygen-enriched rooms, and rooftop views of Stok Kangri mountain range.",
+      destinationSlug: "leh-ladakh",
+      address: "Old Road, Sheynam, Leh Ladakh",
+      city: "Leh",
+      state: "Ladakh",
+      country: "India",
+      hotelCategory: HotelCategory.LUXURY,
+      starRating: 5,
+      featured: true,
+      status: HotelStatus.ACTIVE,
+      amenities: ["Free High-Speed Wi-Fi", "Multi-Cuisine Restaurant", "Fitness Center / Gym", "Conference & Event Hall", "Free Airport Transfer"],
+      roomTypes: [
+        { roomName: "Deluxe Mountain View Room", roomDescription: "Solar heated room with panoramic views of Stok Kangri.", maxGuests: 3, bedType: "King Bed", roomSize: "360 sq ft", priceFrom: 11500 },
+      ],
+    },
+    {
+      slug: "pangong-luxury-tented-camp",
+      name: "Pangong Tso Luxury Tented Camp",
+      shortDescription: "High-altitude glamping camp on the banks of blue Pangong Lake.",
+      fullDescription: "Experience starlit nights at 14,000 feet with insulated luxury tents, attached modern bathrooms, heating stoves, and hot meals served in central dining tent.",
+      destinationSlug: "leh-ladakh",
+      address: "Spangmik Village, Pangong Tso Lake, Ladakh",
+      city: "Pangong Tso",
+      state: "Ladakh",
+      country: "India",
+      hotelCategory: HotelCategory.PREMIUM,
+      starRating: 4,
+      featured: false,
+      status: HotelStatus.ACTIVE,
+      amenities: ["Multi-Cuisine Restaurant", "24/7 Room Service"],
+      roomTypes: [
+        { roomName: "Insulated Luxury Glamping Tent", roomDescription: "Double-walled heated tent with private bathroom and lakefront view.", maxGuests: 3, bedType: "Twin / King Beds", roomSize: "300 sq ft", priceFrom: 7800 },
+      ],
+    },
+    {
+      slug: "thekkady-periyar-meadow-resort",
+      name: "Thekkady Periyar Meadow Resort",
+      shortDescription: "Serene eco-resort adjoining Periyar Wildlife Sanctuary in Thekkady.",
+      fullDescription: "Surrounded by spice plantations, offering jungle walks, bamboo rafting assistance, traditional Keralite meals, and peaceful green ambiance.",
+      destinationSlug: "kerala",
+      address: "Sanctuary Road, Thekkady, Kumily",
+      city: "Thekkady",
+      state: "Kerala",
+      country: "India",
+      hotelCategory: HotelCategory.STANDARD,
+      starRating: 3,
+      featured: false,
+      status: HotelStatus.ACTIVE,
+      amenities: ["Free High-Speed Wi-Fi", "Multi-Cuisine Restaurant", "24/7 Room Service"],
+      roomTypes: [
+        { roomName: "Deluxe Plantation Room", roomDescription: "Cozy balcony room facing spice gardens.", maxGuests: 3, bedType: "Double Bed", roomSize: "270 sq ft", priceFrom: 3400 },
+      ],
+    },
+    {
+      slug: "pahalgam-pine-retreat",
+      name: "Pahalgam Pine Valley Retreat",
+      shortDescription: "Riverside boutique hotel along the rushing Lidder River in Pahalgam.",
+      fullDescription: "Wake up to the sound of Lidder River and pine forests. Features wood-paneled rooms, campfire grounds, and trout fishing excursions.",
+      destinationSlug: "kashmir",
+      address: "Lidder River Bank, KP Road, Pahalgam",
+      city: "Pahalgam",
+      state: "Jammu & Kashmir",
+      country: "India",
+      hotelCategory: HotelCategory.STANDARD,
+      starRating: 3,
+      featured: false,
+      status: HotelStatus.ACTIVE,
+      amenities: ["Free High-Speed Wi-Fi", "Multi-Cuisine Restaurant", "24/7 Room Service"],
+      roomTypes: [
+        { roomName: "River View Room", roomDescription: "Balcony room with direct view of Lidder River.", maxGuests: 3, bedType: "King Bed", roomSize: "300 sq ft", priceFrom: 4200 },
+      ],
+    },
+    {
+      slug: "jodhpur-blue-city-palace",
+      name: "Jodhpur Blue City Palace Hotel",
+      shortDescription: "Boutique heritage stay overlooking Mehrangarh Fort in Jodhpur.",
+      fullDescription: "Situated in the heart of the historic Blue City, featuring rooftop fort-view dining, Rajasthani jharokha windows, and guided fort walks.",
+      destinationSlug: "rajasthan",
+      address: "Clock Tower Road, Jodhpur",
+      city: "Jodhpur",
+      state: "Rajasthan",
+      country: "India",
+      hotelCategory: HotelCategory.STANDARD,
+      starRating: 3,
+      featured: false,
+      status: HotelStatus.ACTIVE,
+      amenities: ["Free High-Speed Wi-Fi", "Multi-Cuisine Restaurant", "24/7 Room Service"],
+      roomTypes: [
+        { roomName: "Fort View Room", roomDescription: "Traditional room with spectacular lit-up view of Mehrangarh Fort.", maxGuests: 2, bedType: "Queen Bed", roomSize: "280 sq ft", priceFrom: 3900 },
+      ],
+    },
+    {
+      slug: "jaisalmer-desert-camps-resort",
+      name: "Jaisalmer Golden Sand Desert Camp",
+      shortDescription: "Authentic Thar desert glamping camp at Sam Sand Dunes Jaisalmer.",
+      fullDescription: "Experience desert magic with sunset camel safaris, jeep dune bashing, Rajasthani Kalbeliya folk dance performances, and starry night camping.",
+      destinationSlug: "rajasthan",
+      address: "Sam Sand Dunes, Jaisalmer",
+      city: "Jaisalmer",
+      state: "Rajasthan",
+      country: "India",
+      hotelCategory: HotelCategory.PREMIUM,
+      starRating: 4,
+      featured: true,
+      status: HotelStatus.ACTIVE,
+      amenities: ["Multi-Cuisine Restaurant", "24/7 Room Service"],
+      roomTypes: [
+        { roomName: "Swiss Royal Desert Tent", roomDescription: "Carpeted tent with modern attached bathroom and evening cultural show.", maxGuests: 3, bedType: "Double Bed", roomSize: "320 sq ft", priceFrom: 5500 },
+      ],
+    },
+    {
+      slug: "candolim-beachfront-suites",
+      name: "Candolim Beachfront Suites Goa",
+      shortDescription: "Boutique suites stepping right onto the sands of Candolim Beach.",
+      fullDescription: "Enjoy sunset cocktails, sea breezes, infinity plunge pools, and spacious modern suites right on Candolim coastline.",
+      destinationSlug: "goa",
+      address: "Main Beach Road, Candolim, North Goa",
+      city: "Goa",
+      state: "Goa",
+      country: "India",
+      hotelCategory: HotelCategory.PREMIUM,
+      starRating: 4,
+      featured: false,
+      status: HotelStatus.ACTIVE,
+      amenities: ["Free High-Speed Wi-Fi", "Swimming Pool", "Beach Access", "Multi-Cuisine Restaurant"],
+      roomTypes: [
+        { roomName: "Beachfront Suite", roomDescription: "Modern suite with direct balcony view of Arabian Sea.", maxGuests: 3, bedType: "King Bed", roomSize: "420 sq ft", priceFrom: 9200 },
+      ],
+    },
+    {
+      slug: "kovalam-ayurvedic-beach-resort",
+      name: "Kovalam Ayurvedic Beach Resort",
+      shortDescription: "Rejuvenating Ayurveda wellness retreat overlooking Lighthouse Beach Kovalam.",
+      fullDescription: "Authentic doctor-guided Ayurvedic treatments, yoga pavilions, vegetarian satvik dining, and cliffside ocean views.",
+      destinationSlug: "kerala",
+      address: "Lighthouse Beach, Kovalam, Trivandrum",
+      city: "Kovalam",
+      state: "Kerala",
+      country: "India",
+      hotelCategory: HotelCategory.PREMIUM,
+      starRating: 4,
+      featured: false,
+      status: HotelStatus.ACTIVE,
+      amenities: ["Free High-Speed Wi-Speed", "Ayurveda & Wellness Spa", "Swimming Pool", "Beach Access", "Multi-Cuisine Restaurant"],
+      roomTypes: [
+        { roomName: "Ayurveda Ocean Cottage", roomDescription: "Seafacing cottage designed for peaceful wellness stays.", maxGuests: 2, bedType: "King Bed", roomSize: "350 sq ft", priceFrom: 7200 },
+      ],
+    },
+    {
+      slug: "nubra-valley-himalayan-resort",
+      name: "Nubra Valley Himalayan Organic Resort",
+      shortDescription: "Scenic orchard resort in Diskit village, Nubra Valley.",
+      fullDescription: "Set among apple and apricot orchards near Hunder sand dunes and Diskit Monastery. Features organic farm dining and camel safari assistance.",
+      destinationSlug: "leh-ladakh",
+      address: "Diskit Village, Nubra Valley",
+      city: "Nubra Valley",
+      state: "Ladakh",
+      country: "India",
+      hotelCategory: HotelCategory.STANDARD,
+      starRating: 3,
+      featured: false,
+      status: HotelStatus.ACTIVE,
+      amenities: ["Multi-Cuisine Restaurant", "24/7 Room Service"],
+      roomTypes: [
+        { roomName: "Orchard Cottage Room", roomDescription: "Wooden room surrounded by organic fruit orchards.", maxGuests: 3, bedType: "King / Twin Beds", roomSize: "320 sq ft", priceFrom: 4800 },
+      ],
+    },
+    {
+      slug: "south-goa-budget-inn",
+      name: "South Goa Budget Beach Inn",
+      shortDescription: "Clean and affordable stay near Colva Beach South Goa.",
+      fullDescription: "Perfect for budget travelers and backpackers wanting quiet palm groves, clean air-conditioned rooms, and quick beach access.",
+      destinationSlug: "goa",
+      address: "Colva Beach Road, South Goa",
+      city: "Goa",
+      state: "Goa",
+      country: "India",
+      hotelCategory: HotelCategory.BUDGET,
+      starRating: 2,
+      featured: false,
+      status: HotelStatus.ACTIVE,
+      amenities: ["Free High-Speed Wi-Fi", "24/7 Room Service"],
+      roomTypes: [
+        { roomName: "Standard AC Room", roomDescription: "Basic air-conditioned room with private bathroom.", maxGuests: 2, bedType: "Double Bed", roomSize: "200 sq ft", priceFrom: 1800 },
       ],
     },
   ];
 
-  for (const pkgSeed of packageSeeds) {
-    const dest = seededDestinations[pkgSeed.destinationSlug] ?? kerala;
-    const { itineraries, ...pkgData } = pkgSeed;
+  for (const hSeed of hotelSeeds) {
+    const dest = seededDestinations[hSeed.destinationSlug];
+    if (!dest) continue;
 
-    const tourPackage = await prisma.tourPackage.upsert({
-      where: { slug: pkgSeed.slug },
+    const { amenities, roomTypes, destinationSlug, ...hData } = hSeed;
+
+    const createdHotel = await prisma.hotel.upsert({
+      where: { slug: hSeed.slug },
       update: {
-        title: pkgData.title,
-        shortDescription: pkgData.shortDescription,
-        description: pkgData.description,
+        name: hData.name,
+        shortDescription: hData.shortDescription,
+        fullDescription: hData.fullDescription,
         destinationId: dest.id,
-        durationDays: pkgData.durationDays,
-        durationNights: pkgData.durationNights,
-        priceFrom: pkgData.priceFrom,
-        packageType: pkgData.packageType,
-        inclusions: pkgData.inclusions,
-        exclusions: pkgData.exclusions,
-        featured: pkgData.featured,
-        status: pkgData.status,
-        metaTitle: pkgData.metaTitle,
-        metaDescription: pkgData.metaDescription,
-        isActive: true,
+        address: hData.address,
+        city: hData.city,
+        state: hData.state,
+        country: hData.country,
+        hotelCategory: hData.hotelCategory,
+        starRating: hData.starRating,
+        featured: hData.featured,
+        status: hData.status,
       },
       create: {
-        ...pkgData,
+        ...hData,
         destinationId: dest.id,
-        currency: "INR",
-        galleryImages: [],
-        isActive: true,
+        amenities: {
+          connect: amenities
+            .filter((aName) => seededAmenities[aName])
+            .map((aName) => ({ id: seededAmenities[aName].id })),
+        },
       },
     });
 
-    const itinSlug = `${pkgSeed.slug}-standard-itinerary`;
-    const itinerary = await prisma.itinerary.upsert({
-      where: { slug: itinSlug },
-      update: {
-        title: `${pkgData.title} Standard Itinerary`,
-        description: `Complete ${pkgData.durationDays}D/${pkgData.durationNights}N day-by-day itinerary schedule.`,
-        packageId: tourPackage.id,
-        isDefault: true,
-        isActive: true,
-      },
-      create: {
-        packageId: tourPackage.id,
-        title: `${pkgData.title} Standard Itinerary`,
-        slug: itinSlug,
-        description: `Complete ${pkgData.durationDays}D/${pkgData.durationNights}N day-by-day itinerary schedule.`,
-        isDefault: true,
-        isActive: true,
-      },
-    });
-
-    for (const itinDay of itineraries) {
-      const { activities, ...dayFields } = itinDay;
-
-      const createdDay = await prisma.itineraryDay.upsert({
-        where: {
-          itineraryId_dayNumber: {
-            itineraryId: itinerary.id,
-            dayNumber: dayFields.dayNumber,
-          },
-        },
-        update: {
-          ...dayFields,
-          sortOrder: dayFields.dayNumber,
-        },
-        create: {
-          itineraryId: itinerary.id,
-          sortOrder: dayFields.dayNumber,
-          ...dayFields,
-        },
+    // Create Room Types
+    for (const rt of roomTypes) {
+      const existingRoom = await prisma.hotelRoomType.findFirst({
+        where: { hotelId: createdHotel.id, roomName: rt.roomName },
       });
 
-      if (activities && activities.length > 0) {
-        for (let i = 0; i < activities.length; i++) {
-          const act = activities[i];
-          await prisma.dayActivity.create({
-            data: {
-              dayId: createdDay.id,
-              title: act.title,
-              timing: act.timing,
-              sortOrder: i + 1,
-            },
-          });
-        }
+      if (!existingRoom) {
+        await prisma.hotelRoomType.create({
+          data: {
+            hotelId: createdHotel.id,
+            roomName: rt.roomName,
+            roomDescription: rt.roomDescription,
+            maxGuests: rt.maxGuests,
+            bedType: rt.bedType,
+            roomSize: rt.roomSize,
+            priceFrom: rt.priceFrom,
+            active: true,
+          },
+        });
       }
+    }
+
+    // Create Sample Hotel Images
+    const existingImage = await prisma.hotelImage.findFirst({ where: { hotelId: createdHotel.id } });
+    if (!existingImage) {
+      await prisma.hotelImage.createMany({
+        data: [
+          { hotelId: createdHotel.id, imageUrl: "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1200&q=80", altText: `${createdHotel.name} Exterior View`, sortOrder: 1 },
+          { hotelId: createdHotel.id, imageUrl: "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=1200&q=80", altText: `${createdHotel.name} Luxury Room`, sortOrder: 2 },
+          { hotelId: createdHotel.id, imageUrl: "https://images.unsplash.com/photo-1571896349842-33c89424de2d?auto=format&fit=crop&w=1200&q=80", altText: `${createdHotel.name} Pool and Lounge`, sortOrder: 3 },
+        ],
+      });
     }
   }
 
-  await prisma.hotel.upsert({
-    where: { slug: "demo-kerala-resort" },
-    update: {},
-    create: {
-      name: "Demo Kerala Resort",
-      slug: "demo-kerala-resort",
-      destinationId: kerala.id,
-      description: "Development sample hotel.",
-      address: "Demo address, Kerala",
-      category: "4 Star",
-      priceFrom: 5999,
-    },
-  });
+  // Update Packages with Hotels
+  const packages = await prisma.tourPackage.findMany();
+  const allHotels = await prisma.hotel.findMany();
 
-  await prisma.vehicle.createMany({
-    data: [
-      {
-        vehicleName: "Demo Sedan",
-        vehicleType: VehicleType.SEDAN,
-        description: "Development sample vehicle.",
-        capacity: 4,
-        priceFrom: 2500,
-      },
-      {
-        vehicleName: "Demo Tempo Traveller",
-        vehicleType: VehicleType.TEMPO_TRAVELLER,
-        description: "Development sample vehicle.",
-        capacity: 12,
-        priceFrom: 8500,
-      },
-    ],
-    skipDuplicates: true,
-  });
+  for (const pkg of packages) {
+    const destHotels = allHotels.filter((h) => h.destinationId === pkg.destinationId);
+    if (destHotels.length > 0) {
+      await prisma.tourPackage.update({
+        where: { id: pkg.id },
+        data: {
+          hotels: {
+            connect: destHotels.map((h) => ({ id: h.id })),
+          },
+        },
+      });
+    }
+  }
 
-  await prisma.blog.upsert({
-    where: { slug: "demo-travel-planning-guide" },
-    update: {},
-    create: {
-      title: "Demo Travel Planning Guide",
-      slug: "demo-travel-planning-guide",
-      excerpt: "Development sample blog excerpt.",
-      content: "Development sample blog content. Replace before production use.",
-      author: "GoYatrio Team",
-      isPublished: true,
-      publishedAt: new Date(),
-    },
-  });
-
-  console.log(`Seed complete. Development admin: ${admin.email}`);
+  console.log(`Phase 10 Seed complete. 20 Hotels seeded across destinations.`);
 }
 
 main()

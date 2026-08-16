@@ -1,4 +1,4 @@
-﻿import { prisma } from "@goyatrio/database";
+import { prisma, HotelStatus } from "@goyatrio/database";
 
 type DestinationCreateInput = {
   name: string;
@@ -127,7 +127,15 @@ export const destinationService = {
       },
       include: {
         packages: { where: { isActive: true }, orderBy: { createdAt: "desc" } },
-        hotels: { where: { isActive: true }, orderBy: { createdAt: "desc" } },
+        hotels: {
+          where: { status: HotelStatus.ACTIVE },
+          orderBy: [{ featured: "desc" }, { starRating: "desc" }],
+          include: {
+            images: { orderBy: { sortOrder: "asc" }, take: 1 },
+            amenities: true,
+            roomTypes: { where: { active: true }, orderBy: { priceFrom: "asc" }, take: 1 },
+          },
+        },
       },
     });
   },

@@ -1,4 +1,4 @@
-import { prisma, PackageType } from "@goyatrio/database";
+import { prisma, PackageType, HotelStatus } from "@goyatrio/database";
 
 type PackageCreateInput = {
   title: string;
@@ -184,6 +184,14 @@ export const packageService = {
             },
           },
         },
+        hotels: {
+          where: { status: HotelStatus.ACTIVE },
+          include: {
+            images: { orderBy: { sortOrder: "asc" }, take: 1 },
+            amenities: true,
+            roomTypes: { where: { active: true }, orderBy: { priceFrom: "asc" }, take: 1 },
+          },
+        },
       },
     });
   },
@@ -205,6 +213,14 @@ export const packageService = {
                 },
               },
             },
+          },
+        },
+        hotels: {
+          where: { status: HotelStatus.ACTIVE },
+          include: {
+            images: { orderBy: { sortOrder: "asc" }, take: 1 },
+            amenities: true,
+            roomTypes: { where: { active: true }, orderBy: { priceFrom: "asc" }, take: 1 },
           },
         },
       },
