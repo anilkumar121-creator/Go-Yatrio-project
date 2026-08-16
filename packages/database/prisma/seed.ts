@@ -7,6 +7,9 @@ import {
   UserRole,
   HotelCategory,
   HotelStatus,
+  CabStatus,
+  CabTripType,
+  CabFuelType,
 } from "@prisma/client";
 import { hash } from "bcryptjs";
 
@@ -626,7 +629,272 @@ async function main() {
     }
   }
 
-  console.log(`Phase 10 Seed complete. 20 Hotels seeded across destinations.`);
+  // === Phase 11: Cab Booking System Seeding ===
+  const cabAmenitySeeds = [
+    { name: "Air Conditioning", icon: "Snowflake" },
+    { name: "Music System / Bluetooth", icon: "Music" },
+    { name: "USB Charging Points", icon: "Plug" },
+    { name: "Pushback Recliner Seats", icon: "Armchair" },
+    { name: "Reading Lights", icon: "Lightbulb" },
+    { name: "Large Luggage Space", icon: "Backpack" },
+    { name: "Sunroof", icon: "Sun" },
+    { name: "GPS Navigation", icon: "MapPin" },
+    { name: "Clean & Sanitized Interior", icon: "SprayCan" },
+  ];
+
+  const seededCabAmenities: Record<string, { id: string; name: string }> = {};
+  for (const am of cabAmenitySeeds) {
+    const rec = await prisma.cabAmenity.upsert({
+      where: { name: am.name },
+      update: { icon: am.icon, active: true },
+      create: { name: am.name, icon: am.icon, active: true },
+    });
+    seededCabAmenities[am.name] = rec;
+  }
+
+  const cabSeeds = [
+    {
+      slug: "maruti-dzire-sedan",
+      vehicleName: "Maruti Suzuki Dzire",
+      vehicleType: VehicleType.SEDAN,
+      description: "Comfortable AC sedan perfect for local city rides, airport transfers, and short one-way trips.",
+      capacity: 4,
+      luggageCapacity: 2,
+      ac: true,
+      fuelType: CabFuelType.PETROL,
+      driverAllowance: 250,
+      baseFare: 200,
+      extraKmCharge: 12,
+      nightCharge: 150,
+      priceFrom: 2000,
+      image: "https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&w=1200&q=80",
+      galleryImages: [
+        "https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&w=1200&q=80",
+      ],
+      tripTypes: [CabTripType.LOCAL, CabTripType.AIRPORT_TRANSFER, CabTripType.RAILWAY_TRANSFER, CabTripType.ONE_WAY],
+      featured: true,
+      status: CabStatus.ACTIVE,
+      destinationSlug: "goa",
+      amenities: ["Air Conditioning", "Music System / Bluetooth", "USB Charging Points", "Clean & Sanitized Interior"],
+    },
+    {
+      slug: "toyota-innova-crysta-suv",
+      vehicleName: "Toyota Innova Crysta",
+      vehicleType: VehicleType.SUV,
+      description: "Spacious 7-seater SUV ideal for family outstation trips, hill routes, and round trips.",
+      capacity: 7,
+      luggageCapacity: 4,
+      ac: true,
+      fuelType: CabFuelType.DIESEL,
+      driverAllowance: 300,
+      baseFare: 400,
+      extraKmCharge: 18,
+      nightCharge: 200,
+      priceFrom: 3200,
+      image: "https://images.unsplash.com/photo-1621135802920-133df287f89c?auto=format&fit=crop&w=1200&q=80",
+      galleryImages: [
+        "https://images.unsplash.com/photo-1621135802920-133df287f89c?auto=format&fit=crop&w=1200&q=80",
+      ],
+      tripTypes: [CabTripType.LOCAL, CabTripType.OUTSTATION, CabTripType.ONE_WAY, CabTripType.ROUND_TRIP, CabTripType.MULTI_DAY],
+      featured: true,
+      status: CabStatus.ACTIVE,
+      destinationSlug: "rajasthan",
+      amenities: ["Air Conditioning", "Music System / Bluetooth", "USB Charging Points", "Pushback Recliner Seats", "Large Luggage Space"],
+    },
+    {
+      slug: "mahindra-xuv700-luxury-suv",
+      vehicleName: "Mahindra XUV700 Luxury SUV",
+      vehicleType: VehicleType.LUXURY_SUV,
+      description: "Premium luxury SUV with plush interiors, large boot space, and advanced safety for executive travel.",
+      capacity: 6,
+      luggageCapacity: 4,
+      ac: true,
+      fuelType: CabFuelType.DIESEL,
+      driverAllowance: 350,
+      baseFare: 500,
+      extraKmCharge: 22,
+      nightCharge: 250,
+      priceFrom: 4200,
+      image: "https://images.unsplash.com/photo-1553440569-bcc63803a83d?auto=format&fit=crop&w=1200&q=80",
+      galleryImages: [
+        "https://images.unsplash.com/photo-1553440569-bcc63803a83d?auto=format&fit=crop&w=1200&q=80",
+      ],
+      tripTypes: [CabTripType.OUTSTATION, CabTripType.AIRPORT_TRANSFER, CabTripType.ROUND_TRIP, CabTripType.MULTI_DAY],
+      featured: true,
+      status: CabStatus.ACTIVE,
+      destinationSlug: "kerala",
+      amenities: ["Air Conditioning", "Sunroof", "USB Charging Points", "GPS Navigation", "Clean & Sanitized Interior"],
+    },
+    {
+      slug: "force-tempo-traveller-12",
+      vehicleName: "Force Tempo Traveller 12 Seater",
+      vehicleType: VehicleType.TEMPO_TRAVELLER,
+      description: "Comfortable 12-seater tempo traveller for group travel, hill trips, and multi-day tours.",
+      capacity: 12,
+      luggageCapacity: 8,
+      ac: true,
+      fuelType: CabFuelType.DIESEL,
+      driverAllowance: 350,
+      baseFare: 900,
+      extraKmCharge: 26,
+      nightCharge: 350,
+      priceFrom: 5500,
+      image: "https://images.unsplash.com/photo-1570125909232-eb263c188f7e?auto=format&fit=crop&w=1200&q=80",
+      galleryImages: [
+        "https://images.unsplash.com/photo-1570125909232-eb263c188f7e?auto=format&fit=crop&w=1200&q=80",
+      ],
+      tripTypes: [CabTripType.OUTSTATION, CabTripType.MULTI_DAY, CabTripType.ROUND_TRIP],
+      featured: false,
+      status: CabStatus.ACTIVE,
+      destinationSlug: "rajasthan",
+      amenities: ["Air Conditioning", "Pushback Recliner Seats", "Reading Lights", "Large Luggage Space", "Music System / Bluetooth"],
+    },
+    {
+      slug: "urbania-luxury-traveller-17",
+      vehicleName: "Urbania Luxury Traveller 17 Seater",
+      vehicleType: VehicleType.MINI_BUS,
+      description: "Luxury 17-seater mini bus with recliner seats, ample luggage space, and premium interiors for big groups.",
+      capacity: 17,
+      luggageCapacity: 12,
+      ac: true,
+      fuelType: CabFuelType.DIESEL,
+      driverAllowance: 400,
+      baseFare: 1200,
+      extraKmCharge: 34,
+      nightCharge: 450,
+      priceFrom: 8500,
+      image: "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&w=1200&q=80",
+      galleryImages: [
+        "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&w=1200&q=80",
+      ],
+      tripTypes: [CabTripType.OUTSTATION, CabTripType.MULTI_DAY, CabTripType.AIRPORT_TRANSFER],
+      featured: false,
+      status: CabStatus.ACTIVE,
+      destinationSlug: "goa",
+      amenities: ["Air Conditioning", "Pushback Recliner Seats", "Reading Lights", "Large Luggage Space", "USB Charging Points"],
+    },
+    {
+      slug: "hyundai-creta-hatchback",
+      vehicleName: "Hyundai Creta (Premium Hatchback)",
+      vehicleType: VehicleType.HATCHBACK,
+      description: "Economical and agile hatchback perfect for city runs and short outstation commutes.",
+      capacity: 4,
+      luggageCapacity: 2,
+      ac: true,
+      fuelType: CabFuelType.PETROL,
+      driverAllowance: 250,
+      baseFare: 180,
+      extraKmCharge: 11,
+      nightCharge: 140,
+      priceFrom: 1800,
+      image: "https://images.unsplash.com/photo-1590362891991-f776e747a588?auto=format&fit=crop&w=1200&q=80",
+      galleryImages: [
+        "https://images.unsplash.com/photo-1590362891991-f776e747a588?auto=format&fit=crop&w=1200&q=80",
+      ],
+      tripTypes: [CabTripType.LOCAL, CabTripType.AIRPORT_TRANSFER, CabTripType.ONE_WAY],
+      featured: false,
+      status: CabStatus.ACTIVE,
+      destinationSlug: "kashmir",
+      amenities: ["Air Conditioning", "Music System / Bluetooth", "Clean & Sanitized Interior"],
+    },
+    {
+      slug: "scorpio-n-adventure-suv",
+      vehicleName: "Mahindra Scorpio-N Adventure SUV",
+      vehicleType: VehicleType.SUV,
+      description: "Rugged 7-seater SUV built for Ladakh, hill stations, and long outstation road trips.",
+      capacity: 7,
+      luggageCapacity: 5,
+      ac: true,
+      fuelType: CabFuelType.DIESEL,
+      driverAllowance: 350,
+      baseFare: 450,
+      extraKmCharge: 19,
+      nightCharge: 220,
+      priceFrom: 3500,
+      image: "https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=1200&q=80",
+      galleryImages: [
+        "https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=1200&q=80",
+      ],
+      tripTypes: [CabTripType.OUTSTATION, CabTripType.MULTI_DAY, CabTripType.ROUND_TRIP],
+      featured: false,
+      status: CabStatus.ACTIVE,
+      destinationSlug: "leh-ladakh",
+      amenities: ["Air Conditioning", "USB Charging Points", "GPS Navigation", "Large Luggage Space"],
+    },
+    {
+      slug: "e-triber-electric-hatchback",
+      vehicleName: "Tata Tiago EV (Electric)",
+      vehicleType: VehicleType.HATCHBACK,
+      description: "Eco-friendly electric hatchback for clean, quiet city travel and airport transfers.",
+      capacity: 4,
+      luggageCapacity: 2,
+      ac: true,
+      fuelType: CabFuelType.ELECTRIC,
+      driverAllowance: 200,
+      baseFare: 160,
+      extraKmCharge: 10,
+      nightCharge: 120,
+      priceFrom: 1600,
+      image: "https://images.unsplash.com/photo-1593941707882-a5bba14938c7?auto=format&fit=crop&w=1200&q=80",
+      galleryImages: [
+        "https://images.unsplash.com/photo-1593941707882-a5bba14938c7?auto=format&fit=crop&w=1200&q=80",
+      ],
+      tripTypes: [CabTripType.LOCAL, CabTripType.AIRPORT_TRANSFER],
+      featured: false,
+      status: CabStatus.ACTIVE,
+      destinationSlug: "andaman",
+      amenities: ["Air Conditioning", "USB Charging Points", "Clean & Sanitized Interior"],
+    },
+  ];
+
+  for (const cabSeed of cabSeeds) {
+    const dest = cabSeed.destinationSlug ? seededDestinations[cabSeed.destinationSlug] : undefined;
+    const { amenities, destinationSlug, ...cabData } = cabSeed;
+
+    await prisma.vehicle.upsert({
+      where: { slug: cabSeed.slug },
+      update: {
+        ...cabData,
+        isActive: true,
+        destinationId: dest?.id ?? null,
+        amenities: {
+          connect: amenities
+            .filter((aName) => seededCabAmenities[aName])
+            .map((aName) => ({ id: seededCabAmenities[aName].id })),
+        },
+      },
+      create: {
+        ...cabData,
+        isActive: true,
+        destinationId: dest?.id ?? null,
+        amenities: {
+          connect: amenities
+            .filter((aName) => seededCabAmenities[aName])
+            .map((aName) => ({ id: seededCabAmenities[aName].id })),
+        },
+      },
+    });
+  }
+
+  // Link cabs to packages by destination
+  const allPkgs = await prisma.tourPackage.findMany();
+  const allCabs = await prisma.vehicle.findMany();
+
+  for (const pkg of allPkgs) {
+    const destCabs = allCabs.filter((c) => c.destinationId === pkg.destinationId);
+    if (destCabs.length > 0) {
+      await prisma.tourPackage.update({
+        where: { id: pkg.id },
+        data: {
+          vehicles: {
+            connect: destCabs.map((c) => ({ id: c.id })),
+          },
+        },
+      });
+    }
+  }
+
+  console.log(`Phase 11 Seed complete. Cabs seeded across destinations and linked to packages.`);
 }
 
 main()

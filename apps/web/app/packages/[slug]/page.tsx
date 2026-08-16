@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import { MapPin, Calendar, CheckCircle2, XCircle, ImageIcon, Hotel, Utensils, Car, Clock, ArrowRight, Star, Building2 } from "lucide-react";
+import { MapPin, Calendar, CheckCircle2, XCircle, ImageIcon, Hotel, Utensils, Car, Clock, ArrowRight, Star, Building2, Users } from "lucide-react";
 import { Container } from "@/components/common/container";
 import { Badge } from "@/components/common/badge";
 import { Card } from "@/components/common/card";
@@ -41,6 +41,19 @@ type Itinerary = {
   description?: string | null;
   isDefault: boolean;
   days: ItineraryDay[];
+};
+
+type PackageCab = {
+  id: string;
+  vehicleName: string;
+  slug: string;
+  vehicleType: string;
+  description: string;
+  capacity: number;
+  priceFrom: number;
+  image: string | null;
+  featured: boolean;
+  amenities: { id: string; name: string }[];
 };
 
 type PackageHotel = {
@@ -85,6 +98,7 @@ type PackageDetail = {
   };
   itineraries: Itinerary[];
   hotels: PackageHotel[];
+  vehicles: PackageCab[];
 };
 
 async function getPackage(slug: string): Promise<PackageDetail | null> {
@@ -400,6 +414,63 @@ export default async function PackageDetailPage({ params }: Props) {
                 </div>
               ) : null}
 
+              {/* Package Cabs */}
+              {pkg.vehicles.length > 0 ? (
+                <div>
+                  <h2 className="text-2xl font-semibold text-foreground mb-5 flex items-center gap-2">
+                    <Car className="size-6 text-primary" />
+                    Cab Options in This Package
+                  </h2>
+                  <div className="grid grid-cols-1 gap-5 tablet:grid-cols-2">
+                    {pkg.vehicles.map((cab) => (
+                      <Card key={cab.id} className="overflow-hidden border border-border bg-card shadow-sm transition-all hover:shadow-md">
+                        <div className="relative aspect-[16/9]">
+                          {cab.image ? (
+                            <CardMedia src={cab.image} alt={cab.vehicleName} className="h-full w-full" />
+                          ) : (
+                            <div className="flex h-full w-full items-center justify-center bg-primary/10 text-primary">
+                              <Car className="size-6" />
+                            </div>
+                          )}
+                          {cab.featured ? <Badge variant="accent" className="absolute left-3 top-3">Featured</Badge> : null}
+                        </div>
+                        <div className="p-5">
+                          <div className="flex items-center justify-between gap-2">
+                            <Link href={`/cabs/${cab.slug}`} className="text-lg font-semibold text-foreground hover:text-primary">
+                              {cab.vehicleName}
+                            </Link>
+                            <Badge variant="secondary" className="text-xs">{cab.vehicleType}</Badge>
+                          </div>
+                          <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
+                            <Users className="size-3.5 text-primary" />
+                            {cab.capacity} Seats
+                          </p>
+                          <p className="mt-2 text-sm text-muted-foreground line-clamp-2">{cab.description}</p>
+                          <div className="mt-3 flex flex-wrap gap-1.5">
+                            {cab.amenities.slice(0, 3).map((am) => (
+                              <Badge key={am.id} variant="outline" className="text-[11px] font-normal">{am.name}</Badge>
+                            ))}
+                          </div>
+                          <div className="mt-4 flex items-center justify-between border-t border-border pt-3">
+                            {cab.priceFrom ? (
+                              <div>
+                                <span className="block text-[11px] text-muted-foreground">Starting from</span>
+                                <Price amount={Number(cab.priceFrom)} size="sm" />
+                              </div>
+                            ) : null}
+                            <Button asChild size="sm" variant="outline" className="gap-1">
+                              <Link href={`/cabs/${cab.slug}`}>
+                                View Cab
+                                <ArrowRight className="size-3.5" />
+                              </Link>
+                            </Button>
+                          </div>
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
               {/* Photo Gallery */}
               {gallery.length > 0 ? (
                 <div>

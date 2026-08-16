@@ -136,6 +136,13 @@ export const destinationService = {
             roomTypes: { where: { active: true }, orderBy: { priceFrom: "asc" }, take: 1 },
           },
         },
+        vehicles: {
+          where: { status: "ACTIVE", isActive: true },
+          orderBy: [{ featured: "desc" }, { createdAt: "desc" }],
+          include: {
+            amenities: true,
+          },
+        },
       },
     });
   },

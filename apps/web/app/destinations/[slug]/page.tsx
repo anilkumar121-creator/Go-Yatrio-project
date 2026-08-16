@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import { MapPin, ImageIcon, ArrowRight, Calendar, IndianRupee, Star, Building2 } from "lucide-react";
+import { MapPin, ImageIcon, ArrowRight, Calendar, IndianRupee, Star, Building2, Car, Users } from "lucide-react";
 import { Container } from "@/components/common/container";
 import { Button } from "@/components/common/button";
 import { Badge } from "@/components/common/badge";
@@ -22,6 +22,19 @@ type DestinationHotel = {
   featured: boolean;
   images: { id: string; imageUrl: string }[];
   roomTypes: { id: string; priceFrom: number }[];
+};
+
+type DestinationCab = {
+  id: string;
+  vehicleName: string;
+  slug: string;
+  description: string;
+  vehicleType: string;
+  capacity: number;
+  priceFrom: number;
+  featured: boolean;
+  image: string | null;
+  amenities: { id: string; name: string }[];
 };
 
 type DestinationDetail = {
@@ -47,6 +60,7 @@ type DestinationDetail = {
     currency: string;
   }[];
   hotels: DestinationHotel[];
+  vehicles: DestinationCab[];
 };
 
 async function getDestination(slug: string): Promise<DestinationDetail | null> {
@@ -236,6 +250,28 @@ export default async function DestinationDetailPage({ params }: Props) {
               ) : null}
             </div>
 
+              {/* Cabs in Destination */}
+              {destination.vehicles.length > 0 ? (
+                <div className="mt-10">
+                  <div className="flex items-center justify-between">
+                    <h2 className="text-2xl font-semibold text-foreground flex items-center gap-2">
+                      <Car className="size-6 text-primary" />
+                      Cab Options in {destination.name}
+                    </h2>
+                    <Button asChild variant="outline" size="sm" className="gap-1">
+                      <Link href={`/cabs?destination=${destination.slug}`}>
+                        View All Cabs
+                        <ArrowRight className="size-3.5" />
+                      </Link>
+                    </Button>
+                  </div>
+                  <div className="mt-6 grid grid-cols-1 gap-5 tablet:grid-cols-2">
+                    {destination.vehicles.map((cab) => (
+                      <CabCard key={cab.id} cab={cab} />
+                    ))}
+                  </div>
+                </div>
+              ) : null}
             {/* Highlights sidebar */}
             <aside>
               <Card className="p-6">
@@ -260,6 +296,10 @@ export default async function DestinationDetailPage({ params }: Props) {
                   <li className="flex items-center gap-2">
                     <Badge variant="accent" className="shrink-0">Hotels</Badge>
                     {destination.hotels.length} Stays
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Badge variant="accent" className="shrink-0">Cabs</Badge>
+                    {destination.vehicles.length} Vehicles
                   </li>
                 </ul>
                 <Button asChild className="mt-6 w-full">
@@ -333,6 +373,52 @@ function HotelCard({ hotel }: { hotel: DestinationHotel }) {
           <Button asChild size="sm" variant="outline" className="gap-1">
             <Link href={`/hotels/${hotel.slug}`}>
               View Hotel
+              <ArrowRight className="size-3.5" />
+            </Link>
+          </Button>
+        </div>
+      </div>
+    </Card>
+  );
+}
+
+function CabCard({ cab }: { cab: DestinationCab }) {
+  const imageUrl = cab.image ?? "";
+
+  return (
+    <Card className="overflow-hidden border border-border bg-card shadow-sm transition-all hover:shadow-md">
+      <div className="relative aspect-[16/10]">
+        {imageUrl ? (
+          <CardMedia src={imageUrl} alt={cab.vehicleName} className="h-full w-full" />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center bg-primary/10 text-primary">
+            <Car className="size-6" />
+          </div>
+        )}
+        {cab.featured ? <Badge variant="accent" className="absolute left-3 top-3">Featured</Badge> : null}
+      </div>
+      <div className="p-5">
+        <div className="flex items-center justify-between gap-2">
+          <Link href={`/cabs/${cab.slug}`} className="text-lg font-semibold text-foreground hover:text-primary">
+            {cab.vehicleName}
+          </Link>
+          <Badge variant="secondary" className="text-xs">{cab.vehicleType}</Badge>
+        </div>
+        <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
+          <Users className="size-3.5 text-primary" />
+          {cab.capacity} Seats
+        </p>
+        <p className="mt-2 text-sm text-muted-foreground line-clamp-2">{cab.description}</p>
+        <div className="mt-3 flex items-center justify-between border-t border-border pt-3">
+          {cab.priceFrom ? (
+            <div>
+              <span className="block text-[11px] text-muted-foreground">Starting from</span>
+              <Price amount={Number(cab.priceFrom)} size="sm" />
+            </div>
+          ) : null}
+          <Button asChild size="sm" variant="outline" className="gap-1">
+            <Link href={`/cabs/${cab.slug}`}>
+              View Cab
               <ArrowRight className="size-3.5" />
             </Link>
           </Button>

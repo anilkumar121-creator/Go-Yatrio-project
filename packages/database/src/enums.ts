@@ -45,9 +45,48 @@ export const VehicleType = {
   TEMPO_TRAVELLER: "TEMPO_TRAVELLER",
   BUS: "BUS",
   LUXURY: "LUXURY",
+  LUXURY_SUV: "LUXURY_SUV",
+  MINI_BUS: "MINI_BUS",
 } as const;
 
 export type VehicleType = (typeof VehicleType)[keyof typeof VehicleType];
+
+export const CabTripType = {
+  LOCAL: "LOCAL",
+  AIRPORT_TRANSFER: "AIRPORT_TRANSFER",
+  RAILWAY_TRANSFER: "RAILWAY_TRANSFER",
+  OUTSTATION: "OUTSTATION",
+  ONE_WAY: "ONE_WAY",
+  ROUND_TRIP: "ROUND_TRIP",
+  MULTI_DAY: "MULTI_DAY",
+} as const;
+
+export type CabTripType = (typeof CabTripType)[keyof typeof CabTripType];
+
+export const CabFuelType = {
+  PETROL: "PETROL",
+  DIESEL: "DIESEL",
+  CNG: "CNG",
+  ELECTRIC: "ELECTRIC",
+} as const;
+
+export type CabFuelType = (typeof CabFuelType)[keyof typeof CabFuelType];
+
+export const CabStatus = {
+  DRAFT: "DRAFT",
+  ACTIVE: "ACTIVE",
+  INACTIVE: "INACTIVE",
+} as const;
+
+export type CabStatus = (typeof CabStatus)[keyof typeof CabStatus];
+
+export const CabInquiryStatus = {
+  NEW: "NEW",
+  CONTACTED: "CONTACTED",
+  CLOSED: "CLOSED",
+} as const;
+
+export type CabInquiryStatus = (typeof CabInquiryStatus)[keyof typeof CabInquiryStatus];
 
 export const MediaResourceType = {
   IMAGE: "IMAGE",

@@ -1,4 +1,8 @@
 import {
+  CabFuelType,
+  CabInquiryStatus,
+  CabStatus,
+  CabTripType,
   DestinationStatus,
   HotelCategory,
   HotelInquiryStatus,
@@ -208,6 +212,57 @@ export const vehicleCreateSchema = z.object({
 });
 
 export const vehicleUpdateSchema = vehicleCreateSchema.partial();
+export const cabAmenityCreateSchema = z.object({
+  name: stringField(80),
+  icon: optionalStringField(40),
+  active: z.boolean().optional(),
+});
+
+export const cabInquiryCreateSchema = z.object({
+  tripType: z.enum(CabTripType),
+  customerName: stringField(120),
+  email: z.string().email().max(255),
+  phone: stringField(30),
+  pickupLocation: optionalStringField(200),
+  dropLocation: optionalStringField(200),
+  travelDate: z.coerce.date().optional(),
+  returnDate: z.coerce.date().optional(),
+  passengers: z.coerce.number().int().positive().max(100).default(1),
+  message: optionalStringField(2000),
+  status: z.enum(CabInquiryStatus).optional(),
+});
+
+export const cabInquiryUpdateSchema = cabInquiryCreateSchema.partial();
+
+export const cabCreateSchema = z.object({
+  vehicleName: stringField(140),
+  slug: slugSchema.optional(),
+  vehicleType: z.enum(VehicleType),
+  description: stringField(6000),
+  capacity: z.coerce.number().int().positive().max(100),
+  luggageCapacity: z.coerce.number().int().min(0).max(100).optional(),
+  ac: z.boolean().optional(),
+  fuelType: z.enum(CabFuelType).default("DIESEL"),
+  driverAllowance: moneySchema.optional(),
+  baseFare: moneySchema.optional(),
+  extraKmCharge: moneySchema.optional(),
+  nightCharge: moneySchema.optional(),
+  priceFrom: moneySchema,
+  currency: z.string().length(3).default("INR"),
+  image: optionalStringField(500),
+  galleryImages: z.array(z.url().max(1000)).max(20).optional(),
+  tripTypes: z.array(z.enum(CabTripType)).optional(),
+  featured: z.boolean().optional(),
+  status: z.enum(CabStatus).optional(),
+  destinationId: optionalStringField(255),
+  amenities: z.array(z.string().trim().min(1).max(80)).max(30).optional(),
+});
+
+export const cabUpdateSchema = cabCreateSchema.partial();
+
+export const cabStatusSchema = z.object({
+  status: z.enum(CabStatus),
+});
 
 export const inquiryCreateSchema = z.object({
   fullName: stringField(120),

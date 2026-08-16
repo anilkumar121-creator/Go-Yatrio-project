@@ -192,6 +192,12 @@ export const packageService = {
             roomTypes: { where: { active: true }, orderBy: { priceFrom: "asc" }, take: 1 },
           },
         },
+        vehicles: {
+          where: { status: "ACTIVE", isActive: true },
+          include: {
+            amenities: true,
+          },
+        },
       },
     });
   },
@@ -221,6 +227,12 @@ export const packageService = {
             images: { orderBy: { sortOrder: "asc" }, take: 1 },
             amenities: true,
             roomTypes: { where: { active: true }, orderBy: { priceFrom: "asc" }, take: 1 },
+          },
+        },
+        vehicles: {
+          where: { status: "ACTIVE", isActive: true },
+          include: {
+            amenities: true,
           },
         },
       },
