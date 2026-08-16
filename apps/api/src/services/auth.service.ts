@@ -1,4 +1,4 @@
-﻿import { compare, hash } from "bcryptjs";
+import { compare, hash } from "bcryptjs";
 import crypto from "node:crypto";
 import jwt from "jsonwebtoken";
 import { prisma, UserRole, type UserRole as UserRoleValue } from "@goyatrio/database";
@@ -69,7 +69,7 @@ export async function registerUser(data: { name: string; email: string; password
 
   const passwordHash = await hashPassword(data.password);
 
-  let user = {
+  let user: { id: string; name: string; email: string; role: UserRoleValue; isActive: boolean; createdAt: Date } = {
     id: "dev_user_" + Date.now(),
     name: data.name,
     email: data.email,
