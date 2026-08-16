@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import { MapPin, Calendar, CheckCircle2, XCircle, ImageIcon, Hotel, Utensils, Car, Clock, ArrowRight, Star, Building2, Users } from "lucide-react";
+import { MapPin, Calendar, CheckCircle2, XCircle, ImageIcon, Hotel, Utensils, Car, Clock, ArrowRight, Star, Building2, Users, FileText } from "lucide-react";
 import { Container } from "@/components/common/container";
 import { Badge } from "@/components/common/badge";
 import { Card } from "@/components/common/card";
@@ -10,6 +10,7 @@ import { Price } from "@/components/common/price";
 import { Button } from "@/components/common/button";
 import { CardMedia } from "@/components/cards/card-media";
 import { PageWrapper } from "@/components/layout/page-wrapper";
+import { BlogCard } from "@/components/blogs/blog-card";
 import { PackageInquiryForm } from "./package-inquiry-form";
 
 type Activity = {
@@ -70,6 +71,17 @@ type PackageHotel = {
   roomTypes: { id: string; priceFrom: number }[];
 };
 
+type PackageBlog = {
+  id: string;
+  title: string;
+  slug: string;
+  excerpt: string;
+  featuredImage: string | null;
+  publishedAt: string | null;
+  readingTimeMinutes: number;
+  author: { id: string; name: string; slug: string } | null;
+};
+
 type PackageDetail = {
   id: string;
   title: string;
@@ -99,6 +111,7 @@ type PackageDetail = {
   itineraries: Itinerary[];
   hotels: PackageHotel[];
   vehicles: PackageCab[];
+  blogs: PackageBlog[];
 };
 
 async function getPackage(slug: string): Promise<PackageDetail | null> {
@@ -467,6 +480,20 @@ export default async function PackageDetailPage({ params }: Props) {
                           </div>
                         </div>
                       </Card>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+              {/* Related Blogs */}
+              {pkg.blogs.length > 0 ? (
+                <div>
+                  <h2 className="text-2xl font-semibold text-foreground mb-5 flex items-center gap-2">
+                    <FileText className="size-6 text-primary" />
+                    Travel Stories for This Package
+                  </h2>
+                  <div className="grid grid-cols-1 gap-5 tablet:grid-cols-2">
+                    {pkg.blogs.map((blog) => (
+                      <BlogCard key={blog.id} blog={blog} />
                     ))}
                   </div>
                 </div>

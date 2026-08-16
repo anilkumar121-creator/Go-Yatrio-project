@@ -134,3 +134,19 @@ export const HotelInquiryStatus = {
 } as const;
 
 export type HotelInquiryStatus = (typeof HotelInquiryStatus)[keyof typeof HotelInquiryStatus];
+export const BlogStatus = {
+  DRAFT: "DRAFT",
+  PUBLISHED: "PUBLISHED",
+  ARCHIVED: "ARCHIVED",
+} as const;
+
+export type BlogStatus = (typeof BlogStatus)[keyof typeof BlogStatus];
+
+export const BlogContentFormat = {
+  PLAIN_TEXT: "PLAIN_TEXT",
+  MARKDOWN: "MARKDOWN",
+  HTML: "HTML",
+  JSON_BLOCKS: "JSON_BLOCKS",
+} as const;
+
+export type BlogContentFormat = (typeof BlogContentFormat)[keyof typeof BlogContentFormat];

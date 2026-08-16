@@ -7,7 +7,7 @@ import { healthRouter } from "./routes/health.js";
 import { health } from "./controllers/health.controller.js";
 import { notFound } from "./middleware/not-found.js";
 import { authRouter } from "./routes/auth.js";
-import { blogsRouter } from "./routes/blogs.js";
+import { adminBlogsRouter, blogsRouter } from "./routes/blogs.js";
 import { adminCabsRouter, cabsRouter } from "./routes/cabs.js";
 import { adminDestinationsRouter, destinationsRouter } from "./routes/destinations.js";
 import { adminHotelsRouter, hotelsRouter } from "./routes/hotels.js";
@@ -47,6 +47,7 @@ export function createApp() {
   app.use("/api/admin/cabs", adminCabsRouter);
   app.use("/api/inquiries", inquiriesRouter);
   app.use("/api/blogs", blogsRouter);
+  app.use("/api/admin/blogs", adminBlogsRouter);
   app.use("/api/media", mediaRouter);
 
   app.use(notFound);

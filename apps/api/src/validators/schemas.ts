@@ -1,4 +1,6 @@
 import {
+  BlogContentFormat,
+  BlogStatus,
   CabFuelType,
   CabInquiryStatus,
   CabStatus,
@@ -281,20 +283,97 @@ export const inquiryCreateSchema = z.object({
 
 export const inquiryUpdateSchema = inquiryCreateSchema.partial();
 
+export const blogContentBlockSchema = z.discriminatedUnion("type", [
+  z.object({ type: z.literal("paragraph"), content: z.string().max(5000) }),
+  z.object({ type: z.literal("heading"), level: z.union([z.literal(2), z.literal(3), z.literal(4)]), content: z.string().max(500) }),
+  z.object({
+    type: z.literal("image"),
+    attrs: z.object({
+      publicId: optionalStringField(255),
+      url: optionalStringField(1000),
+      alt: z.string().max(300),
+      caption: optionalStringField(500),
+      width: z.coerce.number().int().positive().optional(),
+      height: z.coerce.number().int().positive().optional(),
+      alignment: z.enum(["left", "center", "right"]).optional(),
+    }),
+  }),
+  z.object({ type: z.literal("gallery"), images: z.array(z.any()).max(20) }),
+  z.object({ type: z.literal("list"), ordered: z.boolean().default(false), items: z.array(z.string().max(1000)).max(50) }),
+  z.object({ type: z.literal("quote"), content: z.string().max(2000), cite: optionalStringField(300) }),
+  z.object({ type: z.literal("code"), language: optionalStringField(60), code: z.string().max(20000) }),
+  z.object({ type: z.literal("embed"), provider: z.enum(["youtube", "vimeo", "generic"]), url: z.url().max(1000) }),
+  z.object({ type: z.literal("divider") }),
+  z.object({
+    type: z.literal("cta"),
+    title: z.string().max(200),
+    description: optionalStringField(500),
+    links: z.array(z.object({ label: z.string().max(100), href: z.string().max(1000), variant: z.enum(["primary", "outline"]).optional() })).max(8),
+  }),
+  z.object({ type: z.literal("callout"), variant: z.enum(["info", "warning", "success"]), title: optionalStringField(200), content: z.string().max(2000) }),
+  z.object({ type: z.literal("accordion"), items: z.array(z.object({ title: z.string().max(300), content: z.string().max(3000) })).max(20) }),
+  z.object({ type: z.literal("linkCard"), title: z.string().max(300), url: z.url().max(1000), description: optionalStringField(500) }),
+]);
+
 export const blogCreateSchema = z.object({
-  title: stringField(160),
-  slug: slugSchema,
-  excerpt: stringField(300),
-  content: stringField(20000),
-  featuredImage: optionalStringField(500),
-  author: stringField(120),
-  isPublished: z.boolean().optional(),
+  title: stringField(200),
+  slug: slugSchema.optional(),
+  excerpt: stringField(500),
+  content: stringField(50000),
+  contentFormat: z.enum(BlogContentFormat).default("JSON_BLOCKS"),
+  contentBlocks: z.array(blogContentBlockSchema).optional(),
+  faq: z.array(z.object({ question: stringField(300), answer: stringField(3000) })).max(50).optional(),
+  featuredImage: optionalStringField(1000),
+  featuredImagePublicId: optionalStringField(255),
+  galleryImages: z.array(z.url().max(1000)).max(20).optional(),
+  authorId: optionalStringField(255),
+  authorName: optionalStringField(120),
+  status: z.enum(BlogStatus).optional(),
+  featured: z.boolean().optional(),
+  readingTimeMinutes: z.coerce.number().int().min(0).max(600).optional(),
+  viewCount: z.coerce.number().int().min(0).optional(),
   publishedAt: z.coerce.date().optional(),
-  seoTitle: optionalStringField(120),
-  seoDescription: optionalStringField(180),
+  seoTitle: optionalStringField(160),
+  seoDescription: optionalStringField(200),
+  canonicalUrl: optionalStringField(1000),
+  ogImage: optionalStringField(1000),
+  categoryIds: z.array(z.string().min(1)).optional(),
+  tagIds: z.array(z.string().min(1)).optional(),
+  destinationIds: z.array(z.string().min(1)).optional(),
+  packageIds: z.array(z.string().min(1)).optional(),
 });
 
 export const blogUpdateSchema = blogCreateSchema.partial();
+
+export const blogStatusSchema = z.object({
+  status: z.enum(BlogStatus),
+});
+
+export const blogCategoryCreateSchema = z.object({
+  name: stringField(120),
+  slug: slugSchema.optional(),
+  description: optionalStringField(500),
+});
+
+export const blogCategoryUpdateSchema = blogCategoryCreateSchema.partial();
+
+export const blogTagCreateSchema = z.object({
+  name: stringField(80),
+  slug: slugSchema.optional(),
+});
+
+export const blogTagUpdateSchema = blogTagCreateSchema.partial();
+
+export const blogAuthorCreateSchema = z.object({
+  name: stringField(120),
+  slug: slugSchema.optional(),
+  bio: optionalStringField(2000),
+  avatar: optionalStringField(1000),
+  role: optionalStringField(120),
+  email: z.string().email().max(255).optional(),
+});
+
+export const blogAuthorUpdateSchema = blogAuthorCreateSchema.partial();
 
 export const mediaCreateSchema = z.object({
   publicId: stringField(255),

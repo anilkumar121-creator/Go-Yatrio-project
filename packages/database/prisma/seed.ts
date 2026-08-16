@@ -10,6 +10,8 @@ import {
   CabStatus,
   CabTripType,
   CabFuelType,
+  BlogStatus,
+  BlogContentFormat,
 } from "@prisma/client";
 import { hash } from "bcryptjs";
 
@@ -894,7 +896,277 @@ async function main() {
     }
   }
 
-  console.log(`Phase 11 Seed complete. Cabs seeded across destinations and linked to packages.`);
+  // === Phase 12: Blog CMS Seeding ===
+  const blogAuthors = [
+    { slug: "goyatrio-editorial", name: "GoYatrio Editorial", bio: "Official travel editorial team of GoYatrio.", role: "Editor", avatar: "" },
+    { slug: "ananya-sharma", name: "Ananya Sharma", bio: "Travel writer covering Kerala, backwaters, and wellness retreats.", role: "Senior Travel Writer", avatar: "" },
+    { slug: "vikram-singh", name: "Vikram Singh", bio: "Adventure travel journalist focused on Ladakh, trekking, and road trips.", role: "Adventure Writer", avatar: "" },
+    { slug: "meera-nair", name: "Meera Nair", bio: "Food and culture writer exploring Indian heritage destinations.", role: "Culture Writer", avatar: "" },
+  ];
+
+  const seededBlogAuthors: Record<string, { id: string; name: string }> = {};
+  for (const author of blogAuthors) {
+    const rec = await prisma.blogAuthor.upsert({
+      where: { slug: author.slug },
+      update: { name: author.name, bio: author.bio, role: author.role, avatar: author.avatar },
+      create: { slug: author.slug, name: author.name, bio: author.bio, role: author.role, avatar: author.avatar },
+    });
+    seededBlogAuthors[author.slug] = rec;
+  }
+
+  const blogCategorySeeds = [
+    { slug: "destination-guides", name: "Destination Guides", description: "In-depth travel guides to India's best destinations." },
+    { slug: "travel-tips", name: "Travel Tips", description: "Packing lists, planning advice, and smart travel hacks." },
+    { slug: "packages", name: "Packages & Deals", description: "Highlights of curated GoYatrio holiday packages." },
+    { slug: "experiences", name: "Experiences", description: "Signature stays, cruises, and memorable activities." },
+  ];
+
+  const seededBlogCategories: Record<string, { id: string; name: string }> = {};
+  for (const cat of blogCategorySeeds) {
+    const rec = await prisma.blogCategory.upsert({
+      where: { slug: cat.slug },
+      update: { name: cat.name, description: cat.description },
+      create: { slug: cat.slug, name: cat.name, description: cat.description },
+    });
+    seededBlogCategories[cat.slug] = rec;
+  }
+
+  const blogTagSeeds = ["Kerala", "Kashmir", "Rajasthan", "Goa", "Ladakh", "Andaman", "Honeymoon", "Family", "Budget", "Luxury", "Backwaters", "Houseboat"];
+  const seededBlogTags: Record<string, { id: string; name: string }> = {};
+  for (const tag of blogTagSeeds) {
+    const slug = tag.toLowerCase().replace(/\s+/g, "-");
+    const rec = await prisma.blogTag.upsert({
+      where: { slug },
+      update: { name: tag },
+      create: { slug, name: tag },
+    });
+    seededBlogTags[slug] = rec;
+  }
+
+  const makeBlocks = (paragraphs: string[]) =>
+    paragraphs.map((content) => ({ type: "paragraph", content }));
+
+  const blogSeeds = [
+    {
+      slug: "kerala-backwaters-houseboat-guide",
+      title: "The Ultimate Guide to Kerala Backwater Houseboats",
+      excerpt: "Everything you need to know about Alleppey houseboats, from itineraries to food and budget tips.",
+      authorSlug: "ananya-sharma",
+      categorySlug: "destination-guides",
+      tagSlugs: ["kerala", "backwaters", "houseboat"],
+      destinationSlugs: ["kerala"],
+      packageSlug: "kerala-backwaters-and-hills",
+      featuredImage: "https://images.unsplash.com/photo-1570125909232-eb263c188f7e?auto=format&fit=crop&w=1200&q=80",
+      featured: true,
+      status: BlogStatus.PUBLISHED,
+      readingTimeMinutes: 8,
+      viewCount: 1240,
+      publishedAt: new Date("2026-08-10T10:00:00Z"),
+      faq: [
+        { question: "What is the best time for a Kerala houseboat trip?", answer: "September to March offers pleasant weather and calm backwaters." },
+        { question: "How much does an Alleppey houseboat cost?", answer: "Deluxe houseboats start around ₹7,500 per night including meals." },
+      ],
+      contentBlocks: makeBlocks([
+        "Alleppey, often called the 'Venice of the East', is the gateway to Kerala's iconic backwaters. A houseboat cruise here is the single most relaxing travel experience in India.",
+        "Choose between deluxe and luxury categories, each offering air-conditioned bedrooms, private chefs, and sun decks for panoramic views of palm-lined canals.",
+        "Most cruises start at noon, sail through the afternoon, and anchor overnight near a village. Breakfast is served on board before disembarking at 9 AM.",
+      ]),
+    },
+    {
+      slug: "kashmir-honeymoon-itinerary",
+      title: "Kashmir Honeymoon Itinerary: 6 Days of Romance in Paradise",
+      excerpt: "A dreamy 6-day Kashmir itinerary featuring Dal Lake shikara rides, Gulmarg gondolas, and Pahalgam valleys.",
+      authorSlug: "meera-nair",
+      categorySlug: "experiences",
+      tagSlugs: ["kashmir", "honeymoon"],
+      destinationSlugs: ["kashmir"],
+      packageSlug: "kashmir-paradise-experience",
+      featuredImage: "https://images.unsplash.com/photo-1609167830220-7164aa360951?auto=format&fit=crop&w=1200&q=80",
+      featured: true,
+      status: BlogStatus.PUBLISHED,
+      readingTimeMinutes: 6,
+      viewCount: 980,
+      publishedAt: new Date("2026-08-08T10:00:00Z"),
+      contentBlocks: makeBlocks([
+        "A Kashmir honeymoon is about slow mornings on Dal Lake, warm shikara rides at sunset, and the crisp mountain air of Gulmarg and Pahalgam.",
+        "Spend the first two nights on a heritage houseboat in Srinagar. The carved walnut interiors and floating gardens set the perfect romantic tone.",
+        "Day three takes you to Gulmarg for the famous gondola ride up to Apharwat Peak, followed by a scenic drive to Pahalgam's pine valleys.",
+      ]),
+    },
+    {
+      slug: "rajasthan-heritage-road-trip",
+      title: "Rajasthan Heritage Road Trip: Jaipur to Udaipur in 7 Days",
+      excerpt: "Explore royal forts, lake palaces, and desert culture on the classic Golden Triangle route.",
+      authorSlug: "vikram-singh",
+      categorySlug: "destination-guides",
+      tagSlugs: ["rajasthan"],
+      destinationSlugs: ["rajasthan"],
+      packageSlug: "grand-rajasthan-heritage-tour",
+      featuredImage: "https://images.unsplash.com/photo-1599661046289-e31897846e41?auto=format&fit=crop&w=1200&q=80",
+      featured: false,
+      status: BlogStatus.PUBLISHED,
+      readingTimeMinutes: 10,
+      viewCount: 760,
+      publishedAt: new Date("2026-08-05T10:00:00Z"),
+      contentBlocks: makeBlocks([
+        "Rajasthan is India's most cinematic state — amber forts, blue cities, and mirror-work palaces at every turn.",
+        "Start in Jaipur with Amber Fort and Hawa Mahal, then drive through Pushkar to the blue city of Jodhpur.",
+        "Finish with Udaipur's Lake Pichola and a sunset boat cruise that ends the journey on a perfect note.",
+      ]),
+    },
+    {
+      slug: "ladakh-bike-trip-tips",
+      title: "Ladakh on a Road Trip: The Ultimate High-Altitude Adventure Guide",
+      excerpt: "Mountain passes, cold deserts, and starry camps — everything you need to plan a Ladakh road trip.",
+      authorSlug: "vikram-singh",
+      categorySlug: "travel-tips",
+      tagSlugs: ["ladakh"],
+      destinationSlugs: ["leh-ladakh"],
+      packageSlug: "",
+      featuredImage: "https://images.unsplash.com/photo-1539533018447-63fcce2678e3?auto=format&fit=crop&w=1200&q=80",
+      featured: false,
+      status: BlogStatus.PUBLISHED,
+      readingTimeMinutes: 9,
+      viewCount: 640,
+      publishedAt: new Date("2026-07-30T10:00:00Z"),
+      contentBlocks: makeBlocks([
+        "Ladakh sits at an average elevation of 11,000 feet, so acclimatization is non-negotiable. Spend at least two nights in Leh before crossing high passes.",
+        "Khardung La, Pangong Tso, and Nubra Valley are the highlights. Carry warm layers even in summer — nights dip below freezing.",
+        "Book camps in advance during peak season and always carry a first-aid kit and extra oxygen cans.",
+      ]),
+    },
+    {
+      slug: "goa-beach-guide",
+      title: "Goa Beach Guide: North vs South for Every Kind of Traveller",
+      excerpt: "Party in North Goa, unwind in South Goa — a complete guide to picking the right beach.",
+      authorSlug: "ananya-sharma",
+      categorySlug: "destination-guides",
+      tagSlugs: ["goa", "budget", "luxury"],
+      destinationSlugs: ["goa"],
+      packageSlug: "",
+      featuredImage: "https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?auto=format&fit=crop&w=1200&q=80",
+      featured: false,
+      status: BlogStatus.PUBLISHED,
+      readingTimeMinutes: 7,
+      viewCount: 890,
+      publishedAt: new Date("2026-07-25T10:00:00Z"),
+      contentBlocks: makeBlocks([
+        "North Goa is loud, colorful, and full of energy — perfect for first-timers who want beach shacks, water sports, and night markets.",
+        "South Goa offers quieter sands, luxury resorts, and picture-perfect sunsets at Palolem and Agonda.",
+        "Whichever side you choose, December to February delivers the best weather for beach days.",
+      ]),
+    },
+    {
+      slug: "andaman-island-hopping",
+      title: "Andaman Island Hopping: Port Blair, Havelock & Neil Island",
+      excerpt: "Coral reefs, white sands, and cellular jail history — a complete Andaman trip plan.",
+      authorSlug: "goyatrio-editorial",
+      categorySlug: "experiences",
+      tagSlugs: ["andaman", "family"],
+      destinationSlugs: ["andaman"],
+      packageSlug: "",
+      featuredImage: "https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=1200&q=80",
+      featured: true,
+      status: BlogStatus.PUBLISHED,
+      readingTimeMinutes: 8,
+      viewCount: 1120,
+      publishedAt: new Date("2026-07-20T10:00:00Z"),
+      contentBlocks: makeBlocks([
+        "Start in Port Blair with the Cellular Jail light-and-sound show, then take a ferry to Havelock for Radhanagar Beach.",
+        "Snorkel at Elephant Beach, catch the sunset at Neil Island, and return to Port Blair for departure.",
+        "Book ferry tickets in advance — they sell out fast during winter months.",
+      ]),
+    },
+    {
+      slug: "packing-checklist-india-travel",
+      title: "The Perfect Packing Checklist for Travelling Across India",
+      excerpt: "From mountain passes to tropical beaches — pack smart with this destination-proof checklist.",
+      authorSlug: "goyatrio-editorial",
+      categorySlug: "travel-tips",
+      tagSlugs: ["family", "budget"],
+      destinationSlugs: [],
+      packageSlug: "",
+      featuredImage: "https://images.unsplash.com/photo-1553531384-cc64ac80f931?auto=format&fit=crop&w=1200&q=80",
+      featured: false,
+      status: BlogStatus.PUBLISHED,
+      readingTimeMinutes: 5,
+      viewCount: 540,
+      publishedAt: new Date("2026-07-15T10:00:00Z"),
+      contentBlocks: makeBlocks([
+        "Layering is the secret to Indian travel — the same lightweight jacket works for hill mornings and desert evenings.",
+        "Always carry a power bank, reusable water bottle, and a small first-aid kit. Sunscreen and insect repellent are non-negotiable.",
+        "Keep documents digital and offline: scan your ID, tickets, and insurance before you leave.",
+      ]),
+    },
+    {
+      slug: "ai-generated-draft-kerala-festivals",
+      title: "Draft: Onam and Kerala Festival Calendar (AI Draft)",
+      excerpt: "A working draft exploring Kerala's festival calendar — prepared with AI-assisted content.",
+      authorSlug: "goyatrio-editorial",
+      categorySlug: "experiences",
+      tagSlugs: ["kerala"],
+      destinationSlugs: ["kerala"],
+      packageSlug: "",
+      featuredImage: "",
+      featured: false,
+      status: BlogStatus.DRAFT,
+      readingTimeMinutes: 4,
+      viewCount: 0,
+      contentBlocks: makeBlocks([
+        "This is a draft article prepared for editorial review before publication.",
+        "Onam, Thrissur Pooram, and the Nehru Trophy Boat Race anchor Kerala's cultural calendar.",
+      ]),
+    },
+  ];
+
+  for (const seed of blogSeeds) {
+    const author = seed.authorSlug ? seededBlogAuthors[seed.authorSlug] : undefined;
+    const category = seed.categorySlug ? seededBlogCategories[seed.categorySlug] : undefined;
+    const tags = seed.tagSlugs.map((s) => seededBlogTags[s]).filter(Boolean);
+    const destinations = seed.destinationSlugs.map((s) => seededDestinations[s]).filter(Boolean);
+    const linkedPackage = seed.packageSlug ? await prisma.tourPackage.findUnique({ where: { slug: seed.packageSlug } }) : null;
+
+    await prisma.blog.upsert({
+      where: { slug: seed.slug },
+      update: {
+        title: seed.title,
+        excerpt: seed.excerpt,
+        content: seed.contentBlocks.map((b) => b.content).join("\n\n"),
+        contentFormat: BlogContentFormat.JSON_BLOCKS,
+        contentBlocks: seed.contentBlocks,
+        faq: seed.faq ?? undefined,
+        featuredImage: seed.featuredImage,
+        featured: seed.featured,
+        status: seed.status,
+        viewCount: seed.viewCount,
+        readingTimeMinutes: seed.readingTimeMinutes,
+        publishedAt: seed.publishedAt,
+        authorId: author?.id ?? null,
+      },
+      create: {
+        slug: seed.slug,
+        title: seed.title,
+        excerpt: seed.excerpt,
+        content: seed.contentBlocks.map((b) => b.content).join("\n\n"),
+        contentFormat: BlogContentFormat.JSON_BLOCKS,
+        contentBlocks: seed.contentBlocks,
+        faq: seed.faq ?? undefined,
+        featuredImage: seed.featuredImage,
+        featured: seed.featured,
+        status: seed.status,
+        viewCount: seed.viewCount,
+        readingTimeMinutes: seed.readingTimeMinutes,
+        publishedAt: seed.publishedAt,
+        authorId: author?.id ?? null,
+        categories: category ? { connect: { id: category.id } } : undefined,
+        tags: tags.length > 0 ? { connect: tags.map((t) => ({ id: t.id })) } : undefined,
+        destinations: destinations.length > 0 ? { connect: destinations.map((d) => ({ id: d.id })) } : undefined,
+        packages: linkedPackage ? { connect: { id: linkedPackage.id } } : undefined,
+      },
+    });
+  }
+
+  console.log(`Phase 12 Seed complete. Blog CMS seeded with authors, categories, tags, and articles.`);
 }
 
 main()

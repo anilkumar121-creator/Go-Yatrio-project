@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import { MapPin, ImageIcon, ArrowRight, Calendar, IndianRupee, Star, Building2, Car, Users } from "lucide-react";
+import { MapPin, ImageIcon, ArrowRight, Calendar, IndianRupee, Star, Building2, Car, Users, FileText } from "lucide-react";
 import { Container } from "@/components/common/container";
 import { Button } from "@/components/common/button";
 import { Badge } from "@/components/common/badge";
@@ -10,6 +10,7 @@ import { Card } from "@/components/common/card";
 import { Price } from "@/components/common/price";
 import { PageWrapper } from "@/components/layout/page-wrapper";
 import { CardMedia } from "@/components/cards/card-media";
+import { BlogCard } from "@/components/blogs/blog-card";
 
 type DestinationHotel = {
   id: string;
@@ -37,6 +38,17 @@ type DestinationCab = {
   amenities: { id: string; name: string }[];
 };
 
+type DestinationBlog = {
+  id: string;
+  title: string;
+  slug: string;
+  excerpt: string;
+  featuredImage: string | null;
+  publishedAt: string | null;
+  readingTimeMinutes: number;
+  author: { id: string; name: string; slug: string } | null;
+};
+
 type DestinationDetail = {
   id: string;
   name: string;
@@ -61,6 +73,7 @@ type DestinationDetail = {
   }[];
   hotels: DestinationHotel[];
   vehicles: DestinationCab[];
+  blogs: DestinationBlog[];
 };
 
 async function getDestination(slug: string): Promise<DestinationDetail | null> {
@@ -272,6 +285,28 @@ export default async function DestinationDetailPage({ params }: Props) {
                   </div>
                 </div>
               ) : null}
+              {/* Related Blogs */}
+              {destination.blogs.length > 0 ? (
+                <div className="mt-10">
+                  <div className="flex items-center justify-between">
+                    <h2 className="text-2xl font-semibold text-foreground flex items-center gap-2">
+                      <FileText className="size-6 text-primary" />
+                      Travel Stories from {destination.name}
+                    </h2>
+                    <Button asChild variant="outline" size="sm" className="gap-1">
+                      <Link href={`/blogs?destination=${destination.slug}`}>
+                        All Articles
+                        <ArrowRight className="size-3.5" />
+                      </Link>
+                    </Button>
+                  </div>
+                  <div className="mt-6 grid grid-cols-1 gap-5 tablet:grid-cols-2">
+                    {destination.blogs.map((blog) => (
+                      <BlogCard key={blog.id} blog={blog} />
+                    ))}
+                  </div>
+                </div>
+              ) : null}
             {/* Highlights sidebar */}
             <aside>
               <Card className="p-6">
@@ -300,6 +335,10 @@ export default async function DestinationDetailPage({ params }: Props) {
                   <li className="flex items-center gap-2">
                     <Badge variant="accent" className="shrink-0">Cabs</Badge>
                     {destination.vehicles.length} Vehicles
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Badge variant="accent" className="shrink-0">Blogs</Badge>
+                    {destination.blogs.length} Articles
                   </li>
                 </ul>
                 <Button asChild className="mt-6 w-full">

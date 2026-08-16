@@ -143,6 +143,21 @@ export const destinationService = {
             amenities: true,
           },
         },
+        blogs: {
+          where: { status: "PUBLISHED" },
+          orderBy: [{ publishedAt: "desc" }],
+          take: 4,
+          select: {
+            id: true,
+            title: true,
+            slug: true,
+            excerpt: true,
+            featuredImage: true,
+            publishedAt: true,
+            readingTimeMinutes: true,
+            author: { select: { id: true, name: true, slug: true } },
+          },
+        },
       },
     });
   },

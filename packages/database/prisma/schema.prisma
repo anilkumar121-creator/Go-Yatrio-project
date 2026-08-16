@@ -83,6 +83,18 @@ enum CabInquiryStatus {
   CONTACTED
   CLOSED
 }
+enum BlogStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum BlogContentFormat {
+  PLAIN_TEXT
+  MARKDOWN
+  HTML
+  JSON_BLOCKS
+}
 
 enum MediaResourceType {
   IMAGE
@@ -163,6 +175,7 @@ model Destination {
   packages         TourPackage[]
   hotels           Hotel[]
   vehicles         Vehicle[]
+  blogs            Blog[]
 
   @@index([status, featured, isActive])
   @@map("destinations")
@@ -196,6 +209,7 @@ model TourPackage {
   inquiries        TravelInquiry[]
   hotels           Hotel[]
   vehicles         Vehicle[]
+  blogs            Blog[]
 
   @@index([destinationId])
   @@index([status, featured, isActive, packageType])
@@ -446,22 +460,78 @@ model TravelInquiry {
 }
 
 model Blog {
-  id             String    @id @default(cuid())
-  title          String
-  slug           String    @unique
-  excerpt        String
-  content        String
-  featuredImage  String?
-  author         String
-  isPublished    Boolean   @default(false)
-  publishedAt    DateTime?
-  seoTitle       String?
-  seoDescription String?
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  id                    String            @id @default(cuid())
+  title                 String
+  slug                  String            @unique
+  excerpt               String
+  content               String            @db.Text
+  contentFormat         BlogContentFormat @default(JSON_BLOCKS)
+  contentBlocks         Json?
+  faq                   Json?
+  featuredImage         String?
+  featuredImagePublicId String?
+  galleryImages         String[]
+  authorId              String?
+  isPublished           Boolean           @default(false)
+  status                BlogStatus        @default(DRAFT)
+  featured              Boolean           @default(false)
+  viewCount             Int               @default(0)
+  readingTimeMinutes    Int               @default(0)
+  publishedAt           DateTime?
+  seoTitle              String?
+  seoDescription        String?
+  canonicalUrl          String?
+  ogImage               String?
+  createdAt             DateTime          @default(now())
+  updatedAt             DateTime          @updatedAt
+  author                BlogAuthor?       @relation(fields: [authorId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  categories            BlogCategory[]
+  tags                  BlogTag[]
+  destinations          Destination[]
+  packages              TourPackage[]
 
   @@index([isPublished, publishedAt])
+  @@index([status, featured, publishedAt])
+  @@index([authorId])
   @@map("blogs")
+}
+
+model BlogAuthor {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  slug      String   @unique
+  bio       String?
+  avatar    String?
+  role      String?
+  email     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  blogs     Blog[]
+
+  @@map("blog_authors")
+}
+
+model BlogCategory {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  slug        String   @unique
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  blogs       Blog[]
+
+  @@map("blog_categories")
+}
+
+model BlogTag {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  slug      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  blogs     Blog[]
+
+  @@map("blog_tags")
 }
 
 model Media {
