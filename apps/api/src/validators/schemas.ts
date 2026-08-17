@@ -2,6 +2,7 @@ import {
   BlogContentFormat,
   BlogStatus,
   CabFuelType,
+  PackageAvailability,
   CabInquiryStatus,
   CabStatus,
   CabTripType,
@@ -65,6 +66,29 @@ export const destinationFeaturedSchema = z.object({
   featured: z.boolean(),
 });
 
+export const packageSeasonalPriceSchema = z.object({
+  id: optionalStringField(255),
+  label: stringField(120),
+  priceFrom: moneySchema,
+  discountedPrice: moneySchema.optional(),
+  displayOrder: z.coerce.number().int().min(0).optional(),
+  startDate: z.coerce.date(),
+  endDate: z.coerce.date(),
+  active: z.boolean().optional(),
+});
+
+export const packageOfferSchema = z.object({
+  id: optionalStringField(255),
+  label: stringField(120),
+  badge: optionalStringField(80),
+  discountedPrice: moneySchema.optional(),
+  priority: z.coerce.number().int().min(0).optional(),
+  startDate: z.coerce.date(),
+  endDate: z.coerce.date(),
+  featured: z.boolean().optional(),
+  active: z.boolean().optional(),
+});
+
 export const packageCreateSchema = z.object({
   title: stringField(140),
   slug: slugSchema.optional(),
@@ -74,6 +98,7 @@ export const packageCreateSchema = z.object({
   durationDays: z.coerce.number().int().positive().max(365),
   durationNights: z.coerce.number().int().min(0).max(365),
   priceFrom: moneySchema,
+  discountedPrice: moneySchema.optional(),
   currency: z.string().length(3).default("INR"),
   packageType: z.enum(PackageType),
   inclusions: z.array(z.string().trim().min(1).max(300)).max(50).optional(),
@@ -82,9 +107,15 @@ export const packageCreateSchema = z.object({
   galleryImages: z.array(z.string().trim().min(1).max(500)).max(20).optional(),
   featured: z.boolean().optional(),
   status: z.enum(PackageStatus).optional(),
+  availability: z.enum(PackageAvailability).optional(),
+  availableSeats: z.coerce.number().int().min(0).max(100000).optional(),
+  priceValidFrom: z.coerce.date().optional(),
+  priceValidTo: z.coerce.date().optional(),
   metaTitle: optionalStringField(120),
   metaDescription: optionalStringField(180),
   isActive: z.boolean().optional(),
+  seasonalPrices: z.array(packageSeasonalPriceSchema).optional(),
+  offers: z.array(packageOfferSchema).optional(),
 });
 
 export const packageUpdateSchema = packageCreateSchema.partial();
@@ -95,6 +126,11 @@ export const packageStatusSchema = z.object({
 
 export const packageFeaturedSchema = z.object({
   featured: z.boolean(),
+});
+
+export const packageAvailabilitySchema = z.object({
+  availability: z.enum(PackageAvailability),
+  availableSeats: z.coerce.number().int().min(0).max(100000).optional(),
 });
 
 export const activityCreateSchema = z.object({

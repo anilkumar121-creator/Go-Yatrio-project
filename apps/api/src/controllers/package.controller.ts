@@ -4,8 +4,11 @@ import { asyncHandler } from "../utils/async-handler.js";
 import { sendMessage, sendSuccess } from "../utils/api-response.js";
 import { packageService } from "../services/package.service.js";
 import {
+  packageAvailabilitySchema,
   packageCreateSchema,
   packageFeaturedSchema,
+  packageOfferSchema,
+  packageSeasonalPriceSchema,
   packageStatusSchema,
   packageUpdateSchema,
 } from "../validators/schemas.js";
@@ -17,6 +20,7 @@ export const listPackages: RequestHandler = asyncHandler(async (request, respons
   const packageType = (request.query.packageType as string | undefined) ?? undefined;
   const destinationId = (request.query.destinationId as string | undefined) ?? undefined;
   const featuredOnly = request.query.featured === "true";
+  const availability = (request.query.availability as "AVAILABLE" | "LIMITED_SEATS" | "SOLD_OUT" | "UPCOMING" | undefined) ?? undefined;
   const sort = (request.query.sort as "price_asc" | "price_desc" | "duration_asc" | "duration_desc" | "newest" | undefined) ?? "newest";
 
   const [data, total] = await Promise.all([
@@ -27,6 +31,7 @@ export const listPackages: RequestHandler = asyncHandler(async (request, respons
       packageType,
       destinationId,
       featuredOnly,
+      availability,
       sort,
     }),
     packageService.count({ search, packageType, destinationId, status: "PUBLISHED" }),
@@ -102,4 +107,57 @@ export const updatePackageFeatured: RequestHandler = asyncHandler(async (request
   const data = await packageService.updateFeatured(id, payload.featured);
 
   sendSuccess(response, data);
+});
+export const updatePackageAvailability: RequestHandler = asyncHandler(async (request, response) => {
+  const { id } = idParamSchema.parse(request.params);
+  const payload = packageAvailabilitySchema.parse(request.body);
+  const data = await packageService.updateAvailability(id, payload.availability, payload.availableSeats);
+
+  sendSuccess(response, data);
+});
+
+export const addPackageSeasonalPrice: RequestHandler = asyncHandler(async (request, response) => {
+  const { id } = idParamSchema.parse(request.params);
+  const payload = packageSeasonalPriceSchema.parse(request.body);
+  const data = await packageService.addSeasonalPrice(id, payload);
+
+  sendSuccess(response, data, 201);
+});
+
+export const updatePackageSeasonalPrice: RequestHandler = asyncHandler(async (request, response) => {
+  const { id } = idParamSchema.parse(request.params);
+  const payload = packageSeasonalPriceSchema.parse(request.body);
+  const data = await packageService.updateSeasonalPrice(id, payload);
+
+  sendSuccess(response, data);
+});
+
+export const deletePackageSeasonalPrice: RequestHandler = asyncHandler(async (request, response) => {
+  const { id } = idParamSchema.parse(request.params);
+  await packageService.removeSeasonalPrice(id);
+
+  sendMessage(response, "Seasonal price removed.");
+});
+
+export const addPackageOffer: RequestHandler = asyncHandler(async (request, response) => {
+  const { id } = idParamSchema.parse(request.params);
+  const payload = packageOfferSchema.parse(request.body);
+  const data = await packageService.addOffer(id, payload);
+
+  sendSuccess(response, data, 201);
+});
+
+export const updatePackageOffer: RequestHandler = asyncHandler(async (request, response) => {
+  const { id } = idParamSchema.parse(request.params);
+  const payload = packageOfferSchema.parse(request.body);
+  const data = await packageService.updateOffer(id, payload);
+
+  sendSuccess(response, data);
+});
+
+export const deletePackageOffer: RequestHandler = asyncHandler(async (request, response) => {
+  const { id } = idParamSchema.parse(request.params);
+  await packageService.removeOffer(id);
+
+  sendMessage(response, "Offer removed.");
 });

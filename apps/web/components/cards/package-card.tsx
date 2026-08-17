@@ -16,6 +16,8 @@ type PackageCardProps = {
   rating?: number;
   reviews?: number;
   badge?: string;
+  availability?: string;
+  availableSeats?: number;
   image?: { src: string; alt: string };
   ctaLabel?: string;
   ctaHref: string;
@@ -31,6 +33,8 @@ export function PackageCard({
   rating,
   reviews,
   badge,
+  availability,
+  availableSeats,
   image,
   ctaLabel = "View Package",
   ctaHref,
@@ -59,6 +63,27 @@ export function PackageCard({
         {rating !== undefined ? (
           <div className="mt-2">
             <Rating value={rating} count={reviews} />
+          </div>
+        ) : null}
+        {availability ? (
+          <div className="mt-2">
+            <span
+              className={
+                availability === "SOLD_OUT"
+                  ? "text-xs font-semibold text-error"
+                  : availability === "UPCOMING"
+                    ? "text-xs font-semibold text-muted-foreground"
+                    : "text-xs font-semibold text-success"
+              }
+            >
+              {availability === "AVAILABLE"
+                ? "Available"
+                : availability === "LIMITED_SEATS"
+                  ? `Only ${availableSeats ?? 0} seats left`
+                  : availability === "SOLD_OUT"
+                    ? "Sold Out"
+                    : "Upcoming"}
+            </span>
           </div>
         ) : null}
         <div className="mt-4 flex items-center justify-between gap-3">

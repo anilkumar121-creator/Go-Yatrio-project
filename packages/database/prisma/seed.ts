@@ -956,7 +956,7 @@ async function main() {
       publishedAt: new Date("2026-08-10T10:00:00Z"),
       faq: [
         { question: "What is the best time for a Kerala houseboat trip?", answer: "September to March offers pleasant weather and calm backwaters." },
-        { question: "How much does an Alleppey houseboat cost?", answer: "Deluxe houseboats start around ₹7,500 per night including meals." },
+        { question: "How much does an Alleppey houseboat cost?", answer: "Deluxe houseboats start around â‚¹7,500 per night including meals." },
       ],
       contentBlocks: makeBlocks([
         "Alleppey, often called the 'Venice of the East', is the gateway to Kerala's iconic backwaters. A houseboat cruise here is the single most relaxing travel experience in India.",
@@ -1001,7 +1001,7 @@ async function main() {
       viewCount: 760,
       publishedAt: new Date("2026-08-05T10:00:00Z"),
       contentBlocks: makeBlocks([
-        "Rajasthan is India's most cinematic state — amber forts, blue cities, and mirror-work palaces at every turn.",
+        "Rajasthan is India's most cinematic state â€” amber forts, blue cities, and mirror-work palaces at every turn.",
         "Start in Jaipur with Amber Fort and Hawa Mahal, then drive through Pushkar to the blue city of Jodhpur.",
         "Finish with Udaipur's Lake Pichola and a sunset boat cruise that ends the journey on a perfect note.",
       ]),
@@ -1009,7 +1009,7 @@ async function main() {
     {
       slug: "ladakh-bike-trip-tips",
       title: "Ladakh on a Road Trip: The Ultimate High-Altitude Adventure Guide",
-      excerpt: "Mountain passes, cold deserts, and starry camps — everything you need to plan a Ladakh road trip.",
+      excerpt: "Mountain passes, cold deserts, and starry camps â€” everything you need to plan a Ladakh road trip.",
       authorSlug: "vikram-singh",
       categorySlug: "travel-tips",
       tagSlugs: ["ladakh"],
@@ -1023,14 +1023,14 @@ async function main() {
       publishedAt: new Date("2026-07-30T10:00:00Z"),
       contentBlocks: makeBlocks([
         "Ladakh sits at an average elevation of 11,000 feet, so acclimatization is non-negotiable. Spend at least two nights in Leh before crossing high passes.",
-        "Khardung La, Pangong Tso, and Nubra Valley are the highlights. Carry warm layers even in summer — nights dip below freezing.",
+        "Khardung La, Pangong Tso, and Nubra Valley are the highlights. Carry warm layers even in summer â€” nights dip below freezing.",
         "Book camps in advance during peak season and always carry a first-aid kit and extra oxygen cans.",
       ]),
     },
     {
       slug: "goa-beach-guide",
       title: "Goa Beach Guide: North vs South for Every Kind of Traveller",
-      excerpt: "Party in North Goa, unwind in South Goa — a complete guide to picking the right beach.",
+      excerpt: "Party in North Goa, unwind in South Goa â€” a complete guide to picking the right beach.",
       authorSlug: "ananya-sharma",
       categorySlug: "destination-guides",
       tagSlugs: ["goa", "budget", "luxury"],
@@ -1043,7 +1043,7 @@ async function main() {
       viewCount: 890,
       publishedAt: new Date("2026-07-25T10:00:00Z"),
       contentBlocks: makeBlocks([
-        "North Goa is loud, colorful, and full of energy — perfect for first-timers who want beach shacks, water sports, and night markets.",
+        "North Goa is loud, colorful, and full of energy â€” perfect for first-timers who want beach shacks, water sports, and night markets.",
         "South Goa offers quieter sands, luxury resorts, and picture-perfect sunsets at Palolem and Agonda.",
         "Whichever side you choose, December to February delivers the best weather for beach days.",
       ]),
@@ -1051,7 +1051,7 @@ async function main() {
     {
       slug: "andaman-island-hopping",
       title: "Andaman Island Hopping: Port Blair, Havelock & Neil Island",
-      excerpt: "Coral reefs, white sands, and cellular jail history — a complete Andaman trip plan.",
+      excerpt: "Coral reefs, white sands, and cellular jail history â€” a complete Andaman trip plan.",
       authorSlug: "goyatrio-editorial",
       categorySlug: "experiences",
       tagSlugs: ["andaman", "family"],
@@ -1066,13 +1066,13 @@ async function main() {
       contentBlocks: makeBlocks([
         "Start in Port Blair with the Cellular Jail light-and-sound show, then take a ferry to Havelock for Radhanagar Beach.",
         "Snorkel at Elephant Beach, catch the sunset at Neil Island, and return to Port Blair for departure.",
-        "Book ferry tickets in advance — they sell out fast during winter months.",
+        "Book ferry tickets in advance â€” they sell out fast during winter months.",
       ]),
     },
     {
       slug: "packing-checklist-india-travel",
       title: "The Perfect Packing Checklist for Travelling Across India",
-      excerpt: "From mountain passes to tropical beaches — pack smart with this destination-proof checklist.",
+      excerpt: "From mountain passes to tropical beaches â€” pack smart with this destination-proof checklist.",
       authorSlug: "goyatrio-editorial",
       categorySlug: "travel-tips",
       tagSlugs: ["family", "budget"],
@@ -1085,7 +1085,7 @@ async function main() {
       viewCount: 540,
       publishedAt: new Date("2026-07-15T10:00:00Z"),
       contentBlocks: makeBlocks([
-        "Layering is the secret to Indian travel — the same lightweight jacket works for hill mornings and desert evenings.",
+        "Layering is the secret to Indian travel â€” the same lightweight jacket works for hill mornings and desert evenings.",
         "Always carry a power bank, reusable water bottle, and a small first-aid kit. Sunscreen and insect repellent are non-negotiable.",
         "Keep documents digital and offline: scan your ID, tickets, and insurance before you leave.",
       ]),
@@ -1093,7 +1093,7 @@ async function main() {
     {
       slug: "ai-generated-draft-kerala-festivals",
       title: "Draft: Onam and Kerala Festival Calendar (AI Draft)",
-      excerpt: "A working draft exploring Kerala's festival calendar — prepared with AI-assisted content.",
+      excerpt: "A working draft exploring Kerala's festival calendar â€” prepared with AI-assisted content.",
       authorSlug: "goyatrio-editorial",
       categorySlug: "experiences",
       tagSlugs: ["kerala"],
@@ -1158,7 +1158,70 @@ async function main() {
     });
   }
 
-  console.log(`Phase 12 Seed complete. Blog CMS seeded with authors, categories, tags, and articles.`);
+  // === Phase 13: Package Pricing & Availability Seeding ===
+  const demoPackageSlugs = [
+    "kerala-backwaters-and-hills",
+    "kashmir-paradise-experience",
+    "grand-rajasthan-heritage-tour",
+  ];
+
+  for (const pkgSlug of demoPackageSlugs) {
+    const pkg = await prisma.tourPackage.findUnique({ where: { slug: pkgSlug } });
+    if (!pkg) continue;
+
+    // Base discount + availability defaults (only set when unset / zero)
+    await prisma.tourPackage.update({
+      where: { id: pkg.id },
+      data: {
+        discountedPrice: pkg.discountedPrice ?? undefined,
+        availability: pkg.availability ?? "AVAILABLE",
+        availableSeats: pkg.availableSeats ?? 12,
+        priceValidFrom: pkg.priceValidFrom ?? new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
+        priceValidTo: pkg.priceValidTo ?? new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
+      },
+    });
+
+    // Demo seasonal price
+    const existingSeasonal = await prisma.packageSeasonalPrice.findFirst({
+      where: { packageId: pkg.id, label: "Winter Special" },
+    });
+    if (!existingSeasonal) {
+      await prisma.packageSeasonalPrice.create({
+        data: {
+          packageId: pkg.id,
+          label: "Winter Special",
+          priceFrom: Number(pkg.priceFrom) * 0.9,
+          discountedPrice: Number(pkg.priceFrom) * 0.85,
+          displayOrder: 0,
+          startDate: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000),
+          endDate: new Date(Date.now() + 180 * 24 * 60 * 60 * 1000),
+          active: true,
+        },
+      });
+    }
+
+    // Demo offer
+    const existingOffer = await prisma.packageOffer.findFirst({
+      where: { packageId: pkg.id, label: "Early Bird Offer" },
+    });
+    if (!existingOffer) {
+      await prisma.packageOffer.create({
+        data: {
+          packageId: pkg.id,
+          label: "Early Bird Offer",
+          badge: "Early Bird",
+          discountedPrice: Number(pkg.priceFrom) * 0.8,
+          priority: 10,
+          startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
+          endDate: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000),
+          featured: true,
+          active: true,
+        },
+      });
+    }
+  }
+
+  console.log(`Phase 13 Seed complete. Package pricing, offers, and availability seeded.`);
 }
 
 main()

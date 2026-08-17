@@ -20,6 +20,7 @@ import { Textarea } from "@/components/common/textarea";
 import { Label } from "@/components/common/label";
 import { Switch } from "@/components/common/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/common/select";
+import { Card } from "@/components/common/card";
 
 type DestinationOption = {
   id: string;
@@ -38,6 +39,7 @@ type TourPackage = {
   durationDays: number;
   durationNights: number;
   priceFrom: number;
+  discountedPrice: number | null;
   currency: string;
   packageType: "DOMESTIC" | "INTERNATIONAL" | "LUXURY" | "ADVENTURE" | "PILGRIMAGE";
   inclusions: string[];
@@ -46,6 +48,12 @@ type TourPackage = {
   galleryImages: string[];
   featured: boolean;
   status: "DRAFT" | "PUBLISHED";
+  availability: "AVAILABLE" | "LIMITED_SEATS" | "SOLD_OUT" | "UPCOMING";
+  availableSeats: number;
+  priceValidFrom: string | null;
+  priceValidTo: string | null;
+  seasonalPrices: { id?: string; label: string; priceFrom: number; discountedPrice: number | null; displayOrder: number; startDate: string; endDate: string; active: boolean }[];
+  offers: { id?: string; label: string; badge: string; discountedPrice: number | null; priority: number; startDate: string; endDate: string; featured: boolean; active: boolean }[];
   metaTitle: string | null;
   metaDescription: string | null;
   createdAt: string;
@@ -58,6 +66,13 @@ type PackageForm = {
   durationDays: number;
   durationNights: number;
   priceFrom: number;
+  discountedPrice: string;
+  availability: "AVAILABLE" | "LIMITED_SEATS" | "SOLD_OUT" | "UPCOMING";
+  availableSeats: number;
+  priceValidFrom: string;
+  priceValidTo: string;
+  seasonalPrices: { id?: string; label: string; priceFrom: string; discountedPrice: string; displayOrder: number; startDate: string; endDate: string; active: boolean }[];
+  offers: { id?: string; label: string; badge: string; discountedPrice: string; priority: number; startDate: string; endDate: string; featured: boolean; active: boolean }[];
   shortDescription: string;
   description: string;
   inclusions: string;
@@ -77,6 +92,13 @@ const emptyForm: PackageForm = {
   durationDays: 5,
   durationNights: 4,
   priceFrom: 15000,
+  discountedPrice: "",
+  availability: "AVAILABLE",
+  availableSeats: 0,
+  priceValidFrom: "",
+  priceValidTo: "",
+  seasonalPrices: [],
+  offers: [],
   shortDescription: "",
   description: "",
   inclusions: "",
@@ -192,6 +214,32 @@ export default function AdminPackagesPage() {
       durationDays: pkg.durationDays,
       durationNights: pkg.durationNights,
       priceFrom: Number(pkg.priceFrom),
+      discountedPrice: pkg.discountedPrice ? String(pkg.discountedPrice) : "",
+      availability: pkg.availability ?? "AVAILABLE",
+      availableSeats: pkg.availableSeats ?? 0,
+      priceValidFrom: pkg.priceValidFrom ? pkg.priceValidFrom.slice(0, 10) : "",
+      priceValidTo: pkg.priceValidTo ? pkg.priceValidTo.slice(0, 10) : "",
+      seasonalPrices: (pkg.seasonalPrices ?? []).map((s) => ({
+        id: s.id,
+        label: s.label,
+        priceFrom: String(s.priceFrom),
+        discountedPrice: s.discountedPrice ? String(s.discountedPrice) : "",
+        displayOrder: s.displayOrder ?? 0,
+        startDate: (s.startDate ?? "").slice(0, 10),
+        endDate: (s.endDate ?? "").slice(0, 10),
+        active: s.active ?? true,
+      })),
+      offers: (pkg.offers ?? []).map((o) => ({
+        id: o.id,
+        label: o.label,
+        badge: o.badge ?? "",
+        discountedPrice: o.discountedPrice ? String(o.discountedPrice) : "",
+        priority: o.priority ?? 0,
+        startDate: (o.startDate ?? "").slice(0, 10),
+        endDate: (o.endDate ?? "").slice(0, 10),
+        featured: o.featured ?? false,
+        active: o.active ?? true,
+      })),
       shortDescription: pkg.shortDescription,
       description: pkg.description,
       inclusions: (pkg.inclusions ?? []).join("\n"),
@@ -213,8 +261,45 @@ export default function AdminPackagesPage() {
     setFormError(null);
 
     try {
+      const toNumber = (value: string): number | undefined =>
+        value.trim() === "" ? undefined : Number(value);
+
       const payload = {
-        ...form,
+        title: form.title,
+        slug: undefined as string | undefined,
+        destinationId: form.destinationId,
+        packageType: form.packageType,
+        durationDays: form.durationDays,
+        durationNights: form.durationNights,
+        priceFrom: form.priceFrom,
+        discountedPrice: toNumber(form.discountedPrice),
+        availability: form.availability,
+        availableSeats: form.availableSeats,
+        priceValidFrom: form.priceValidFrom ? new Date(form.priceValidFrom).toISOString() : undefined,
+        priceValidTo: form.priceValidTo ? new Date(form.priceValidTo).toISOString() : undefined,
+        seasonalPrices: form.seasonalPrices.map((s) => ({
+          id: s.id,
+          label: s.label,
+          priceFrom: Number(s.priceFrom),
+          discountedPrice: toNumber(s.discountedPrice),
+          displayOrder: s.displayOrder,
+          startDate: new Date(s.startDate).toISOString(),
+          endDate: new Date(s.endDate).toISOString(),
+          active: s.active,
+        })),
+        offers: form.offers.map((o) => ({
+          id: o.id,
+          label: o.label,
+          badge: o.badge.trim() ? o.badge : undefined,
+          discountedPrice: toNumber(o.discountedPrice),
+          priority: o.priority,
+          startDate: new Date(o.startDate).toISOString(),
+          endDate: new Date(o.endDate).toISOString(),
+          featured: o.featured,
+          active: o.active,
+        })),
+        shortDescription: form.shortDescription,
+        description: form.description,
         inclusions: form.inclusions
           .split("\n")
           .map((s) => s.trim())
@@ -223,10 +308,15 @@ export default function AdminPackagesPage() {
           .split("\n")
           .map((s) => s.trim())
           .filter(Boolean),
+        featuredImage: form.featuredImage,
         galleryImages: form.galleryImages
           .split("\n")
           .map((url) => url.trim())
           .filter(Boolean),
+        featured: form.featured,
+        status: form.status,
+        metaTitle: form.metaTitle,
+        metaDescription: form.metaDescription,
       };
 
       if (editingPackage) {
@@ -376,7 +466,16 @@ export default function AdminPackagesPage() {
                 { header: "Package Title", cell: (row) => <span className="font-semibold text-foreground">{row.title}</span> },
                 { header: "Destination", cell: (row) => <span>{row.destination?.name ?? "N/A"}</span> },
                 { header: "Duration", cell: (row) => <span className="text-muted-foreground">{row.durationDays}D / {row.durationNights}N</span> },
-                { header: "Starting Price", cell: (row) => <Price amount={Number(row.priceFrom)} size="sm" /> },
+                { header: "Starting Price", cell: (row) => (
+                  <div>
+                    {row.discountedPrice && Number(row.discountedPrice) < Number(row.priceFrom) ? (
+                      <Price amount={Number(row.discountedPrice)} size="sm" />
+                    ) : (
+                      <Price amount={Number(row.priceFrom)} size="sm" />
+                    )}
+                    <span className="block text-[11px] text-muted-foreground">{row.availability ?? "AVAILABLE"}</span>
+                  </div>
+                ) },
                 { header: "Category", cell: (row) => <Badge variant="outline">{row.packageType}</Badge> },
                 {
                   header: "Status",
@@ -505,6 +604,270 @@ export default function AdminPackagesPage() {
                 <div className="space-y-2">
                   <Label htmlFor="package-price">Starting Price (INR) *</Label>
                   <Input id="package-price" type="number" min={0} required value={form.priceFrom} onChange={(e) => setForm({ ...form, priceFrom: Number(e.target.value) })} />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="package-discount">Discount Price (INR)</Label>
+                  <Input id="package-discount" type="number" min={0} value={form.discountedPrice} onChange={(e) => setForm({ ...form, discountedPrice: e.target.value })} placeholder="Optional base discount" />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="package-availability">Availability</Label>
+                  <Select
+                    value={form.availability}
+                    onValueChange={(value) => setForm({ ...form, availability: value as "AVAILABLE" | "LIMITED_SEATS" | "SOLD_OUT" | "UPCOMING" })}
+                  >
+                    <SelectTrigger id="package-availability">
+                      <SelectValue placeholder="Select availability" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="AVAILABLE">Available</SelectItem>
+                      <SelectItem value="LIMITED_SEATS">Limited Seats</SelectItem>
+                      <SelectItem value="SOLD_OUT">Sold Out</SelectItem>
+                      <SelectItem value="UPCOMING">Upcoming</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="package-seats">Available Seats</Label>
+                  <Input id="package-seats" type="number" min={0} value={form.availableSeats} onChange={(e) => setForm({ ...form, availableSeats: Number(e.target.value) })} />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="package-valid-from">Price Valid From</Label>
+                  <Input id="package-valid-from" type="date" value={form.priceValidFrom} onChange={(e) => setForm({ ...form, priceValidFrom: e.target.value })} />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="package-valid-to">Price Valid To</Label>
+                  <Input id="package-valid-to" type="date" value={form.priceValidTo} onChange={(e) => setForm({ ...form, priceValidTo: e.target.value })} />
+                </div>
+
+                {/* Seasonal Pricing Repeater */}
+                <div className="space-y-3 tablet:col-span-2 border-t border-border pt-4">
+                  <div className="flex items-center justify-between">
+                    <Label className="font-semibold">Seasonal Prices ({form.seasonalPrices.length})</Label>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={() =>
+                        setForm({
+                          ...form,
+                          seasonalPrices: [
+                            ...form.seasonalPrices,
+                            { label: "", priceFrom: "", discountedPrice: "", displayOrder: form.seasonalPrices.length, startDate: "", endDate: "", active: true },
+                          ],
+                        })
+                      }
+                      className="gap-1"
+                    >
+                      <Plus className="size-3.5" />
+                      Add Seasonal Price
+                    </Button>
+                  </div>
+                  {form.seasonalPrices.map((sPrice, idx) => (
+                    <Card key={idx} className="p-3 border border-border bg-muted/20">
+                      <div className="grid grid-cols-1 gap-2 tablet:grid-cols-6">
+                        <Input
+                          className="h-8 text-xs"
+                          placeholder="Label (e.g. Summer)"
+                          value={sPrice.label}
+                          onChange={(e) => {
+                            const list = [...form.seasonalPrices];
+                            list[idx] = { ...list[idx], label: e.target.value };
+                            setForm({ ...form, seasonalPrices: list });
+                          }}
+                        />
+                        <Input
+                          className="h-8 text-xs"
+                          type="number"
+                          placeholder="Price From"
+                          value={sPrice.priceFrom}
+                          onChange={(e) => {
+                            const list = [...form.seasonalPrices];
+                            list[idx] = { ...list[idx], priceFrom: e.target.value };
+                            setForm({ ...form, seasonalPrices: list });
+                          }}
+                        />
+                        <Input
+                          className="h-8 text-xs"
+                          type="number"
+                          placeholder="Discount"
+                          value={sPrice.discountedPrice}
+                          onChange={(e) => {
+                            const list = [...form.seasonalPrices];
+                            list[idx] = { ...list[idx], discountedPrice: e.target.value };
+                            setForm({ ...form, seasonalPrices: list });
+                          }}
+                        />
+                        <Input
+                          className="h-8 text-xs"
+                          type="date"
+                          value={sPrice.startDate}
+                          onChange={(e) => {
+                            const list = [...form.seasonalPrices];
+                            list[idx] = { ...list[idx], startDate: e.target.value };
+                            setForm({ ...form, seasonalPrices: list });
+                          }}
+                        />
+                        <Input
+                          className="h-8 text-xs"
+                          type="date"
+                          value={sPrice.endDate}
+                          onChange={(e) => {
+                            const list = [...form.seasonalPrices];
+                            list[idx] = { ...list[idx], endDate: e.target.value };
+                            setForm({ ...form, seasonalPrices: list });
+                          }}
+                        />
+                        <div className="flex items-center gap-2">
+                          <Switch
+                            checked={sPrice.active}
+                            onCheckedChange={(checked) => {
+                              const list = [...form.seasonalPrices];
+                              list[idx] = { ...list[idx], active: checked };
+                              setForm({ ...form, seasonalPrices: list });
+                            }}
+                            aria-label="Active seasonal price"
+                          />
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 w-7 p-0 text-destructive hover:bg-destructive/10"
+                            onClick={() => setForm({ ...form, seasonalPrices: form.seasonalPrices.filter((_, i) => i !== idx) })}
+                          >
+                            <X className="size-3.5" />
+                          </Button>
+                        </div>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+
+                {/* Offers Repeater */}
+                <div className="space-y-3 tablet:col-span-2 border-t border-border pt-4">
+                  <div className="flex items-center justify-between">
+                    <Label className="font-semibold">Offers ({form.offers.length})</Label>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={() =>
+                        setForm({
+                          ...form,
+                          offers: [
+                            ...form.offers,
+                            { label: "", badge: "", discountedPrice: "", priority: 0, startDate: "", endDate: "", featured: false, active: true },
+                          ],
+                        })
+                      }
+                      className="gap-1"
+                    >
+                      <Plus className="size-3.5" />
+                      Add Offer
+                    </Button>
+                  </div>
+                  {form.offers.map((offer, idx) => (
+                    <Card key={idx} className="p-3 border border-border bg-muted/20">
+                      <div className="grid grid-cols-1 gap-2 tablet:grid-cols-4">
+                        <Input
+                          className="h-8 text-xs"
+                          placeholder="Label (e.g. Early Bird)"
+                          value={offer.label}
+                          onChange={(e) => {
+                            const list = [...form.offers];
+                            list[idx] = { ...list[idx], label: e.target.value };
+                            setForm({ ...form, offers: list });
+                          }}
+                        />
+                        <Input
+                          className="h-8 text-xs"
+                          placeholder="Badge (e.g. Early Bird)"
+                          value={offer.badge}
+                          onChange={(e) => {
+                            const list = [...form.offers];
+                            list[idx] = { ...list[idx], badge: e.target.value };
+                            setForm({ ...form, offers: list });
+                          }}
+                        />
+                        <Input
+                          className="h-8 text-xs"
+                          type="number"
+                          placeholder="Offer Price"
+                          value={offer.discountedPrice}
+                          onChange={(e) => {
+                            const list = [...form.offers];
+                            list[idx] = { ...list[idx], discountedPrice: e.target.value };
+                            setForm({ ...form, offers: list });
+                          }}
+                        />
+                        <Input
+                          className="h-8 text-xs"
+                          type="number"
+                          placeholder="Priority"
+                          value={offer.priority}
+                          onChange={(e) => {
+                            const list = [...form.offers];
+                            list[idx] = { ...list[idx], priority: Number(e.target.value) };
+                            setForm({ ...form, offers: list });
+                          }}
+                        />
+                        <Input
+                          className="h-8 text-xs"
+                          type="date"
+                          value={offer.startDate}
+                          onChange={(e) => {
+                            const list = [...form.offers];
+                            list[idx] = { ...list[idx], startDate: e.target.value };
+                            setForm({ ...form, offers: list });
+                          }}
+                        />
+                        <Input
+                          className="h-8 text-xs"
+                          type="date"
+                          value={offer.endDate}
+                          onChange={(e) => {
+                            const list = [...form.offers];
+                            list[idx] = { ...list[idx], endDate: e.target.value };
+                            setForm({ ...form, offers: list });
+                          }}
+                        />
+                        <label className="flex items-center gap-2 text-xs text-foreground">
+                          <Switch
+                            checked={offer.active}
+                            onCheckedChange={(checked) => {
+                              const list = [...form.offers];
+                              list[idx] = { ...list[idx], active: checked };
+                              setForm({ ...form, offers: list });
+                            }}
+                            aria-label="Active offer"
+                          />
+                          Active
+                        </label>
+                        <div className="flex items-center gap-2">
+                          <label className="flex items-center gap-2 text-xs text-foreground">
+                            <Switch
+                              checked={offer.featured}
+                              onCheckedChange={(checked) => {
+                                const list = [...form.offers];
+                                list[idx] = { ...list[idx], featured: checked };
+                                setForm({ ...form, offers: list });
+                              }}
+                              aria-label="Featured offer"
+                            />
+                            Featured
+                          </label>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 w-7 p-0 text-destructive hover:bg-destructive/10"
+                            onClick={() => setForm({ ...form, offers: form.offers.filter((_, i) => i !== idx) })}
+                          >
+                            <X className="size-3.5" />
+                          </Button>
+                        </div>
+                      </div>
+                    </Card>
+                  ))}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="package-status">Status</Label>

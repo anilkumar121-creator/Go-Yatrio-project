@@ -25,6 +25,13 @@ enum PackageStatus {
   PUBLISHED
 }
 
+enum PackageAvailability {
+  AVAILABLE
+  LIMITED_SEATS
+  SOLD_OUT
+  UPCOMING
+}
+
 enum InquiryStatus {
   NEW
   CONTACTED
@@ -182,38 +189,83 @@ model Destination {
 }
 
 model TourPackage {
-  id               String          @id @default(cuid())
+  id               String                @id @default(cuid())
   title            String
-  slug             String          @unique
+  slug             String                @unique
   shortDescription String
   description      String
   destinationId    String
   durationDays     Int
   durationNights   Int
-  priceFrom        Decimal         @db.Decimal(12, 2)
-  currency         String          @default("INR")
+  priceFrom        Decimal               @db.Decimal(12, 2)
+  discountedPrice  Decimal?              @db.Decimal(12, 2)
+  currency         String                @default("INR")
   packageType      PackageType
   inclusions       String[]
   exclusions       String[]
   featuredImage    String?
   galleryImages    String[]
-  featured         Boolean         @default(false)
-  status           PackageStatus   @default(DRAFT)
+  featured         Boolean               @default(false)
+  status           PackageStatus         @default(DRAFT)
+  availability     PackageAvailability   @default(AVAILABLE)
+  availableSeats   Int                   @default(0)
+  priceValidFrom   DateTime?
+  priceValidTo     DateTime?
   metaTitle        String?
   metaDescription  String?
-  isActive         Boolean         @default(true)
-  createdAt        DateTime        @default(now())
-  updatedAt        DateTime        @updatedAt
-  destination      Destination     @relation(fields: [destinationId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  isActive         Boolean               @default(true)
+  createdAt        DateTime              @default(now())
+  updatedAt        DateTime              @updatedAt
+  destination      Destination           @relation(fields: [destinationId], references: [id], onDelete: Restrict, onUpdate: Cascade)
   itineraries      Itinerary[]
   inquiries        TravelInquiry[]
   hotels           Hotel[]
   vehicles         Vehicle[]
   blogs            Blog[]
+  seasonalPrices   PackageSeasonalPrice[]
+  offers           PackageOffer[]
 
   @@index([destinationId])
   @@index([status, featured, isActive, packageType])
+  @@index([availability])
   @@map("tour_packages")
+}
+
+model PackageSeasonalPrice {
+  id              String      @id @default(cuid())
+  packageId       String
+  label           String
+  priceFrom       Decimal     @db.Decimal(12, 2)
+  discountedPrice Decimal?    @db.Decimal(12, 2)
+  displayOrder    Int         @default(0)
+  startDate       DateTime
+  endDate         DateTime
+  active          Boolean     @default(true)
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  package         TourPackage @relation(fields: [packageId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@index([packageId, active])
+  @@map("package_seasonal_prices")
+}
+
+model PackageOffer {
+  id              String      @id @default(cuid())
+  packageId       String
+  label           String
+  badge           String?
+  discountedPrice Decimal?    @db.Decimal(12, 2)
+  priority        Int         @default(0)
+  startDate       DateTime
+  endDate         DateTime
+  featured        Boolean     @default(false)
+  active          Boolean     @default(true)
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  package         TourPackage @relation(fields: [packageId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@index([packageId, active])
+  @@map("package_offers")
 }
 
 model Itinerary {

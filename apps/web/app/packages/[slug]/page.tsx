@@ -92,6 +92,16 @@ type PackageDetail = {
   durationDays: number;
   durationNights: number;
   priceFrom: number | string;
+  discountedPrice: number | string | null;
+  effectivePrice: number | string;
+  originalPrice: number | string;
+  priceBadge: string | null;
+  offerLabel: string | null;
+  seasonalLabel: string | null;
+  availability: "AVAILABLE" | "LIMITED_SEATS" | "SOLD_OUT" | "UPCOMING";
+  availableSeats: number;
+  priceValidFrom: string | null;
+  priceValidTo: string | null;
   currency: string;
   packageType: string;
   inclusions: string[];
@@ -224,7 +234,29 @@ export default async function PackageDetailPage({ params }: Props) {
           </p>
 
           <div className="mt-6 flex items-center gap-4">
-            <Price amount={Number(pkg.priceFrom)} per="per person" className="text-white" size="lg" />
+            <div className="flex flex-wrap items-center gap-3">
+              {pkg.priceBadge ? <Badge variant="accent">{pkg.priceBadge}</Badge> : null}
+              <Price
+                amount={Number(pkg.effectivePrice ?? pkg.priceFrom)}
+                per="per person"
+                className="text-white"
+                size="lg"
+              />
+              {Number(pkg.effectivePrice ?? pkg.priceFrom) < Number(pkg.originalPrice ?? pkg.priceFrom) ? (
+                <span className="text-sm text-white/60 line-through">
+                  {pkg.currency} {Number(pkg.originalPrice ?? pkg.priceFrom).toLocaleString("en-IN")}
+                </span>
+              ) : null}
+            </div>
+            <div className="mt-2">
+              {pkg.availability === "SOLD_OUT" ? (
+                <Badge variant="error">Sold Out</Badge>
+              ) : pkg.availability === "UPCOMING" ? (
+                <Badge variant="outline">Upcoming</Badge>
+              ) : pkg.availability === "LIMITED_SEATS" ? (
+                <Badge variant="secondary">Only {pkg.availableSeats ?? 0} Seats Left</Badge>
+              ) : null}
+            </div>
           </div>
         </Container>
       </section>
@@ -519,6 +551,18 @@ export default async function PackageDetailPage({ params }: Props) {
             {/* Sticky Inquiry Form Sidebar */}
             <aside>
               <div className="sticky top-24">
+                {pkg.availability === "SOLD_OUT" || pkg.availability === "UPCOMING" ? (
+                  <Card className="p-6 border border-border bg-card shadow-md">
+                    <h3 className="text-xl font-semibold text-foreground mb-1">
+                      {pkg.availability === "SOLD_OUT" ? "Temporarily Sold Out" : "Package Coming Soon"}
+                    </h3>
+                    <p className="text-xs text-muted-foreground">
+                      {pkg.availability === "SOLD_OUT"
+                        ? "This package is currently sold out. Please check back soon or explore other packages."
+                        : "This package is not yet available for booking. Stay tuned!"}
+                    </p>
+                  </Card>
+                ) : (
                 <Card className="p-6 border border-border bg-card shadow-md">
                   <h3 className="text-xl font-semibold text-foreground mb-1">Book / Inquire Tour</h3>
                   <p className="text-xs text-muted-foreground mb-5">
@@ -532,6 +576,7 @@ export default async function PackageDetailPage({ params }: Props) {
                     destinationName={pkg.destination.name}
                   />
                 </Card>
+                )}
               </div>
             </aside>
           </div>

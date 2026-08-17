@@ -110,6 +110,15 @@ export const PackageStatus = {
 
 export type PackageStatus = (typeof PackageStatus)[keyof typeof PackageStatus];
 
+export const PackageAvailability = {
+  AVAILABLE: "AVAILABLE",
+  LIMITED_SEATS: "LIMITED_SEATS",
+  SOLD_OUT: "SOLD_OUT",
+  UPCOMING: "UPCOMING",
+} as const;
+
+export type PackageAvailability = (typeof PackageAvailability)[keyof typeof PackageAvailability];
+
 export const HotelStatus = {
   DRAFT: "DRAFT",
   ACTIVE: "ACTIVE",

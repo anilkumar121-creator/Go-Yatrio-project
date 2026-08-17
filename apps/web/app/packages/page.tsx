@@ -29,10 +29,16 @@ type PackageSummary = {
   durationDays: number;
   durationNights: number;
   priceFrom: number | string;
+  discountedPrice: number | string | null;
+  effectivePrice: number | string;
+  originalPrice: number | string;
+  priceBadge: string | null;
   currency: string;
   packageType: string;
   featuredImage: string | null;
   featured: boolean;
+  availability: "AVAILABLE" | "LIMITED_SEATS" | "SOLD_OUT" | "UPCOMING";
+  availableSeats: number;
   destination?: { name: string; slug: string };
 };
 
@@ -73,7 +79,7 @@ export default async function PackagesPage() {
           {packages.length === 0 ? (
             <EmptyState
               title="No tour packages available"
-              description="Check back soon — we are adding exciting new packages daily."
+              description="Check back soon â€” we are adding exciting new packages daily."
             />
           ) : (
             <div className="grid grid-cols-1 gap-6 tablet:grid-cols-2 desktop:grid-cols-3">
@@ -83,8 +89,15 @@ export default async function PackagesPage() {
                   title={pkg.title}
                   destination={pkg.destination?.name ?? "India"}
                   duration={`${pkg.durationDays}D / ${pkg.durationNights}N`}
-                  price={Number(pkg.priceFrom)}
-                  badge={pkg.featured ? "Featured" : pkg.packageType}
+                  price={Number(pkg.effectivePrice ?? pkg.priceFrom)}
+                  originalPrice={
+                    Number(pkg.effectivePrice ?? pkg.priceFrom) < Number(pkg.originalPrice ?? pkg.priceFrom)
+                      ? Number(pkg.originalPrice ?? pkg.priceFrom)
+                      : undefined
+                  }
+                  badge={pkg.priceBadge ?? (pkg.featured ? "Featured" : pkg.packageType)}
+                  availability={pkg.availability ?? "AVAILABLE"}
+                  availableSeats={pkg.availableSeats ?? 0}
                   image={
                     pkg.featuredImage
                       ? { src: pkg.featuredImage, alt: pkg.title }

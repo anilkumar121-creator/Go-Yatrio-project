@@ -1,4 +1,4 @@
-# GoYatrio — Package Management Documentation
+# GoYatrio â€” Package Management Documentation
 
 This document describes the **Package Management System** (`Phase 8`) for the GoYatrio travel platform.
 
@@ -12,7 +12,7 @@ The Package Management System enables administrators to manage tour packages, du
 
 ## Database Structure
 
-### Prisma Model — `TourPackage`
+### Prisma Model â€” `TourPackage`
 
 | Field | Type | Notes |
 | :--- | :--- | :--- |
@@ -64,8 +64,8 @@ The Package Management System enables administrators to manage tour packages, du
 
 ## Public Website & Inquiry Integration
 
-- **`/packages`** — Public package listing page displaying package cards with duration, starting price, and destination details.
-- **`/packages/[slug]`** — Package detail page featuring:
+- **`/packages`** â€” Public package listing page displaying package cards with duration, starting price, and destination details.
+- **`/packages/[slug]`** â€” Package detail page featuring:
   - Hero banner with price per person, category, and destination.
   - Inclusions and Exclusions checklist cards.
   - Day-by-day itinerary timeline with accommodation & meal details.
@@ -81,3 +81,35 @@ The Package Management System enables administrators to manage tour packages, du
 - Dynamic `generateMetadata` per package using `metaTitle` and `metaDescription`.
 - OpenGraph tags (`title`, `description`, `type`, `locale`, `url`, `images`).
 - Canonical URL pointing to `/packages/[slug]`.
+---
+
+## Phase 13 â€” Package Pricing & Availability
+
+### Models Added
+- `PackageSeasonalPrice` â€” seasonal rate entries (`label`, `priceFrom`, `discountedPrice`, `displayOrder`, `startDate`, `endDate`, `active`).
+- `PackageOffer` â€” promotional offers (`label`, `badge`, `discountedPrice`, `priority`, `startDate`, `endDate`, `featured`, `active`).
+
+### TourPackage Additions
+- `discountedPrice` â€” base discount price.
+- `availability` â€” `AVAILABLE | LIMITED_SEATS | SOLD_OUT | UPCOMING`.
+- `availableSeats` â€” seat count for limited seats.
+- `priceValidFrom` / `priceValidTo` â€” booking/price validity window.
+
+### Effective Price Priority
+1. Active `PackageOffer` (highest `priority`)
+2. Active `PackageSeasonalPrice`
+3. `TourPackage.discountedPrice`
+4. `TourPackage.priceFrom`
+
+### APIs
+- `PATCH /api/admin/packages/:id/availability` â€” set availability + seats.
+- `POST /api/admin/packages/:id/seasonal-prices`, `PUT/DELETE /api/admin/packages/seasonal-prices/:id`.
+- `POST /api/admin/packages/:id/offers`, `PUT/DELETE /api/admin/packages/offers/:id`.
+- Public `GET /api/packages` supports `availability` filter; responses include `effectivePrice`, `originalPrice`, `priceBadge`.
+
+### Admin
+- Package form now manages base/discount price, availability, seats, validity dates, seasonal price repeater, and offers repeater (badge, price, priority, validity, featured/active toggles).
+
+### Public
+- Cards show effective price, strike-through original, offer badge, and availability status.
+- Detail page shows badge, discount, seasonal label, and replaces the booking CTA with Sold Out / Upcoming messaging.
