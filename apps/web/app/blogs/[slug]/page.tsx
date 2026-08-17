@@ -111,7 +111,6 @@ export default async function PublicBlogDetailPage({ params }: Props) {
 
   const relatedBlogs = await getRelatedBlogs(blog.slug);
   const date = blog.publishedAt ? new Date(blog.publishedAt).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" }) : "Draft";
-  const primaryDestination = blog.destinations[0];
 
   return (
     <PageWrapper>

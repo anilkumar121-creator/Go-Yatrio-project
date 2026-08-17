@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import { MapPin, Calendar, CheckCircle2, XCircle, ImageIcon, Hotel, Utensils, Car, Clock, ArrowRight, Star, Building2, Users, FileText } from "lucide-react";
+import { MapPin, Calendar, CheckCircle2, XCircle, ImageIcon, Hotel, Utensils, Car, ArrowRight, Star, Building2, Users, FileText } from "lucide-react";
 import { Container } from "@/components/common/container";
 import { Badge } from "@/components/common/badge";
 import { Card } from "@/components/common/card";

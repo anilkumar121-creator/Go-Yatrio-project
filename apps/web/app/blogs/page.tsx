@@ -73,7 +73,6 @@ export default async function PublicBlogsPage({ searchParams }: Props) {
   if (tag) baseQuery.set("tag", tag);
   if (sort) baseQuery.set("sort", sort);
 
-  const featuredPost = result.items.find((b) => b.categories?.length !== undefined) ? result.items[0] : undefined;
 
   return (
     <PageWrapper>

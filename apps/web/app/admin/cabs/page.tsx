@@ -18,7 +18,6 @@ import { Textarea } from "@/components/common/textarea";
 import { Label } from "@/components/common/label";
 import { Switch } from "@/components/common/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/common/select";
-import { Card } from "@/components/common/card";
 
 type DestinationOption = {
   id: string;

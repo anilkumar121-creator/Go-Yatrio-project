@@ -1,8 +1,6 @@
 import {
   PrismaClient,
   DestinationStatus,
-  PackageStatus,
-  PackageType,
   VehicleType,
   UserRole,
   HotelCategory,
@@ -22,7 +20,7 @@ async function main() {
   const password = process.env.ADMIN_PASSWORD ?? process.env.SEED_ADMIN_PASSWORD ?? "ChangeMe.dev.only.123";
   const passwordHash = await hash(password, 12);
 
-  const admin = await prisma.user.upsert({
+  await prisma.user.upsert({
     where: { email: adminEmail },
     update: { name: "GoYatrio Dev Admin", passwordHash, role: UserRole.ADMIN, isActive: true },
     create: {
@@ -150,12 +148,6 @@ async function main() {
     seededAmenities[am.name] = record;
   }
 
-  const kerala = seededDestinations["kerala"];
-  const goa = seededDestinations["goa"];
-  const kashmir = seededDestinations["kashmir"];
-  const rajasthan = seededDestinations["rajasthan"];
-  const andaman = seededDestinations["andaman"];
-  const ladakh = seededDestinations["leh-ladakh"];
 
   // Seed 20 Hotels
   const hotelSeeds = [
@@ -549,7 +541,7 @@ async function main() {
     const dest = seededDestinations[hSeed.destinationSlug];
     if (!dest) continue;
 
-    const { amenities, roomTypes, destinationSlug, ...hData } = hSeed;
+    const { amenities, roomTypes, ...hData } = hSeed;
 
     const createdHotel = await prisma.hotel.upsert({
       where: { slug: hSeed.slug },
@@ -851,7 +843,7 @@ async function main() {
 
   for (const cabSeed of cabSeeds) {
     const dest = cabSeed.destinationSlug ? seededDestinations[cabSeed.destinationSlug] : undefined;
-    const { amenities, destinationSlug, ...cabData } = cabSeed;
+    const { amenities, ...cabData } = cabSeed;
 
     await prisma.vehicle.upsert({
       where: { slug: cabSeed.slug },
