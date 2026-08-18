@@ -1,4 +1,5 @@
 import { prisma, HotelStatus } from "@goyatrio/database";
+import { attachMediaToItems, getFeaturedMedia, getGalleryMedia } from "../utils/media-resolver.js";
 
 type DestinationCreateInput = {
   name: string;
@@ -39,7 +40,7 @@ async function generateUniqueSlug(name: string, excludeId?: string) {
       select: { id: true },
     });
 
-    if (!existing || existing.id === excludeId) {
+    if (!existing || (excludeId && existing.id === excludeId)) {
       return candidate;
     }
 
@@ -115,7 +116,7 @@ export const destinationService = {
       orderBy: [{ featured: "desc" }, { createdAt: "desc" }],
       skip,
       take,
-    });
+    }).then((items) => attachMediaToItems("DESTINATION", items));
   },
 
   getBySlug(slug: string, publishedOnly = false) {
@@ -159,6 +160,19 @@ export const destinationService = {
           },
         },
       },
+    }).then(async (destination) => {
+      if (!destination) return null;
+
+      const [featuredMedia, galleryMedia] = await Promise.all([
+        getFeaturedMedia("DESTINATION", destination.id),
+        getGalleryMedia("DESTINATION", destination.id),
+      ]);
+
+      return {
+        ...destination,
+        featuredMedia,
+        galleryMedia,
+      };
     });
   },
 

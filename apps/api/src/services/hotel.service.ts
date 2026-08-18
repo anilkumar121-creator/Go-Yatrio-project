@@ -1,4 +1,5 @@
 import { prisma, HotelCategory, HotelStatus, HotelInquiryStatus } from "@goyatrio/database";
+import { attachMediaToItems, getMediaForModule } from "../utils/media-resolver.js";
 
 type HotelImageInput = {
   imageUrl: string;
@@ -151,7 +152,10 @@ export const hotelService = {
       }),
     ]);
 
-    return { total, items };
+    return {
+      total,
+      items: await attachMediaToItems("HOTEL", items),
+    };
   },
 
   listFeatured: async (take = 6) => {
@@ -168,7 +172,7 @@ export const hotelService = {
         amenities: true,
         roomTypes: { where: { active: true }, orderBy: { priceFrom: "asc" } },
       },
-    });
+    }).then((items) => attachMediaToItems("HOTEL", items));
   },
 
   listByDestinationSlug: async (destinationSlug: string, take = 20) => {
@@ -185,11 +189,11 @@ export const hotelService = {
         amenities: true,
         roomTypes: { where: { active: true }, orderBy: { priceFrom: "asc" } },
       },
-    });
+    }).then((items) => attachMediaToItems("HOTEL", items));
   },
 
   getBySlug: async (slug: string) => {
-    return prisma.hotel.findFirst({
+    const hotel = await prisma.hotel.findFirst({
       where: {
         OR: [{ id: slug }, { slug }],
       },
@@ -204,10 +208,15 @@ export const hotelService = {
         },
       },
     });
+
+    if (!hotel) return null;
+
+    const media = await getMediaForModule("HOTEL", hotel.id);
+    return { ...hotel, featuredMedia: media.featuredMedia, galleryMedia: media.galleryMedia };
   },
 
   getById: async (id: string) => {
-    return prisma.hotel.findUnique({
+    const hotel = await prisma.hotel.findUnique({
       where: { id },
       include: {
         destination: true,
@@ -217,6 +226,11 @@ export const hotelService = {
         inquiries: { orderBy: { createdAt: "desc" }, take: 20 },
       },
     });
+
+    if (!hotel) return null;
+
+    const media = await getMediaForModule("HOTEL", hotel.id);
+    return { ...hotel, featuredMedia: media.featuredMedia, galleryMedia: media.galleryMedia };
   },
 
   create: async (data: HotelCreateInput) => {

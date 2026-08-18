@@ -26,6 +26,8 @@ type BlogDetail = {
   contentBlocks: unknown[] | null;
   faq: { question: string; answer: string }[] | null;
   featuredImage: string | null;
+  featuredMedia: { secureUrl: string; altText?: string | null } | null;
+  galleryMedia: { secureUrl: string }[] | null;
   galleryImages: string[];
   author: { id: string; name: string; slug: string; avatar: string | null; role: string | null; bio: string | null } | null;
   status: string;
@@ -178,9 +180,9 @@ export default async function PublicBlogDetailPage({ params }: Props) {
 
       <section className="py-12">
         <Container className="max-w-4xl">
-          {blog.featuredImage ? (
+          {blog.featuredMedia?.secureUrl ?? blog.featuredImage ? (
             <div className="mb-10 overflow-hidden rounded-xl">
-              <Image src={blog.featuredImage} alt={blog.title} width={1200} height={675} className="w-full object-cover" />
+              <Image src={blog.featuredMedia?.secureUrl ?? blog.featuredImage ?? ""} alt={blog.title} width={1200} height={675} className="w-full object-cover" />
             </div>
           ) : null}
 

@@ -58,7 +58,9 @@ type DestinationDetail = {
   state: string | null;
   country: string;
   featuredImage: string | null;
+  featuredMedia: { secureUrl: string; altText?: string | null } | null;
   galleryImages: string[];
+  galleryMedia: { secureUrl: string }[] | null;
   featured: boolean;
   metaTitle: string | null;
   metaDescription: string | null;
@@ -137,11 +139,14 @@ export default async function DestinationDetailPage({ params }: Props) {
     notFound();
   }
 
-  const gallery = destination.galleryImages.length > 0
-    ? destination.galleryImages
-    : destination.featuredImage
-      ? [destination.featuredImage]
-      : [];
+  const gallery =
+    destination.galleryMedia && destination.galleryMedia.length > 0
+      ? destination.galleryMedia.map((m) => m.secureUrl)
+      : destination.galleryImages.length > 0
+        ? destination.galleryImages
+        : destination.featuredMedia?.secureUrl ?? destination.featuredImage
+          ? [destination.featuredMedia?.secureUrl ?? destination.featuredImage ?? ""]
+          : [];
 
   const featuredHotels = destination.hotels.filter((h) => h.featured);
   const otherHotels = destination.hotels.filter((h) => !h.featured);
@@ -150,10 +155,10 @@ export default async function DestinationDetailPage({ params }: Props) {
     <PageWrapper>
       {/* Hero Banner */}
       <section className="relative overflow-hidden bg-primary">
-        {destination.featuredImage ? (
+        {destination.featuredMedia?.secureUrl ?? destination.featuredImage ? (
           <>
             <Image
-              src={destination.featuredImage}
+              src={destination.featuredMedia?.secureUrl ?? destination.featuredImage ?? ""}
               alt={destination.name}
               fill
               priority

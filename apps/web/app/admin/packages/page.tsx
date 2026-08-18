@@ -21,6 +21,7 @@ import { Label } from "@/components/common/label";
 import { Switch } from "@/components/common/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/common/select";
 import { Card } from "@/components/common/card";
+import { MediaLinkPanel } from "@/components/media/media-link-panel";
 
 type DestinationOption = {
   id: string;
@@ -904,6 +905,9 @@ export default function AdminPackagesPage() {
                 <div className="space-y-2 tablet:col-span-2">
                   <Label htmlFor="package-gallery">Gallery Images (one URL per line)</Label>
                   <Textarea id="package-gallery" rows={3} value={form.galleryImages} onChange={(e) => setForm({ ...form, galleryImages: e.target.value })} placeholder={"https://...\nhttps://..."} />
+                </div>
+                <div className="space-y-2 tablet:col-span-2">
+                  <MediaLinkPanel module="PACKAGE" moduleId={editingPackage?.id} />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="package-meta-title">Meta Title</Label>

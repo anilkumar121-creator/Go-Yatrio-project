@@ -1,4 +1,5 @@
 import { prisma, CabStatus, CabTripType, CabFuelType, VehicleType } from "@goyatrio/database";
+import { attachMediaToItems, getMediaForModule } from "../utils/media-resolver.js";
 
 type CabCreateInput = {
   vehicleName: string;
@@ -134,7 +135,10 @@ export const cabService = {
       }),
     ]);
 
-    return { total, items };
+    return {
+      total,
+      items: await attachMediaToItems("CAB", items),
+    };
   },
 
   listFeatured: async (take = 6) => {
@@ -146,7 +150,7 @@ export const cabService = {
         destination: { select: { id: true, name: true, slug: true } },
         amenities: true,
       },
-    });
+    }).then((items) => attachMediaToItems("CAB", items));
   },
 
   listByDestinationSlug: async (destinationSlug: string, take = 20) => {
@@ -162,11 +166,11 @@ export const cabService = {
         destination: true,
         amenities: true,
       },
-    });
+    }).then((items) => attachMediaToItems("CAB", items));
   },
 
   getBySlug: async (slug: string) => {
-    return prisma.vehicle.findFirst({
+    const cab = await prisma.vehicle.findFirst({
       where: { OR: [{ id: slug }, { slug }] },
       include: {
         destination: true,
@@ -177,10 +181,15 @@ export const cabService = {
         },
       },
     });
+
+    if (!cab) return null;
+
+    const media = await getMediaForModule("CAB", cab.id);
+    return { ...cab, featuredMedia: media.featuredMedia, galleryMedia: media.galleryMedia };
   },
 
   get: async (id: string) => {
-    return prisma.vehicle.findUnique({
+    const cab = await prisma.vehicle.findUnique({
       where: { id },
       include: {
         destination: true,
@@ -188,6 +197,11 @@ export const cabService = {
         inquiries: { orderBy: { createdAt: "desc" }, take: 20 },
       },
     });
+
+    if (!cab) return null;
+
+    const media = await getMediaForModule("CAB", cab.id);
+    return { ...cab, featuredMedia: media.featuredMedia, galleryMedia: media.galleryMedia };
   },
 
   create: async (data: CabCreateInput) => {

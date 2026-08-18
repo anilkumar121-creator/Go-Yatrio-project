@@ -13,7 +13,7 @@ import { adminDestinationsRouter, destinationsRouter } from "./routes/destinatio
 import { adminHotelsRouter, hotelsRouter } from "./routes/hotels.js";
 import { inquiriesRouter } from "./routes/inquiries.js";
 import { adminItinerariesRouter, itinerariesRouter } from "./routes/itineraries.js";
-import { mediaRouter } from "./routes/media.js";
+import { adminMediaRouter, mediaRouter } from "./routes/media.js";
 import { adminPackagesRouter, packagesRouter } from "./routes/packages.js";
 
 export function createApp() {
@@ -49,6 +49,7 @@ export function createApp() {
   app.use("/api/blogs", blogsRouter);
   app.use("/api/admin/blogs", adminBlogsRouter);
   app.use("/api/media", mediaRouter);
+  app.use("/api/admin/media", adminMediaRouter);
 
   app.use(notFound);
   app.use(errorHandler);

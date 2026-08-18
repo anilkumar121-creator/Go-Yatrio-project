@@ -29,6 +29,7 @@ type DestinationSummary = {
   state: string | null;
   country: string;
   featuredImage: string | null;
+  featuredMedia: { secureUrl: string; altText?: string | null } | null;
   featured: boolean;
 };
 
@@ -69,7 +70,7 @@ export default async function DestinationsPage() {
           {destinations.length === 0 ? (
             <EmptyState
               title="No destinations yet"
-              description="Check back soon — we are adding new destinations regularly."
+              description="Check back soon â€” we are adding new destinations regularly."
             />
           ) : (
             <div className="grid grid-cols-1 gap-6 tablet:grid-cols-2 desktop:grid-cols-3">
@@ -80,8 +81,8 @@ export default async function DestinationsPage() {
                   location={destination.state ?? destination.country}
                   description={destination.shortDescription}
                   image={
-                    destination.featuredImage
-                      ? { src: destination.featuredImage, alt: destination.name }
+                    destination.featuredMedia?.secureUrl ?? destination.featuredImage
+                      ? { src: destination.featuredMedia?.secureUrl ?? destination.featuredImage ?? "", alt: destination.name }
                       : undefined
                   }
                   badge={destination.featured ? "Featured" : undefined}

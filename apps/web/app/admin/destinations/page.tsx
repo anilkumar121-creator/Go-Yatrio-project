@@ -19,6 +19,7 @@ import { Textarea } from "@/components/common/textarea";
 import { Label } from "@/components/common/label";
 import { Switch } from "@/components/common/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/common/select";
+import { MediaLinkPanel } from "@/components/media/media-link-panel";
 
 type Destination = {
   id: string;
@@ -442,6 +443,9 @@ export default function AdminDestinationsPage() {
                 <div className="space-y-2 tablet:col-span-2">
                   <Label htmlFor="destination-gallery">Gallery Images (one URL per line)</Label>
                   <Textarea id="destination-gallery" rows={3} value={form.galleryImages} onChange={(e) => setForm({ ...form, galleryImages: e.target.value })} placeholder={"https://...\nhttps://..."} />
+                </div>
+                <div className="space-y-2 tablet:col-span-2">
+                  <MediaLinkPanel module="DESTINATION" moduleId={editingDestination?.id} />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="destination-meta-title">Meta Title</Label>

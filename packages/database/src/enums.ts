@@ -96,6 +96,33 @@ export const MediaResourceType = {
 
 export type MediaResourceType = (typeof MediaResourceType)[keyof typeof MediaResourceType];
 
+export const MediaStatus = {
+  ACTIVE: "ACTIVE",
+  ARCHIVED: "ARCHIVED",
+} as const;
+
+export type MediaStatus = (typeof MediaStatus)[keyof typeof MediaStatus];
+
+export const MediaModule = {
+  DESTINATION: "DESTINATION",
+  PACKAGE: "PACKAGE",
+  HOTEL: "HOTEL",
+  CAB: "CAB",
+  BLOG: "BLOG",
+  HOMEPAGE: "HOMEPAGE",
+} as const;
+
+export type MediaModule = (typeof MediaModule)[keyof typeof MediaModule];
+
+export const MediaLinkRole = {
+  FEATURED: "FEATURED",
+  GALLERY: "GALLERY",
+  VIDEO: "VIDEO",
+  DOCUMENT: "DOCUMENT",
+} as const;
+
+export type MediaLinkRole = (typeof MediaLinkRole)[keyof typeof MediaLinkRole];
+
 export const DestinationStatus = {
   DRAFT: "DRAFT",
   PUBLISHED: "PUBLISHED",

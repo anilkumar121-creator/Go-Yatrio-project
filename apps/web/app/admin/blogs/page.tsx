@@ -17,6 +17,7 @@ import { Textarea } from "@/components/common/textarea";
 import { Label } from "@/components/common/label";
 import { Switch } from "@/components/common/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/common/select";
+import { MediaLinkPanel } from "@/components/media/media-link-panel";
 
 type BlogAuthor = { id: string; name: string; slug: string; avatar: string | null };
 type BlogCategory = { id: string; name: string; slug: string };
@@ -655,7 +656,7 @@ export default function AdminBlogsPage() {
                 </div>
 
                 <div className="space-y-2 tablet:col-span-2">
-                  <Label htmlFor="blog-blocks">Advanced: Content Blocks (JSON array â€” optional)</Label>
+                  <Label htmlFor="blog-blocks">Advanced: Content Blocks (JSON array Ã¢â‚¬â€ optional)</Label>
                   <Textarea
                     id="blog-blocks"
                     rows={8}
@@ -670,7 +671,7 @@ export default function AdminBlogsPage() {
                 </div>
 
                 <div className="space-y-2 tablet:col-span-2">
-                  <Label htmlFor="blog-faq">Advanced: FAQ (JSON array â€” optional)</Label>
+                  <Label htmlFor="blog-faq">Advanced: FAQ (JSON array Ã¢â‚¬â€ optional)</Label>
                   <Textarea
                     id="blog-faq"
                     rows={4}
@@ -703,6 +704,10 @@ export default function AdminBlogsPage() {
                     onChange={(e) => setForm({ ...form, galleryImages: e.target.value })}
                     placeholder={"https://...\nhttps://..."}
                   />
+                </div>
+
+                <div className="space-y-2 tablet:col-span-2">
+                  <MediaLinkPanel module="BLOG" moduleId={editingBlog?.id} />
                 </div>
 
                 {/* Category / Tag / Destination / Package Links */}

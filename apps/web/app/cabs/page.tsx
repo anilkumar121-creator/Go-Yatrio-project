@@ -36,6 +36,7 @@ type CabCard = {
   fuelType: string;
   priceFrom: number;
   image: string | null;
+  featuredMedia: { secureUrl: string; altText?: string | null } | null;
   tripTypes: string[];
   featured: boolean;
   destination?: DestinationOption;
@@ -129,7 +130,7 @@ export default async function PublicCabsPage({ searchParams }: Props) {
         <Container>
           <SectionTitle
             title="Cab Rentals & Car Hire"
-            description="From hatchbacks to luxury SUVs and tempo travellers Ã¢â‚¬â€ find the perfect cab for local, outstation, airport, and multi-day trips."
+            description="From hatchbacks to luxury SUVs and tempo travellers ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â find the perfect cab for local, outstation, airport, and multi-day trips."
             align="left"
           />
         </Container>
@@ -200,8 +201,8 @@ export default async function PublicCabsPage({ searchParams }: Props) {
                 {result.items.map((cab) => (
                   <Card key={cab.id} className="overflow-hidden border border-border bg-card shadow-sm transition-all hover:shadow-md">
                     <div className="relative aspect-[16/10]">
-                      {cab.image ? (
-                        <CardMedia src={cab.image} alt={cab.vehicleName} className="h-full w-full" />
+                      {cab.featuredMedia?.secureUrl ?? cab.image ? (
+                        <CardMedia src={cab.featuredMedia?.secureUrl ?? cab.image ?? ""} alt={cab.vehicleName} className="h-full w-full" />
                       ) : (
                         <div className="flex h-full w-full items-center justify-center bg-primary/10 text-primary">
                           <Car className="size-8" />

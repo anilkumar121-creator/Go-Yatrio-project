@@ -1,4 +1,5 @@
 import { prisma, BlogStatus, BlogContentFormat } from "@goyatrio/database";
+import { attachMediaToItems, getMediaForModule } from "../utils/media-resolver.js";
 
 type BlogCreateInput = {
   title: string;
@@ -132,7 +133,10 @@ export const blogService = {
       }),
     ]);
 
-    return { total, items };
+    return {
+      total,
+      items: await attachMediaToItems("BLOG", items),
+    };
   },
 
   listFeatured: async (take = 6) => {
@@ -141,7 +145,7 @@ export const blogService = {
       take,
       orderBy: [{ publishedAt: "desc" }],
       include: blogIncludes,
-    });
+    }).then((items) => attachMediaToItems("BLOG", items));
   },
 
   listCategories: async () => {
@@ -157,17 +161,27 @@ export const blogService = {
   },
 
   getBySlug: async (slug: string) => {
-    return prisma.blog.findFirst({
+    const blog = await prisma.blog.findFirst({
       where: { OR: [{ id: slug }, { slug }] },
       include: blogIncludes,
     });
+
+    if (!blog) return null;
+
+    const media = await getMediaForModule("BLOG", blog.id);
+    return { ...blog, featuredMedia: media.featuredMedia, galleryMedia: media.galleryMedia };
   },
 
   get: async (id: string) => {
-    return prisma.blog.findUnique({
+    const blog = await prisma.blog.findUnique({
       where: { id },
       include: blogIncludes,
     });
+
+    if (!blog) return null;
+
+    const media = await getMediaForModule("BLOG", blog.id);
+    return { ...blog, featuredMedia: media.featuredMedia, galleryMedia: media.galleryMedia };
   },
 
   related: async (blogId: string, take = 3) => {

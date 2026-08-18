@@ -40,7 +40,9 @@ type CabDetail = {
   priceFrom: number;
   currency: string;
   image: string | null;
+  featuredMedia: { secureUrl: string; altText?: string | null } | null;
   galleryImages: string[];
+  galleryMedia: { secureUrl: string }[] | null;
   tripTypes: string[];
   featured: boolean;
   destination?: { id: string; name: string; slug: string };
@@ -125,7 +127,12 @@ export default async function PublicCabDetailPage({ params }: Props) {
   }
 
   const relatedCabs = cab.destination ? await getRelatedCabs(cab.destination.slug, cab.id) : [];
-  const gallery = [cab.image, ...cab.galleryImages].filter((url): url is string => typeof url === "string" && url.length > 0);
+  const gallery = [
+    cab.featuredMedia?.secureUrl,
+    ...(cab.galleryMedia ?? []).map((m) => m.secureUrl),
+    cab.image,
+    ...cab.galleryImages,
+  ].filter((url): url is string => typeof url === "string" && url.length > 0);
 
   const structuredData = {
     "@context": "https://schema.org",

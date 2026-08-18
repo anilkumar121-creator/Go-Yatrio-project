@@ -36,6 +36,7 @@ type HotelCard = {
   starRating: number;
   featured: boolean;
   destination: DestinationOption;
+  featuredMedia: { secureUrl: string; altText?: string | null } | null;
   images: { id: string; imageUrl: string; altText: string | null }[];
   amenities: { id: string; name: string }[];
   roomTypes: { id: string; roomName: string; priceFrom: number }[];
@@ -188,7 +189,7 @@ export default async function PublicHotelsPage({ searchParams }: Props) {
               <div className="grid grid-cols-1 gap-6 tablet:grid-cols-2 desktop:grid-cols-3">
                 {result.items.map((hotel) => {
                   const minPrice = hotel.roomTypes[0]?.priceFrom ?? 0;
-                  const imageUrl = hotel.images[0]?.imageUrl ?? "";
+                  const imageUrl = hotel.featuredMedia?.secureUrl ?? hotel.images[0]?.imageUrl ?? "";
 
                   return (
                     <Card key={hotel.id} className="overflow-hidden border border-border bg-card shadow-sm transition-all hover:shadow-md">

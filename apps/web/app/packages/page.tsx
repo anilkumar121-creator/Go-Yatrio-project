@@ -36,6 +36,7 @@ type PackageSummary = {
   currency: string;
   packageType: string;
   featuredImage: string | null;
+  featuredMedia: { secureUrl: string; altText?: string | null } | null;
   featured: boolean;
   availability: "AVAILABLE" | "LIMITED_SEATS" | "SOLD_OUT" | "UPCOMING";
   availableSeats: number;
@@ -79,7 +80,7 @@ export default async function PackagesPage() {
           {packages.length === 0 ? (
             <EmptyState
               title="No tour packages available"
-              description="Check back soon â€” we are adding exciting new packages daily."
+              description="Check back soon Ã¢â‚¬â€ we are adding exciting new packages daily."
             />
           ) : (
             <div className="grid grid-cols-1 gap-6 tablet:grid-cols-2 desktop:grid-cols-3">
@@ -99,8 +100,8 @@ export default async function PackagesPage() {
                   availability={pkg.availability ?? "AVAILABLE"}
                   availableSeats={pkg.availableSeats ?? 0}
                   image={
-                    pkg.featuredImage
-                      ? { src: pkg.featuredImage, alt: pkg.title }
+                    pkg.featuredMedia?.secureUrl ?? pkg.featuredImage
+                      ? { src: pkg.featuredMedia?.secureUrl ?? pkg.featuredImage ?? "", alt: pkg.title }
                       : undefined
                   }
                   ctaHref={`/packages/${pkg.slug}`}

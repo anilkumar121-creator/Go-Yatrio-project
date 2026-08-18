@@ -109,6 +109,27 @@ enum MediaResourceType {
   RAW
 }
 
+enum MediaStatus {
+  ACTIVE
+  ARCHIVED
+}
+
+enum MediaModule {
+  DESTINATION
+  PACKAGE
+  HOTEL
+  CAB
+  BLOG
+  HOMEPAGE
+}
+
+enum MediaLinkRole {
+  FEATURED
+  GALLERY
+  VIDEO
+  DOCUMENT
+}
+
 enum DestinationStatus {
   DRAFT
   PUBLISHED
@@ -587,20 +608,51 @@ model BlogTag {
 }
 
 model Media {
-  id           String            @id @default(cuid())
-  publicId     String            @unique
-  url          String
-  secureUrl    String
-  resourceType MediaResourceType
-  format       String?
-  width        Int?
-  height       Int?
-  altText      String?
-  createdAt    DateTime          @default(now())
-  updatedAt    DateTime          @updatedAt
+  id              String            @id @default(cuid())
+  publicId        String            @unique
+  url             String
+  secureUrl       String
+  resourceType    MediaResourceType @default(IMAGE)
+  mimeType        String?
+  format          String?
+  folder          String?
+  fileName        String?
+  width           Int?
+  height          Int?
+  size            BigInt?
+  durationSeconds Float?
+  altText         String?
+  caption         String?
+  tags            String[]
+  metadata        Json?
+  createdBy       String?
+  status          MediaStatus       @default(ACTIVE)
+  usageCount      Int               @default(0)
+  deletedAt       DateTime?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  links           MediaLink[]
 
-  @@index([resourceType])
+  @@index([resourceType, status])
+  @@index([folder])
+  @@index([createdBy])
   @@map("media")
+}
+
+model MediaLink {
+  id        String          @id @default(cuid())
+  mediaId   String
+  module    MediaModule
+  moduleId  String
+  role      MediaLinkRole   @default(GALLERY)
+  sortOrder Int             @default(0)
+  createdAt DateTime        @default(now())
+  media     Media           @relation(fields: [mediaId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@unique([mediaId, module, moduleId, role])
+  @@index([module, moduleId])
+  @@index([mediaId])
+  @@map("media_links")
 }
 
 model SeoMetadata {

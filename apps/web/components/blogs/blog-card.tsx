@@ -11,6 +11,7 @@ export type BlogCardData = {
   slug: string;
   excerpt: string;
   featuredImage: string | null;
+  featuredMedia?: { secureUrl: string; altText?: string | null } | null;
   readingTimeMinutes?: number;
   viewCount?: number;
   publishedAt?: string | null;
@@ -25,7 +26,7 @@ type BlogCardProps = {
 
 export function BlogCard({ blog, featured = false }: BlogCardProps) {
   const date = blog.publishedAt ? new Date(blog.publishedAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : "Draft";
-  const imageUrl = blog.featuredImage ?? "";
+  const imageUrl = blog.featuredMedia?.secureUrl ?? blog.featuredImage ?? "";
 
   return (
     <Card className={`overflow-hidden border border-border bg-card transition-all hover:shadow-md ${featured ? "shadow-lg" : "shadow-sm"}`}>

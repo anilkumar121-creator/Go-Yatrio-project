@@ -1,4 +1,5 @@
 import { prisma, PackageType, HotelStatus, type PackageAvailability } from "@goyatrio/database";
+import { attachMediaToItems, getMediaForModule } from "../utils/media-resolver.js";
 
 type PackageSeasonalInput = {
   id?: string;
@@ -305,7 +306,8 @@ export const packageService = {
       take,
     });
 
-    return items.map(withPricing);
+    const priced = items.map(withPricing);
+    return attachMediaToItems("PACKAGE", priced);
   },
 
   async getBySlug(slug: string, publishedOnly = false) {
@@ -365,7 +367,13 @@ export const packageService = {
       },
     });
 
-    return item ? withPricing(item) : null;
+    if (!item) return null;
+
+    const [featuredMedia, galleryMedia] = await Promise.all([
+      getMediaForModule("PACKAGE", item.id),
+    ]).then(([resolved]) => [resolved.featuredMedia, resolved.galleryMedia]);
+
+    return withPricing({ ...item, featuredMedia, galleryMedia });
   },
 
   async get(id: string) {
@@ -421,7 +429,10 @@ export const packageService = {
       },
     });
 
-    return item ? withPricing(item) : null;
+    if (!item) return null;
+
+    const media = await getMediaForModule("PACKAGE", item.id);
+    return withPricing({ ...item, featuredMedia: media.featuredMedia, galleryMedia: media.galleryMedia });
   },
 
   async create(data: PackageCreateInput) {

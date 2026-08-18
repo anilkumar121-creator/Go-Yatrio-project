@@ -18,6 +18,7 @@ import { Textarea } from "@/components/common/textarea";
 import { Label } from "@/components/common/label";
 import { Switch } from "@/components/common/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/common/select";
+import { MediaLinkPanel } from "@/components/media/media-link-panel";
 
 type DestinationOption = {
   id: string;
@@ -440,7 +441,7 @@ export default function AdminCabsPage() {
                     </div>
                     <span className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
                       <MapPin className="size-3 text-primary" />
-                      {row.destination?.name ?? "All Destinations"} Ã‚Â· /{row.slug}
+                      {row.destination?.name ?? "All Destinations"} Ãƒâ€šÃ‚Â· /{row.slug}
                     </span>
                   </div>
                 ),
@@ -469,7 +470,7 @@ export default function AdminCabsPage() {
                   <div>
                     <Price amount={Number(row.priceFrom)} size="sm" />
                     <span className="block text-[11px] text-muted-foreground">
-                      Ã¢â€šÂ¹{Number(row.extraKmCharge)}/km extra
+                      ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¹{Number(row.extraKmCharge)}/km extra
                     </span>
                   </div>
                 ),
@@ -647,7 +648,7 @@ export default function AdminCabsPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="cab-price">Base Price From (Ã¢â€šÂ¹) *</Label>
+                  <Label htmlFor="cab-price">Base Price From (ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¹) *</Label>
                   <Input
                     id="cab-price"
                     type="number"
@@ -659,7 +660,7 @@ export default function AdminCabsPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="cab-base-fare">Base Fare (Ã¢â€šÂ¹)</Label>
+                  <Label htmlFor="cab-base-fare">Base Fare (ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¹)</Label>
                   <Input
                     id="cab-base-fare"
                     type="number"
@@ -670,7 +671,7 @@ export default function AdminCabsPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="cab-extra">Extra KM Charge (Ã¢â€šÂ¹/km)</Label>
+                  <Label htmlFor="cab-extra">Extra KM Charge (ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¹/km)</Label>
                   <Input
                     id="cab-extra"
                     type="number"
@@ -681,7 +682,7 @@ export default function AdminCabsPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="cab-night">Night Charge (Ã¢â€šÂ¹)</Label>
+                  <Label htmlFor="cab-night">Night Charge (ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¹)</Label>
                   <Input
                     id="cab-night"
                     type="number"
@@ -692,7 +693,7 @@ export default function AdminCabsPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="cab-driver">Driver Allowance (Ã¢â€šÂ¹/day)</Label>
+                  <Label htmlFor="cab-driver">Driver Allowance (ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¹/day)</Label>
                   <Input
                     id="cab-driver"
                     type="number"
@@ -746,6 +747,9 @@ export default function AdminCabsPage() {
                     onChange={(e) => setForm({ ...form, galleryImages: e.target.value })}
                     placeholder={"https://...\nhttps://..."}
                   />
+                </div>
+                <div className="space-y-2 tablet:col-span-2">
+                  <MediaLinkPanel module="CAB" moduleId={editingVehicle?.id} />
                 </div>
 
                 {/* Air Conditioning + Featured toggles */}

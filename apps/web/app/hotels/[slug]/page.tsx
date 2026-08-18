@@ -54,6 +54,8 @@ type HotelDetail = {
     slug: string;
   };
   images: HotelImage[];
+  featuredMedia: { secureUrl: string; altText?: string | null } | null;
+  galleryMedia: { secureUrl: string }[] | null;
   amenities: HotelAmenity[];
   roomTypes: HotelRoomType[];
   packages: { id: string; title: string; slug: string; durationDays: number; priceFrom: number }[];
@@ -68,6 +70,8 @@ type RelatedHotel = {
   hotelCategory: string;
   starRating: number;
   images: HotelImage[];
+  featuredMedia: { secureUrl: string; altText?: string | null } | null;
+  galleryMedia: { secureUrl: string }[] | null;
   roomTypes: HotelRoomType[];
 };
 
@@ -138,7 +142,12 @@ export default async function PublicHotelDetailPage({ params }: Props) {
   }
 
   const relatedHotels = await getRelatedHotels(hotel.destination.slug, hotel.id);
-  const gallery = hotel.images.length > 0 ? hotel.images : [];
+  const gallery =
+    hotel.galleryMedia && hotel.galleryMedia.length > 0
+      ? hotel.galleryMedia.map((m) => ({ imageUrl: m.secureUrl, id: m.secureUrl, altText: null, sortOrder: 0 }))
+      : hotel.images.length > 0
+        ? hotel.images
+        : [];
   const starRating = hotel.starRating;
 
   const structuredData = {
@@ -168,9 +177,9 @@ export default async function PublicHotelDetailPage({ params }: Props) {
 
       {/* Hero Banner */}
       <section className="relative overflow-hidden bg-primary">
-        {gallery[0]?.imageUrl ? (
+        {hotel.featuredMedia?.secureUrl ?? gallery[0]?.imageUrl ? (
           <div className="relative">
-            <CardMedia src={gallery[0].imageUrl} alt={hotel.name} className="w-full h-[22rem] tablet:h-[28rem]" />
+            <CardMedia src={hotel.featuredMedia?.secureUrl ?? gallery[0]?.imageUrl ?? ""} alt={hotel.name} className="w-full h-[22rem] tablet:h-[28rem]" />
             <div className="absolute inset-0 bg-black/50" aria-hidden="true" />
           </div>
         ) : (

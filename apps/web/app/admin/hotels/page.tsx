@@ -19,6 +19,7 @@ import { Label } from "@/components/common/label";
 import { Switch } from "@/components/common/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/common/select";
 import { Card } from "@/components/common/card";
+import { MediaLinkPanel } from "@/components/media/media-link-panel";
 
 type DestinationOption = {
   id: string;
@@ -727,7 +728,7 @@ export default function AdminHotelsPage() {
                           </div>
 
                           <div className="space-y-1">
-                            <Label className="text-xs">Price From (₹/night) *</Label>
+                            <Label className="text-xs">Price From (â‚¹/night) *</Label>
                             <Input
                               type="number"
                               value={room.priceFrom}
@@ -791,6 +792,10 @@ export default function AdminHotelsPage() {
                     onChange={(e) => setForm({ ...form, images: e.target.value })}
                     placeholder={"https://images.unsplash.com/...\nhttps://images.unsplash.com/..."}
                   />
+                </div>
+
+                <div className="space-y-2 tablet:col-span-2">
+                  <MediaLinkPanel module="HOTEL" moduleId={editingHotel?.id} />
                 </div>
 
                 <div className="flex items-center gap-3 rounded-md border border-border bg-muted/30 p-3 tablet:col-span-2">

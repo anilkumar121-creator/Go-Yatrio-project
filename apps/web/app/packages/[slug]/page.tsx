@@ -107,7 +107,9 @@ type PackageDetail = {
   inclusions: string[];
   exclusions: string[];
   featuredImage: string | null;
+  featuredMedia: { secureUrl: string; altText?: string | null } | null;
   galleryImages: string[];
+  galleryMedia: { secureUrl: string }[] | null;
   featured: boolean;
   metaTitle: string | null;
   metaDescription: string | null;
@@ -185,11 +187,14 @@ export default async function PackageDetailPage({ params }: Props) {
     notFound();
   }
 
-  const gallery = pkg.galleryImages.length > 0
-    ? pkg.galleryImages
-    : pkg.featuredImage
-      ? [pkg.featuredImage]
-      : [];
+  const gallery =
+    pkg.galleryMedia && pkg.galleryMedia.length > 0
+      ? pkg.galleryMedia.map((m) => m.secureUrl)
+      : pkg.galleryImages.length > 0
+        ? pkg.galleryImages
+        : pkg.featuredMedia?.secureUrl ?? pkg.featuredImage
+          ? [pkg.featuredMedia?.secureUrl ?? pkg.featuredImage ?? ""]
+          : [];
 
   const activeItinerary = pkg.itineraries.find((i) => i.isDefault) ?? pkg.itineraries[0];
 
@@ -197,10 +202,10 @@ export default async function PackageDetailPage({ params }: Props) {
     <PageWrapper>
       {/* Hero Banner */}
       <section className="relative overflow-hidden bg-primary">
-        {pkg.featuredImage ? (
+        {pkg.featuredMedia?.secureUrl ?? pkg.featuredImage ? (
           <>
             <Image
-              src={pkg.featuredImage}
+              src={pkg.featuredMedia?.secureUrl ?? pkg.featuredImage ?? ""}
               alt={pkg.title}
               fill
               priority
