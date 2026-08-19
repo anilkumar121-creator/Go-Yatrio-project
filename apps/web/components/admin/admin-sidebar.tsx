@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import Link from "next/link";
 import Image from "next/image";
@@ -14,6 +14,7 @@ import {
   Image as ImageIcon,
   MessageSquare,
   Settings,
+  ListChecks,
   LogOut,
   X,
 } from "lucide-react";
@@ -30,6 +31,7 @@ export const adminNavItems = [
   { name: "Media", href: "/admin/media", icon: ImageIcon },
   { name: "Inquiries", href: "/admin/inquiries", icon: MessageSquare },
   { name: "Settings", href: "/admin/settings", icon: Settings },
+  { name: "Lookup Tables", href: "/admin/settings/lookups", icon: ListChecks },
 ];
 
 type AdminSidebarProps = {
@@ -106,7 +108,7 @@ export function AdminSidebar({ mobileOpen = false, onMobileClose, className }: A
                   "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
                   isActive
                     ? "bg-primary text-white shadow-sm"
-                    : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+                    : "text-muted-foreground hover:bg-muted/50 hover:text-foreground",
                 )}
               >
                 <Icon className="size-4 shrink-0" />
@@ -139,9 +141,7 @@ export function AdminSidebar({ mobileOpen = false, onMobileClose, className }: A
       {/* Mobile Drawer Overlay */}
       {mobileOpen ? (
         <div className="fixed inset-0 z-50 flex desktop:hidden bg-black/50">
-          <div className="w-64 h-full animate-in slide-in-from-left duration-200">
-            {navContent}
-          </div>
+          <div className="w-64 h-full animate-in slide-in-from-left duration-200">{navContent}</div>
           <div className="flex-1" onClick={onMobileClose} />
         </div>
       ) : null}

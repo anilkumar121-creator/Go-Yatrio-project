@@ -17,9 +17,16 @@ import { Input } from "@/components/common/input";
 import { Textarea } from "@/components/common/textarea";
 import { Label } from "@/components/common/label";
 import { Switch } from "@/components/common/switch";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/common/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/common/select";
 import { Card } from "@/components/common/card";
 import { MediaLinkPanel } from "@/components/media/media-link-panel";
+import { useLookups } from "@/lib/use-lookups";
 
 type DestinationOption = {
   id: string;
@@ -169,6 +176,10 @@ export default function AdminHotelsPage() {
 
   const [deleteTarget, setDeleteTarget] = useState<HotelItem | null>(null);
   const [deleting, setDeleting] = useState(false);
+
+  const { options: hotelCategoryOptions } = useLookups(["HOTEL_CATEGORY"], {
+    HOTEL_CATEGORY: ["BUDGET", "STANDARD", "PREMIUM", "LUXURY"],
+  });
 
   const loadDestinations = useCallback(async () => {
     try {
@@ -365,7 +376,10 @@ export default function AdminHotelsPage() {
     }
   };
 
-  const handleToggleStatus = async (hotel: HotelItem, newStatus: "ACTIVE" | "INACTIVE" | "DRAFT") => {
+  const handleToggleStatus = async (
+    hotel: HotelItem,
+    newStatus: "ACTIVE" | "INACTIVE" | "DRAFT",
+  ) => {
     try {
       await apiFetch(`/api/admin/hotels/${hotel.id}/status`, {
         method: "PATCH",
@@ -397,7 +411,11 @@ export default function AdminHotelsPage() {
         ) : null}
 
         <div className="flex flex-col gap-3 tablet:flex-row tablet:items-center tablet:justify-between">
-          <SearchBar value={search} onChange={setSearch} placeholder="Search hotels, cities, destinations..." />
+          <SearchBar
+            value={search}
+            onChange={setSearch}
+            placeholder="Search hotels, cities, destinations..."
+          />
           <div className="flex items-center gap-3">
             <Select value={categoryFilter} onValueChange={setCategoryFilter}>
               <SelectTrigger className="w-36">
@@ -475,7 +493,11 @@ export default function AdminHotelsPage() {
                 header: "Price From",
                 cell: (row) => {
                   const minPrice = row.roomTypes[0]?.priceFrom ?? 0;
-                  return minPrice ? <Price amount={Number(minPrice)} size="sm" /> : <span className="text-xs text-muted-foreground">N/A</span>;
+                  return minPrice ? (
+                    <Price amount={Number(minPrice)} size="sm" />
+                  ) : (
+                    <span className="text-xs text-muted-foreground">N/A</span>
+                  );
                 },
               },
               {
@@ -483,7 +505,9 @@ export default function AdminHotelsPage() {
                 cell: (row) => (
                   <Select
                     value={row.status}
-                    onValueChange={(val) => handleToggleStatus(row, val as "ACTIVE" | "INACTIVE" | "DRAFT")}
+                    onValueChange={(val) =>
+                      handleToggleStatus(row, val as "ACTIVE" | "INACTIVE" | "DRAFT")
+                    }
                   >
                     <SelectTrigger className="h-8 w-28 text-xs">
                       <SelectValue />
@@ -537,7 +561,8 @@ export default function AdminHotelsPage() {
                   {editingHotel ? "Edit Hotel Details" : "Create New Partner Hotel"}
                 </DialogPrimitive.Title>
                 <DialogPrimitive.Description className="text-xs text-muted-foreground">
-                  Configure hotel profile, address, star rating, room types, amenities, and gallery images.
+                  Configure hotel profile, address, star rating, room types, amenities, and gallery
+                  images.
                 </DialogPrimitive.Description>
               </div>
               <DialogPrimitive.Close className="rounded-sm opacity-70 hover:opacity-100">
@@ -589,17 +614,21 @@ export default function AdminHotelsPage() {
                   <Select
                     value={form.hotelCategory}
                     onValueChange={(val) =>
-                      setForm({ ...form, hotelCategory: val as "BUDGET" | "STANDARD" | "PREMIUM" | "LUXURY" })
+                      setForm({
+                        ...form,
+                        hotelCategory: val as "BUDGET" | "STANDARD" | "PREMIUM" | "LUXURY",
+                      })
                     }
                   >
                     <SelectTrigger id="hotel-category">
                       <SelectValue placeholder="Category" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="BUDGET">Budget</SelectItem>
-                      <SelectItem value="STANDARD">Standard</SelectItem>
-                      <SelectItem value="PREMIUM">Premium</SelectItem>
-                      <SelectItem value="LUXURY">Luxury</SelectItem>
+                      {(hotelCategoryOptions.HOTEL_CATEGORY ?? []).map((opt) => (
+                        <SelectItem key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -674,7 +703,10 @@ export default function AdminHotelsPage() {
                   <Label className="font-semibold">Hotel Amenities</Label>
                   <div className="grid grid-cols-2 gap-2 tablet:grid-cols-3">
                     {defaultAmenityOptions.map((am) => (
-                      <label key={am} className="flex items-center gap-2 text-xs text-foreground cursor-pointer">
+                      <label
+                        key={am}
+                        className="flex items-center gap-2 text-xs text-foreground cursor-pointer"
+                      >
                         <input
                           type="checkbox"
                           checked={form.amenities.includes(am)}
@@ -690,8 +722,16 @@ export default function AdminHotelsPage() {
                 {/* Room Types Builder */}
                 <div className="space-y-4 tablet:col-span-2 border-t border-border pt-4">
                   <div className="flex items-center justify-between">
-                    <Label className="font-semibold text-base">Room Categories ({form.roomTypes.length})</Label>
-                    <Button type="button" size="sm" variant="outline" onClick={handleAddRoomType} className="gap-1">
+                    <Label className="font-semibold text-base">
+                      Room Categories ({form.roomTypes.length})
+                    </Label>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={handleAddRoomType}
+                      className="gap-1"
+                    >
                       <Plus className="size-3.5" />
                       Add Room Category
                     </Button>
@@ -701,7 +741,9 @@ export default function AdminHotelsPage() {
                     {form.roomTypes.map((room, roomIdx) => (
                       <Card key={roomIdx} className="p-4 border border-border bg-muted/20 relative">
                         <div className="flex items-center justify-between mb-3 border-b border-border pb-2">
-                          <span className="text-xs font-bold text-primary font-mono">Room Category #{roomIdx + 1}</span>
+                          <span className="text-xs font-bold text-primary font-mono">
+                            Room Category #{roomIdx + 1}
+                          </span>
                           {form.roomTypes.length > 1 ? (
                             <Button
                               type="button"
@@ -720,7 +762,9 @@ export default function AdminHotelsPage() {
                             <Label className="text-xs">Room Name *</Label>
                             <Input
                               value={room.roomName}
-                              onChange={(e) => handleRoomChange(roomIdx, "roomName", e.target.value)}
+                              onChange={(e) =>
+                                handleRoomChange(roomIdx, "roomName", e.target.value)
+                              }
                               placeholder="e.g. Executive Cottage"
                               className="h-8 text-xs"
                               required
@@ -728,11 +772,13 @@ export default function AdminHotelsPage() {
                           </div>
 
                           <div className="space-y-1">
-                            <Label className="text-xs">Price From (â‚¹/night) *</Label>
+                            <Label className="text-xs">Price From (Ã¢â€šÂ¹/night) *</Label>
                             <Input
                               type="number"
                               value={room.priceFrom}
-                              onChange={(e) => handleRoomChange(roomIdx, "priceFrom", Number(e.target.value))}
+                              onChange={(e) =>
+                                handleRoomChange(roomIdx, "priceFrom", Number(e.target.value))
+                              }
                               className="h-8 text-xs font-mono"
                               required
                             />
@@ -753,7 +799,9 @@ export default function AdminHotelsPage() {
                             <Input
                               type="number"
                               value={room.maxGuests}
-                              onChange={(e) => handleRoomChange(roomIdx, "maxGuests", Number(e.target.value))}
+                              onChange={(e) =>
+                                handleRoomChange(roomIdx, "maxGuests", Number(e.target.value))
+                              }
                               className="h-8 text-xs"
                             />
                           </div>
@@ -762,7 +810,9 @@ export default function AdminHotelsPage() {
                             <Label className="text-xs">Room Size</Label>
                             <Input
                               value={room.roomSize}
-                              onChange={(e) => handleRoomChange(roomIdx, "roomSize", e.target.value)}
+                              onChange={(e) =>
+                                handleRoomChange(roomIdx, "roomSize", e.target.value)
+                              }
                               placeholder="e.g. 380 sq ft"
                               className="h-8 text-xs"
                             />
@@ -772,7 +822,9 @@ export default function AdminHotelsPage() {
                             <Label className="text-xs">Room Description</Label>
                             <Input
                               value={room.roomDescription}
-                              onChange={(e) => handleRoomChange(roomIdx, "roomDescription", e.target.value)}
+                              onChange={(e) =>
+                                handleRoomChange(roomIdx, "roomDescription", e.target.value)
+                              }
                               placeholder="Short room highlights..."
                               className="h-8 text-xs"
                             />
@@ -814,11 +866,20 @@ export default function AdminHotelsPage() {
               </div>
 
               <div className="flex items-center justify-end gap-3 pt-4 border-t border-border">
-                <Button type="button" variant="outline" size="sm" onClick={() => setFormOpen(false)}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setFormOpen(false)}
+                >
                   Cancel
                 </Button>
                 <Button type="submit" size="sm" disabled={saving}>
-                  {saving ? "Saving Hotel..." : editingHotel ? "Save Changes" : "Create Partner Hotel"}
+                  {saving
+                    ? "Saving Hotel..."
+                    : editingHotel
+                      ? "Save Changes"
+                      : "Create Partner Hotel"}
                 </Button>
               </div>
             </form>

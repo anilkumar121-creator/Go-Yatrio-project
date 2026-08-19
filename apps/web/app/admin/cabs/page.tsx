@@ -17,8 +17,15 @@ import { Input } from "@/components/common/input";
 import { Textarea } from "@/components/common/textarea";
 import { Label } from "@/components/common/label";
 import { Switch } from "@/components/common/switch";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/common/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/common/select";
 import { MediaLinkPanel } from "@/components/media/media-link-panel";
+import { useLookups } from "@/lib/use-lookups";
 
 type DestinationOption = {
   id: string;
@@ -174,6 +181,20 @@ export default function AdminCabsPage() {
 
   const [deleteTarget, setDeleteTarget] = useState<VehicleItem | null>(null);
   const [deleting, setDeleting] = useState(false);
+
+  const { options: cabLookupOptions } = useLookups(["VEHICLE_TYPE", "FUEL_TYPE"], {
+    VEHICLE_TYPE: [
+      "HATCHBACK",
+      "SEDAN",
+      "SUV",
+      "LUXURY_SUV",
+      "TEMPO_TRAVELLER",
+      "MINI_BUS",
+      "BUS",
+      "LUXURY",
+    ],
+    FUEL_TYPE: ["PETROL", "DIESEL", "CNG", "ELECTRIC"],
+  });
 
   const loadDestinations = useCallback(async () => {
     try {
@@ -341,7 +362,10 @@ export default function AdminCabsPage() {
     }
   };
 
-  const handleToggleStatus = async (cab: VehicleItem, newStatus: "ACTIVE" | "INACTIVE" | "DRAFT") => {
+  const handleToggleStatus = async (
+    cab: VehicleItem,
+    newStatus: "ACTIVE" | "INACTIVE" | "DRAFT",
+  ) => {
     try {
       await apiFetch(`/api/admin/cabs/${cab.id}/status`, {
         method: "PATCH",
@@ -386,7 +410,11 @@ export default function AdminCabsPage() {
         ) : null}
 
         <div className="flex flex-col gap-3 tablet:flex-row tablet:items-center tablet:justify-between">
-          <SearchBar value={search} onChange={setSearch} placeholder="Search cabs, types, destinations..." />
+          <SearchBar
+            value={search}
+            onChange={setSearch}
+            placeholder="Search cabs, types, destinations..."
+          />
           <div className="flex items-center gap-3">
             <Select value={typeFilter} onValueChange={setTypeFilter}>
               <SelectTrigger className="w-36">
@@ -395,7 +423,9 @@ export default function AdminCabsPage() {
               <SelectContent>
                 <SelectItem value="all">All Types</SelectItem>
                 {vehicleTypeOptions.map((vt) => (
-                  <SelectItem key={vt} value={vt}>{vt}</SelectItem>
+                  <SelectItem key={vt} value={vt}>
+                    {vt}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -435,13 +465,11 @@ export default function AdminCabsPage() {
                     <div className="flex items-center gap-2">
                       <span className="font-semibold text-foreground">{row.vehicleName}</span>
                       {row.featured ? <Badge variant="accent">Featured</Badge> : null}
-                      {row.ac ? (
-                        <Snowflake className="size-3.5 text-sky-500" />
-                      ) : null}
+                      {row.ac ? <Snowflake className="size-3.5 text-sky-500" /> : null}
                     </div>
                     <span className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
                       <MapPin className="size-3 text-primary" />
-                      {row.destination?.name ?? "All Destinations"} Ãƒâ€šÃ‚Â· /{row.slug}
+                      {row.destination?.name ?? "All Destinations"} ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â· /{row.slug}
                     </span>
                   </div>
                 ),
@@ -450,7 +478,9 @@ export default function AdminCabsPage() {
                 header: "Type & Capacity",
                 cell: (row) => (
                   <div className="space-y-1">
-                    <Badge variant="secondary" className="text-xs">{row.vehicleType}</Badge>
+                    <Badge variant="secondary" className="text-xs">
+                      {row.vehicleType}
+                    </Badge>
                     <div className="flex items-center gap-3 text-xs text-muted-foreground">
                       <span className="flex items-center gap-1">
                         <Users className="size-3 text-primary" />
@@ -470,7 +500,7 @@ export default function AdminCabsPage() {
                   <div>
                     <Price amount={Number(row.priceFrom)} size="sm" />
                     <span className="block text-[11px] text-muted-foreground">
-                      ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¹{Number(row.extraKmCharge)}/km extra
+                      ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¹{Number(row.extraKmCharge)}/km extra
                     </span>
                   </div>
                 ),
@@ -480,7 +510,9 @@ export default function AdminCabsPage() {
                 cell: (row) => (
                   <Select
                     value={row.status}
-                    onValueChange={(val) => handleToggleStatus(row, val as "ACTIVE" | "INACTIVE" | "DRAFT")}
+                    onValueChange={(val) =>
+                      handleToggleStatus(row, val as "ACTIVE" | "INACTIVE" | "DRAFT")
+                    }
                   >
                     <SelectTrigger className="h-8 w-28 text-xs">
                       <SelectValue />
@@ -513,7 +545,13 @@ export default function AdminCabsPage() {
                       onClick={() => handleToggleFeatured(row)}
                       title={row.featured ? "Unfeature Cab" : "Feature Cab"}
                     >
-                      <Star className={row.featured ? "size-4 fill-amber-500 text-amber-500" : "size-4 text-muted-foreground"} />
+                      <Star
+                        className={
+                          row.featured
+                            ? "size-4 fill-amber-500 text-amber-500"
+                            : "size-4 text-muted-foreground"
+                        }
+                      />
                     </Button>
                     <Button
                       variant="ghost"
@@ -543,7 +581,8 @@ export default function AdminCabsPage() {
                   {editingVehicle ? "Edit Cab Details" : "Create New Cab / Vehicle"}
                 </DialogPrimitive.Title>
                 <DialogPrimitive.Description className="text-xs text-muted-foreground">
-                  Configure vehicle profile, seating, trip types, pricing, features, and gallery images.
+                  Configure vehicle profile, seating, trip types, pricing, features, and gallery
+                  images.
                 </DialogPrimitive.Description>
               </div>
               <DialogPrimitive.Close className="rounded-sm opacity-70 hover:opacity-100">
@@ -581,8 +620,10 @@ export default function AdminCabsPage() {
                       <SelectValue placeholder="Select Type" />
                     </SelectTrigger>
                     <SelectContent>
-                      {vehicleTypeOptions.map((vt) => (
-                        <SelectItem key={vt} value={vt}>{vt}</SelectItem>
+                      {(cabLookupOptions.VEHICLE_TYPE ?? []).map((opt) => (
+                        <SelectItem key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -599,7 +640,9 @@ export default function AdminCabsPage() {
                     </SelectTrigger>
                     <SelectContent>
                       {destinations.map((d) => (
-                        <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
+                        <SelectItem key={d.id} value={d.id}>
+                          {d.name}
+                        </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -615,10 +658,11 @@ export default function AdminCabsPage() {
                       <SelectValue placeholder="Select Fuel" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="PETROL">Petrol</SelectItem>
-                      <SelectItem value="DIESEL">Diesel</SelectItem>
-                      <SelectItem value="CNG">CNG</SelectItem>
-                      <SelectItem value="ELECTRIC">Electric</SelectItem>
+                      {(cabLookupOptions.FUEL_TYPE ?? []).map((opt) => (
+                        <SelectItem key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -648,7 +692,9 @@ export default function AdminCabsPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="cab-price">Base Price From (ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¹) *</Label>
+                  <Label htmlFor="cab-price">
+                    Base Price From (ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¹) *
+                  </Label>
                   <Input
                     id="cab-price"
                     type="number"
@@ -660,7 +706,9 @@ export default function AdminCabsPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="cab-base-fare">Base Fare (ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¹)</Label>
+                  <Label htmlFor="cab-base-fare">
+                    Base Fare (ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¹)
+                  </Label>
                   <Input
                     id="cab-base-fare"
                     type="number"
@@ -671,7 +719,9 @@ export default function AdminCabsPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="cab-extra">Extra KM Charge (ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¹/km)</Label>
+                  <Label htmlFor="cab-extra">
+                    Extra KM Charge (ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¹/km)
+                  </Label>
                   <Input
                     id="cab-extra"
                     type="number"
@@ -682,7 +732,7 @@ export default function AdminCabsPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="cab-night">Night Charge (ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¹)</Label>
+                  <Label htmlFor="cab-night">Night Charge (ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¹)</Label>
                   <Input
                     id="cab-night"
                     type="number"
@@ -693,7 +743,9 @@ export default function AdminCabsPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="cab-driver">Driver Allowance (ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¹/day)</Label>
+                  <Label htmlFor="cab-driver">
+                    Driver Allowance (ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¹/day)
+                  </Label>
                   <Input
                     id="cab-driver"
                     type="number"
@@ -758,15 +810,25 @@ export default function AdminCabsPage() {
                     <p className="text-sm font-medium text-foreground">Air Conditioning</p>
                     <p className="text-xs text-muted-foreground">Vehicle includes AC.</p>
                   </div>
-                  <Switch checked={form.ac} onCheckedChange={(checked) => setForm({ ...form, ac: checked })} aria-label="AC" />
+                  <Switch
+                    checked={form.ac}
+                    onCheckedChange={(checked) => setForm({ ...form, ac: checked })}
+                    aria-label="AC"
+                  />
                 </div>
 
                 <div className="flex items-center justify-between gap-3 rounded-md border border-border bg-muted/30 p-3">
                   <div>
                     <p className="text-sm font-medium text-foreground">Featured Cab</p>
-                    <p className="text-xs text-muted-foreground">Featured cabs appear on top listings.</p>
+                    <p className="text-xs text-muted-foreground">
+                      Featured cabs appear on top listings.
+                    </p>
                   </div>
-                  <Switch checked={form.featured} onCheckedChange={(checked) => setForm({ ...form, featured: checked })} aria-label="Featured cab" />
+                  <Switch
+                    checked={form.featured}
+                    onCheckedChange={(checked) => setForm({ ...form, featured: checked })}
+                    aria-label="Featured cab"
+                  />
                 </div>
 
                 {/* Trip Types */}
@@ -774,7 +836,10 @@ export default function AdminCabsPage() {
                   <Label className="font-semibold">Available Trip Types</Label>
                   <div className="grid grid-cols-2 gap-2 tablet:grid-cols-3">
                     {tripTypeOptions.map((trip) => (
-                      <label key={trip.value} className="flex items-center gap-2 text-xs text-foreground cursor-pointer">
+                      <label
+                        key={trip.value}
+                        className="flex items-center gap-2 text-xs text-foreground cursor-pointer"
+                      >
                         <input
                           type="checkbox"
                           checked={form.tripTypes.includes(trip.value)}
@@ -792,7 +857,10 @@ export default function AdminCabsPage() {
                   <Label className="font-semibold">Vehicle Features / Amenities</Label>
                   <div className="grid grid-cols-2 gap-2 tablet:grid-cols-3">
                     {defaultAmenityOptions.map((am) => (
-                      <label key={am} className="flex items-center gap-2 text-xs text-foreground cursor-pointer">
+                      <label
+                        key={am}
+                        className="flex items-center gap-2 text-xs text-foreground cursor-pointer"
+                      >
                         <input
                           type="checkbox"
                           checked={form.amenities.includes(am)}
@@ -807,7 +875,12 @@ export default function AdminCabsPage() {
               </div>
 
               <div className="flex items-center justify-end gap-3 pt-4 border-t border-border">
-                <Button type="button" variant="outline" size="sm" onClick={() => setFormOpen(false)}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setFormOpen(false)}
+                >
                   Cancel
                 </Button>
                 <Button type="submit" size="sm" disabled={saving}>

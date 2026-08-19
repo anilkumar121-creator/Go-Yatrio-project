@@ -159,13 +159,15 @@ export const dayCreateSchema = z.object({
 export const dayUpdateSchema = dayCreateSchema.partial();
 
 export const reorderDaysSchema = z.object({
-  dayOrders: z.array(
-    z.object({
-      dayId: z.string().min(1),
-      sortOrder: z.coerce.number().int().min(0),
-      dayNumber: z.coerce.number().int().positive().optional(),
-    })
-  ).min(1),
+  dayOrders: z
+    .array(
+      z.object({
+        dayId: z.string().min(1),
+        sortOrder: z.coerce.number().int().min(0),
+        dayNumber: z.coerce.number().int().positive().optional(),
+      }),
+    )
+    .min(1),
 });
 
 export const itineraryCreateSchema = z.object({
@@ -321,7 +323,11 @@ export const inquiryUpdateSchema = inquiryCreateSchema.partial();
 
 export const blogContentBlockSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("paragraph"), content: z.string().max(5000) }),
-  z.object({ type: z.literal("heading"), level: z.union([z.literal(2), z.literal(3), z.literal(4)]), content: z.string().max(500) }),
+  z.object({
+    type: z.literal("heading"),
+    level: z.union([z.literal(2), z.literal(3), z.literal(4)]),
+    content: z.string().max(500),
+  }),
   z.object({
     type: z.literal("image"),
     attrs: z.object({
@@ -335,20 +341,57 @@ export const blogContentBlockSchema = z.discriminatedUnion("type", [
     }),
   }),
   z.object({ type: z.literal("gallery"), images: z.array(z.any()).max(20) }),
-  z.object({ type: z.literal("list"), ordered: z.boolean().default(false), items: z.array(z.string().max(1000)).max(50) }),
-  z.object({ type: z.literal("quote"), content: z.string().max(2000), cite: optionalStringField(300) }),
-  z.object({ type: z.literal("code"), language: optionalStringField(60), code: z.string().max(20000) }),
-  z.object({ type: z.literal("embed"), provider: z.enum(["youtube", "vimeo", "generic"]), url: z.url().max(1000) }),
+  z.object({
+    type: z.literal("list"),
+    ordered: z.boolean().default(false),
+    items: z.array(z.string().max(1000)).max(50),
+  }),
+  z.object({
+    type: z.literal("quote"),
+    content: z.string().max(2000),
+    cite: optionalStringField(300),
+  }),
+  z.object({
+    type: z.literal("code"),
+    language: optionalStringField(60),
+    code: z.string().max(20000),
+  }),
+  z.object({
+    type: z.literal("embed"),
+    provider: z.enum(["youtube", "vimeo", "generic"]),
+    url: z.url().max(1000),
+  }),
   z.object({ type: z.literal("divider") }),
   z.object({
     type: z.literal("cta"),
     title: z.string().max(200),
     description: optionalStringField(500),
-    links: z.array(z.object({ label: z.string().max(100), href: z.string().max(1000), variant: z.enum(["primary", "outline"]).optional() })).max(8),
+    links: z
+      .array(
+        z.object({
+          label: z.string().max(100),
+          href: z.string().max(1000),
+          variant: z.enum(["primary", "outline"]).optional(),
+        }),
+      )
+      .max(8),
   }),
-  z.object({ type: z.literal("callout"), variant: z.enum(["info", "warning", "success"]), title: optionalStringField(200), content: z.string().max(2000) }),
-  z.object({ type: z.literal("accordion"), items: z.array(z.object({ title: z.string().max(300), content: z.string().max(3000) })).max(20) }),
-  z.object({ type: z.literal("linkCard"), title: z.string().max(300), url: z.url().max(1000), description: optionalStringField(500) }),
+  z.object({
+    type: z.literal("callout"),
+    variant: z.enum(["info", "warning", "success"]),
+    title: optionalStringField(200),
+    content: z.string().max(2000),
+  }),
+  z.object({
+    type: z.literal("accordion"),
+    items: z.array(z.object({ title: z.string().max(300), content: z.string().max(3000) })).max(20),
+  }),
+  z.object({
+    type: z.literal("linkCard"),
+    title: z.string().max(300),
+    url: z.url().max(1000),
+    description: optionalStringField(500),
+  }),
 ]);
 
 export const blogCreateSchema = z.object({
@@ -358,7 +401,10 @@ export const blogCreateSchema = z.object({
   content: stringField(50000),
   contentFormat: z.enum(BlogContentFormat).default("JSON_BLOCKS"),
   contentBlocks: z.array(blogContentBlockSchema).optional(),
-  faq: z.array(z.object({ question: stringField(300), answer: stringField(3000) })).max(50).optional(),
+  faq: z
+    .array(z.object({ question: stringField(300), answer: stringField(3000) }))
+    .max(50)
+    .optional(),
   featuredImage: optionalStringField(1000),
   featuredImagePublicId: optionalStringField(255),
   galleryImages: z.array(z.url().max(1000)).max(20).optional(),
@@ -423,3 +469,37 @@ export const mediaCreateSchema = z.object({
 });
 
 export const mediaUpdateSchema = mediaCreateSchema.partial();
+
+export const lookupGroupCreateSchema = z.object({
+  key: z
+    .string()
+    .trim()
+    .min(2)
+    .max(80)
+    .regex(/^[A-Z0-9_]+$/, "Key must use uppercase letters, numbers, and underscores."),
+  name: stringField(140),
+  description: optionalStringField(500),
+});
+
+export const lookupGroupUpdateSchema = lookupGroupCreateSchema.partial();
+
+export const lookupItemCreateSchema = z.object({
+  groupId: z.string().min(1),
+  label: stringField(140),
+  value: stringField(140),
+  description: optionalStringField(500),
+  icon: optionalStringField(60),
+  color: optionalStringField(40),
+  sortOrder: z.coerce.number().int().min(0).optional(),
+  isActive: z.boolean().optional(),
+});
+
+export const lookupItemUpdateSchema = lookupItemCreateSchema.partial();
+
+export const lookupItemStatusSchema = z.object({
+  isActive: z.boolean(),
+});
+
+export const lookupItemOrderSchema = z.object({
+  sortOrder: z.coerce.number().int().min(0),
+});

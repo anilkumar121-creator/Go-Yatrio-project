@@ -671,3 +671,34 @@ model SeoMetadata {
   @@unique([pageType, entityType, entityId])
   @@map("seo_metadata")
 }
+
+model LookupGroup {
+  id          String       @id @default(cuid())
+  key         String       @unique
+  name        String
+  description String?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  items       LookupItem[]
+
+  @@map("lookup_groups")
+}
+
+model LookupItem {
+  id          String       @id @default(cuid())
+  groupId     String
+  label       String
+  value       String
+  description String?
+  icon        String?
+  color       String?
+  sortOrder   Int          @default(0)
+  isActive    Boolean      @default(true)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  group       LookupGroup  @relation(fields: [groupId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@unique([groupId, value])
+  @@index([groupId, isActive])
+  @@map("lookup_items")
+}

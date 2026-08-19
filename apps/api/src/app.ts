@@ -14,6 +14,7 @@ import { adminHotelsRouter, hotelsRouter } from "./routes/hotels.js";
 import { inquiriesRouter } from "./routes/inquiries.js";
 import { adminItinerariesRouter, itinerariesRouter } from "./routes/itineraries.js";
 import { adminMediaRouter, mediaRouter } from "./routes/media.js";
+import { adminLookupsRouter, lookupsRouter } from "./routes/lookups.js";
 import { adminPackagesRouter, packagesRouter } from "./routes/packages.js";
 
 export function createApp() {
@@ -50,6 +51,8 @@ export function createApp() {
   app.use("/api/admin/blogs", adminBlogsRouter);
   app.use("/api/media", mediaRouter);
   app.use("/api/admin/media", adminMediaRouter);
+  app.use("/api/lookups", lookupsRouter);
+  app.use("/api/admin/lookups", adminLookupsRouter);
 
   app.use(notFound);
   app.use(errorHandler);

@@ -19,9 +19,16 @@ import { Input } from "@/components/common/input";
 import { Textarea } from "@/components/common/textarea";
 import { Label } from "@/components/common/label";
 import { Switch } from "@/components/common/switch";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/common/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/common/select";
 import { Card } from "@/components/common/card";
 import { MediaLinkPanel } from "@/components/media/media-link-panel";
+import { useLookups } from "@/lib/use-lookups";
 
 type DestinationOption = {
   id: string;
@@ -53,8 +60,27 @@ type TourPackage = {
   availableSeats: number;
   priceValidFrom: string | null;
   priceValidTo: string | null;
-  seasonalPrices: { id?: string; label: string; priceFrom: number; discountedPrice: number | null; displayOrder: number; startDate: string; endDate: string; active: boolean }[];
-  offers: { id?: string; label: string; badge: string; discountedPrice: number | null; priority: number; startDate: string; endDate: string; featured: boolean; active: boolean }[];
+  seasonalPrices: {
+    id?: string;
+    label: string;
+    priceFrom: number;
+    discountedPrice: number | null;
+    displayOrder: number;
+    startDate: string;
+    endDate: string;
+    active: boolean;
+  }[];
+  offers: {
+    id?: string;
+    label: string;
+    badge: string;
+    discountedPrice: number | null;
+    priority: number;
+    startDate: string;
+    endDate: string;
+    featured: boolean;
+    active: boolean;
+  }[];
   metaTitle: string | null;
   metaDescription: string | null;
   createdAt: string;
@@ -72,8 +98,27 @@ type PackageForm = {
   availableSeats: number;
   priceValidFrom: string;
   priceValidTo: string;
-  seasonalPrices: { id?: string; label: string; priceFrom: string; discountedPrice: string; displayOrder: number; startDate: string; endDate: string; active: boolean }[];
-  offers: { id?: string; label: string; badge: string; discountedPrice: string; priority: number; startDate: string; endDate: string; featured: boolean; active: boolean }[];
+  seasonalPrices: {
+    id?: string;
+    label: string;
+    priceFrom: string;
+    discountedPrice: string;
+    displayOrder: number;
+    startDate: string;
+    endDate: string;
+    active: boolean;
+  }[];
+  offers: {
+    id?: string;
+    label: string;
+    badge: string;
+    discountedPrice: string;
+    priority: number;
+    startDate: string;
+    endDate: string;
+    featured: boolean;
+    active: boolean;
+  }[];
   shortDescription: string;
   description: string;
   inclusions: string;
@@ -157,6 +202,10 @@ export default function AdminPackagesPage() {
 
   const [deleteTarget, setDeleteTarget] = useState<TourPackage | null>(null);
   const [deleting, setDeleting] = useState(false);
+
+  const { options: pkgTypeOptions } = useLookups(["PACKAGE_TYPE"], {
+    PACKAGE_TYPE: ["DOMESTIC", "INTERNATIONAL", "LUXURY", "ADVENTURE", "PILGRIMAGE"],
+  });
 
   const loadDestinations = useCallback(async () => {
     try {
@@ -276,7 +325,9 @@ export default function AdminPackagesPage() {
         discountedPrice: toNumber(form.discountedPrice),
         availability: form.availability,
         availableSeats: form.availableSeats,
-        priceValidFrom: form.priceValidFrom ? new Date(form.priceValidFrom).toISOString() : undefined,
+        priceValidFrom: form.priceValidFrom
+          ? new Date(form.priceValidFrom).toISOString()
+          : undefined,
         priceValidTo: form.priceValidTo ? new Date(form.priceValidTo).toISOString() : undefined,
         seasonalPrices: form.seasonalPrices.map((s) => ({
           id: s.id,
@@ -405,7 +456,11 @@ export default function AdminPackagesPage() {
         ) : null}
 
         <div className="flex flex-col gap-4 tablet:flex-row tablet:items-center tablet:justify-between">
-          <SearchBar value={search} onChange={setSearch} placeholder="Search packages or destinations..." />
+          <SearchBar
+            value={search}
+            onChange={setSearch}
+            placeholder="Search packages or destinations..."
+          />
           <FilterBar
             filters={[
               {
@@ -464,20 +519,42 @@ export default function AdminPackagesPage() {
               data={packages}
               keyExtractor={(row) => row.id}
               columns={[
-                { header: "Package Title", cell: (row) => <span className="font-semibold text-foreground">{row.title}</span> },
-                { header: "Destination", cell: (row) => <span>{row.destination?.name ?? "N/A"}</span> },
-                { header: "Duration", cell: (row) => <span className="text-muted-foreground">{row.durationDays}D / {row.durationNights}N</span> },
-                { header: "Starting Price", cell: (row) => (
-                  <div>
-                    {row.discountedPrice && Number(row.discountedPrice) < Number(row.priceFrom) ? (
-                      <Price amount={Number(row.discountedPrice)} size="sm" />
-                    ) : (
-                      <Price amount={Number(row.priceFrom)} size="sm" />
-                    )}
-                    <span className="block text-[11px] text-muted-foreground">{row.availability ?? "AVAILABLE"}</span>
-                  </div>
-                ) },
-                { header: "Category", cell: (row) => <Badge variant="outline">{row.packageType}</Badge> },
+                {
+                  header: "Package Title",
+                  cell: (row) => <span className="font-semibold text-foreground">{row.title}</span>,
+                },
+                {
+                  header: "Destination",
+                  cell: (row) => <span>{row.destination?.name ?? "N/A"}</span>,
+                },
+                {
+                  header: "Duration",
+                  cell: (row) => (
+                    <span className="text-muted-foreground">
+                      {row.durationDays}D / {row.durationNights}N
+                    </span>
+                  ),
+                },
+                {
+                  header: "Starting Price",
+                  cell: (row) => (
+                    <div>
+                      {row.discountedPrice &&
+                      Number(row.discountedPrice) < Number(row.priceFrom) ? (
+                        <Price amount={Number(row.discountedPrice)} size="sm" />
+                      ) : (
+                        <Price amount={Number(row.priceFrom)} size="sm" />
+                      )}
+                      <span className="block text-[11px] text-muted-foreground">
+                        {row.availability ?? "AVAILABLE"}
+                      </span>
+                    </div>
+                  ),
+                },
+                {
+                  header: "Category",
+                  cell: (row) => <Badge variant="outline">{row.packageType}</Badge>,
+                },
                 {
                   header: "Status",
                   cell: (row) => (
@@ -497,22 +574,41 @@ export default function AdminPackagesPage() {
                 {
                   header: "Featured",
                   cell: (row) => (
-                    <Switch checked={row.featured} onCheckedChange={() => toggleFeatured(row)} aria-label="Toggle featured" />
+                    <Switch
+                      checked={row.featured}
+                      onCheckedChange={() => toggleFeatured(row)}
+                      aria-label="Toggle featured"
+                    />
                   ),
                 },
                 {
                   header: "Actions",
                   cell: (row) => (
                     <div className="flex items-center gap-1">
-                      <Button asChild variant="ghost" size="sm" className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground">
+                      <Button
+                        asChild
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
+                      >
                         <Link href={`/packages/${row.slug}`} target="_blank">
                           <Eye className="size-4" />
                         </Link>
                       </Button>
-                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground" onClick={() => openEditForm(row)}>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
+                        onClick={() => openEditForm(row)}
+                      >
                         <Edit className="size-4" />
                       </Button>
-                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-error hover:bg-error/10" onClick={() => setDeleteTarget(row)}>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0 text-error hover:bg-error/10"
+                        onClick={() => setDeleteTarget(row)}
+                      >
                         <Trash2 className="size-4" />
                       </Button>
                     </div>
@@ -526,10 +622,20 @@ export default function AdminPackagesPage() {
                 Page {page} of {totalPages} ({total} tour packages)
               </span>
               <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={page <= 1}
+                  onClick={() => setPage((p) => p - 1)}
+                >
                   Previous
                 </Button>
-                <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={page >= totalPages}
+                  onClick={() => setPage((p) => p + 1)}
+                >
                   Next
                 </Button>
               </div>
@@ -556,17 +662,28 @@ export default function AdminPackagesPage() {
 
             <form onSubmit={handleSubmit} className="mt-4 space-y-4">
               {formError ? (
-                <div className="rounded-lg border border-error/30 bg-error/10 p-3 text-sm">{formError}</div>
+                <div className="rounded-lg border border-error/30 bg-error/10 p-3 text-sm">
+                  {formError}
+                </div>
               ) : null}
 
               <div className="grid grid-cols-1 gap-4 tablet:grid-cols-2">
                 <div className="space-y-2 tablet:col-span-2">
                   <Label htmlFor="package-title">Package Title *</Label>
-                  <Input id="package-title" required value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="e.g. Kashmir Paradise Escape" />
+                  <Input
+                    id="package-title"
+                    required
+                    value={form.title}
+                    onChange={(e) => setForm({ ...form, title: e.target.value })}
+                    placeholder="e.g. Kashmir Paradise Escape"
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="package-destination">Destination *</Label>
-                  <Select value={form.destinationId} onValueChange={(value) => setForm({ ...form, destinationId: value })}>
+                  <Select
+                    value={form.destinationId}
+                    onValueChange={(value) => setForm({ ...form, destinationId: value })}
+                  >
                     <SelectTrigger id="package-destination">
                       <SelectValue placeholder="Select destination" />
                     </SelectTrigger>
@@ -581,40 +698,81 @@ export default function AdminPackagesPage() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="package-type">Package Category *</Label>
-                  <Select value={form.packageType} onValueChange={(value) => setForm({ ...form, packageType: value as PackageForm["packageType"] })}>
+                  <Select
+                    value={form.packageType}
+                    onValueChange={(value) =>
+                      setForm({ ...form, packageType: value as PackageForm["packageType"] })
+                    }
+                  >
                     <SelectTrigger id="package-type">
                       <SelectValue placeholder="Select category" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="DOMESTIC">Domestic</SelectItem>
-                      <SelectItem value="INTERNATIONAL">International</SelectItem>
-                      <SelectItem value="LUXURY">Luxury</SelectItem>
-                      <SelectItem value="ADVENTURE">Adventure</SelectItem>
-                      <SelectItem value="PILGRIMAGE">Pilgrimage</SelectItem>
+                      {(pkgTypeOptions.PACKAGE_TYPE ?? []).map((opt) => (
+                        <SelectItem key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="package-days">Duration Days *</Label>
-                  <Input id="package-days" type="number" min={1} max={365} required value={form.durationDays} onChange={(e) => setForm({ ...form, durationDays: Number(e.target.value) })} />
+                  <Input
+                    id="package-days"
+                    type="number"
+                    min={1}
+                    max={365}
+                    required
+                    value={form.durationDays}
+                    onChange={(e) => setForm({ ...form, durationDays: Number(e.target.value) })}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="package-nights">Duration Nights *</Label>
-                  <Input id="package-nights" type="number" min={0} max={365} required value={form.durationNights} onChange={(e) => setForm({ ...form, durationNights: Number(e.target.value) })} />
+                  <Input
+                    id="package-nights"
+                    type="number"
+                    min={0}
+                    max={365}
+                    required
+                    value={form.durationNights}
+                    onChange={(e) => setForm({ ...form, durationNights: Number(e.target.value) })}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="package-price">Starting Price (INR) *</Label>
-                  <Input id="package-price" type="number" min={0} required value={form.priceFrom} onChange={(e) => setForm({ ...form, priceFrom: Number(e.target.value) })} />
+                  <Input
+                    id="package-price"
+                    type="number"
+                    min={0}
+                    required
+                    value={form.priceFrom}
+                    onChange={(e) => setForm({ ...form, priceFrom: Number(e.target.value) })}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="package-discount">Discount Price (INR)</Label>
-                  <Input id="package-discount" type="number" min={0} value={form.discountedPrice} onChange={(e) => setForm({ ...form, discountedPrice: e.target.value })} placeholder="Optional base discount" />
+                  <Input
+                    id="package-discount"
+                    type="number"
+                    min={0}
+                    value={form.discountedPrice}
+                    onChange={(e) => setForm({ ...form, discountedPrice: e.target.value })}
+                    placeholder="Optional base discount"
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="package-availability">Availability</Label>
                   <Select
                     value={form.availability}
-                    onValueChange={(value) => setForm({ ...form, availability: value as "AVAILABLE" | "LIMITED_SEATS" | "SOLD_OUT" | "UPCOMING" })}
+                    onValueChange={(value) =>
+                      setForm({
+                        ...form,
+                        availability: value as
+                          "AVAILABLE" | "LIMITED_SEATS" | "SOLD_OUT" | "UPCOMING",
+                      })
+                    }
                   >
                     <SelectTrigger id="package-availability">
                       <SelectValue placeholder="Select availability" />
@@ -629,21 +787,39 @@ export default function AdminPackagesPage() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="package-seats">Available Seats</Label>
-                  <Input id="package-seats" type="number" min={0} value={form.availableSeats} onChange={(e) => setForm({ ...form, availableSeats: Number(e.target.value) })} />
+                  <Input
+                    id="package-seats"
+                    type="number"
+                    min={0}
+                    value={form.availableSeats}
+                    onChange={(e) => setForm({ ...form, availableSeats: Number(e.target.value) })}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="package-valid-from">Price Valid From</Label>
-                  <Input id="package-valid-from" type="date" value={form.priceValidFrom} onChange={(e) => setForm({ ...form, priceValidFrom: e.target.value })} />
+                  <Input
+                    id="package-valid-from"
+                    type="date"
+                    value={form.priceValidFrom}
+                    onChange={(e) => setForm({ ...form, priceValidFrom: e.target.value })}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="package-valid-to">Price Valid To</Label>
-                  <Input id="package-valid-to" type="date" value={form.priceValidTo} onChange={(e) => setForm({ ...form, priceValidTo: e.target.value })} />
+                  <Input
+                    id="package-valid-to"
+                    type="date"
+                    value={form.priceValidTo}
+                    onChange={(e) => setForm({ ...form, priceValidTo: e.target.value })}
+                  />
                 </div>
 
                 {/* Seasonal Pricing Repeater */}
                 <div className="space-y-3 tablet:col-span-2 border-t border-border pt-4">
                   <div className="flex items-center justify-between">
-                    <Label className="font-semibold">Seasonal Prices ({form.seasonalPrices.length})</Label>
+                    <Label className="font-semibold">
+                      Seasonal Prices ({form.seasonalPrices.length})
+                    </Label>
                     <Button
                       type="button"
                       size="sm"
@@ -653,7 +829,15 @@ export default function AdminPackagesPage() {
                           ...form,
                           seasonalPrices: [
                             ...form.seasonalPrices,
-                            { label: "", priceFrom: "", discountedPrice: "", displayOrder: form.seasonalPrices.length, startDate: "", endDate: "", active: true },
+                            {
+                              label: "",
+                              priceFrom: "",
+                              discountedPrice: "",
+                              displayOrder: form.seasonalPrices.length,
+                              startDate: "",
+                              endDate: "",
+                              active: true,
+                            },
                           ],
                         })
                       }
@@ -733,7 +917,12 @@ export default function AdminPackagesPage() {
                             variant="ghost"
                             size="sm"
                             className="h-7 w-7 p-0 text-destructive hover:bg-destructive/10"
-                            onClick={() => setForm({ ...form, seasonalPrices: form.seasonalPrices.filter((_, i) => i !== idx) })}
+                            onClick={() =>
+                              setForm({
+                                ...form,
+                                seasonalPrices: form.seasonalPrices.filter((_, i) => i !== idx),
+                              })
+                            }
                           >
                             <X className="size-3.5" />
                           </Button>
@@ -756,7 +945,16 @@ export default function AdminPackagesPage() {
                           ...form,
                           offers: [
                             ...form.offers,
-                            { label: "", badge: "", discountedPrice: "", priority: 0, startDate: "", endDate: "", featured: false, active: true },
+                            {
+                              label: "",
+                              badge: "",
+                              discountedPrice: "",
+                              priority: 0,
+                              startDate: "",
+                              endDate: "",
+                              featured: false,
+                              active: true,
+                            },
                           ],
                         })
                       }
@@ -861,7 +1059,9 @@ export default function AdminPackagesPage() {
                             variant="ghost"
                             size="sm"
                             className="h-7 w-7 p-0 text-destructive hover:bg-destructive/10"
-                            onClick={() => setForm({ ...form, offers: form.offers.filter((_, i) => i !== idx) })}
+                            onClick={() =>
+                              setForm({ ...form, offers: form.offers.filter((_, i) => i !== idx) })
+                            }
                           >
                             <X className="size-3.5" />
                           </Button>
@@ -872,7 +1072,12 @@ export default function AdminPackagesPage() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="package-status">Status</Label>
-                  <Select value={form.status} onValueChange={(value) => setForm({ ...form, status: value as "DRAFT" | "PUBLISHED" })}>
+                  <Select
+                    value={form.status}
+                    onValueChange={(value) =>
+                      setForm({ ...form, status: value as "DRAFT" | "PUBLISHED" })
+                    }
+                  >
                     <SelectTrigger id="package-status">
                       <SelectValue placeholder="Select status" />
                     </SelectTrigger>
@@ -884,51 +1089,113 @@ export default function AdminPackagesPage() {
                 </div>
                 <div className="space-y-2 tablet:col-span-2">
                   <Label htmlFor="package-short">Short Description *</Label>
-                  <Textarea id="package-short" required maxLength={300} value={form.shortDescription} onChange={(e) => setForm({ ...form, shortDescription: e.target.value })} placeholder="One or two sentence summary for cards." />
+                  <Textarea
+                    id="package-short"
+                    required
+                    maxLength={300}
+                    value={form.shortDescription}
+                    onChange={(e) => setForm({ ...form, shortDescription: e.target.value })}
+                    placeholder="One or two sentence summary for cards."
+                  />
                 </div>
                 <div className="space-y-2 tablet:col-span-2">
                   <Label htmlFor="package-description">Full Overview *</Label>
-                  <Textarea id="package-description" required maxLength={6000} rows={5} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Detailed package overview." />
+                  <Textarea
+                    id="package-description"
+                    required
+                    maxLength={6000}
+                    rows={5}
+                    value={form.description}
+                    onChange={(e) => setForm({ ...form, description: e.target.value })}
+                    placeholder="Detailed package overview."
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="package-inclusions">Inclusions (one per line)</Label>
-                  <Textarea id="package-inclusions" rows={4} value={form.inclusions} onChange={(e) => setForm({ ...form, inclusions: e.target.value })} placeholder={"Breakfast & Dinner\nPrivate AC Cab\nHotel Stay"} />
+                  <Textarea
+                    id="package-inclusions"
+                    rows={4}
+                    value={form.inclusions}
+                    onChange={(e) => setForm({ ...form, inclusions: e.target.value })}
+                    placeholder={"Breakfast & Dinner\nPrivate AC Cab\nHotel Stay"}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="package-exclusions">Exclusions (one per line)</Label>
-                  <Textarea id="package-exclusions" rows={4} value={form.exclusions} onChange={(e) => setForm({ ...form, exclusions: e.target.value })} placeholder={"Airfare / Train tickets\nPersonal Expenses\nTips & Monument Fees"} />
+                  <Textarea
+                    id="package-exclusions"
+                    rows={4}
+                    value={form.exclusions}
+                    onChange={(e) => setForm({ ...form, exclusions: e.target.value })}
+                    placeholder={"Airfare / Train tickets\nPersonal Expenses\nTips & Monument Fees"}
+                  />
                 </div>
                 <div className="space-y-2 tablet:col-span-2">
                   <Label htmlFor="package-image">Featured Image URL</Label>
-                  <Input id="package-image" type="url" value={form.featuredImage} onChange={(e) => setForm({ ...form, featuredImage: e.target.value })} placeholder="https://..." />
+                  <Input
+                    id="package-image"
+                    type="url"
+                    value={form.featuredImage}
+                    onChange={(e) => setForm({ ...form, featuredImage: e.target.value })}
+                    placeholder="https://..."
+                  />
                 </div>
                 <div className="space-y-2 tablet:col-span-2">
                   <Label htmlFor="package-gallery">Gallery Images (one URL per line)</Label>
-                  <Textarea id="package-gallery" rows={3} value={form.galleryImages} onChange={(e) => setForm({ ...form, galleryImages: e.target.value })} placeholder={"https://...\nhttps://..."} />
+                  <Textarea
+                    id="package-gallery"
+                    rows={3}
+                    value={form.galleryImages}
+                    onChange={(e) => setForm({ ...form, galleryImages: e.target.value })}
+                    placeholder={"https://...\nhttps://..."}
+                  />
                 </div>
                 <div className="space-y-2 tablet:col-span-2">
                   <MediaLinkPanel module="PACKAGE" moduleId={editingPackage?.id} />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="package-meta-title">Meta Title</Label>
-                  <Input id="package-meta-title" maxLength={120} value={form.metaTitle} onChange={(e) => setForm({ ...form, metaTitle: e.target.value })} placeholder="SEO Title" />
+                  <Input
+                    id="package-meta-title"
+                    maxLength={120}
+                    value={form.metaTitle}
+                    onChange={(e) => setForm({ ...form, metaTitle: e.target.value })}
+                    placeholder="SEO Title"
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="package-meta-description">Meta Description</Label>
-                  <Input id="package-meta-description" maxLength={180} value={form.metaDescription} onChange={(e) => setForm({ ...form, metaDescription: e.target.value })} placeholder="SEO Description" />
+                  <Input
+                    id="package-meta-description"
+                    maxLength={180}
+                    value={form.metaDescription}
+                    onChange={(e) => setForm({ ...form, metaDescription: e.target.value })}
+                    placeholder="SEO Description"
+                  />
                 </div>
               </div>
 
               <div className="flex items-center gap-3 rounded-md border border-border bg-muted/30 p-3">
-                <Switch checked={form.featured} onCheckedChange={(checked) => setForm({ ...form, featured: checked })} aria-label="Featured package" />
+                <Switch
+                  checked={form.featured}
+                  onCheckedChange={(checked) => setForm({ ...form, featured: checked })}
+                  aria-label="Featured package"
+                />
                 <div>
                   <p className="text-sm font-medium text-foreground">Featured Package</p>
-                  <p className="text-xs text-muted-foreground">Featured packages appear on the homepage and top package listings.</p>
+                  <p className="text-xs text-muted-foreground">
+                    Featured packages appear on the homepage and top package listings.
+                  </p>
                 </div>
               </div>
 
               <div className="flex items-center justify-end gap-3 pt-2">
-                <Button type="button" variant="outline" size="sm" onClick={() => setFormOpen(false)}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setFormOpen(false)}
+                >
                   Cancel
                 </Button>
                 <Button type="submit" size="sm" disabled={saving}>
