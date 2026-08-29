@@ -1,4 +1,4 @@
-import { prisma, MediaModule } from "@goyatrio/database";
+import { prisma, MediaModule } from "../db.js";
 import { mediaService } from "./media.service.js";
 
 type MediaLinkInput = {

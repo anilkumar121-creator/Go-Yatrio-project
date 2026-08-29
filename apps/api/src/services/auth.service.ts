@@ -1,7 +1,7 @@
 import { compare, hash } from "bcryptjs";
 import crypto from "node:crypto";
 import jwt from "jsonwebtoken";
-import { prisma, UserRole, type UserRole as UserRoleValue } from "@goyatrio/database";
+import { prisma, UserRole, type UserRole as UserRoleValue } from "../db.js";
 import { env, requireJwtSecret } from "../config/env.js";
 import { AppError } from "../utils/app-error.js";
 
@@ -9,11 +9,21 @@ export async function hashPassword(password: string): Promise<string> {
   return hash(password, 12);
 }
 
-export async function comparePassword(plainPassword: string, passwordHash: string): Promise<boolean> {
+export async function comparePassword(
+  plainPassword: string,
+  passwordHash: string,
+): Promise<boolean> {
   return compare(plainPassword, passwordHash);
 }
 
-function sanitizeUser(user: { id: string; name: string; email: string; role: UserRoleValue; isActive: boolean; createdAt: Date }) {
+function sanitizeUser(user: {
+  id: string;
+  name: string;
+  email: string;
+  role: UserRoleValue;
+  isActive: boolean;
+  createdAt: Date;
+}) {
   return {
     id: user.id,
     name: user.name,
@@ -24,7 +34,11 @@ function sanitizeUser(user: { id: string; name: string; email: string; role: Use
   };
 }
 
-export function generateAccessToken(payload: { userId: string; role: UserRoleValue; email: string }) {
+export function generateAccessToken(payload: {
+  userId: string;
+  role: UserRoleValue;
+  email: string;
+}) {
   return jwt.sign(
     {
       email: payload.email,
@@ -69,7 +83,14 @@ export async function registerUser(data: { name: string; email: string; password
 
   const passwordHash = await hashPassword(data.password);
 
-  let user: { id: string; name: string; email: string; role: UserRoleValue; isActive: boolean; createdAt: Date } = {
+  let user: {
+    id: string;
+    name: string;
+    email: string;
+    role: UserRoleValue;
+    isActive: boolean;
+    createdAt: Date;
+  } = {
     id: "dev_user_" + Date.now(),
     name: data.name,
     email: data.email,
@@ -113,7 +134,11 @@ export async function loginUser(email: string, password: string) {
         isActive: true,
         createdAt: new Date(),
       };
-      const accessToken = generateAccessToken({ userId: devAdmin.id, role: devAdmin.role, email: devAdmin.email });
+      const accessToken = generateAccessToken({
+        userId: devAdmin.id,
+        role: devAdmin.role,
+        email: devAdmin.email,
+      });
       return {
         token: accessToken,
         accessToken,
@@ -163,7 +188,11 @@ export async function refreshSession(refreshTokenInput: string) {
         isActive: true,
         createdAt: new Date(),
       };
-      const accessToken = generateAccessToken({ userId: devAdmin.id, role: devAdmin.role, email: devAdmin.email });
+      const accessToken = generateAccessToken({
+        userId: devAdmin.id,
+        role: devAdmin.role,
+        email: devAdmin.email,
+      });
       return {
         accessToken,
         refreshToken: "dev_refresh_token",

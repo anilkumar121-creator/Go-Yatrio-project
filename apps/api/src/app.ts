@@ -11,7 +11,7 @@ import { adminBlogsRouter, blogsRouter } from "./routes/blogs.js";
 import { adminCabsRouter, cabsRouter } from "./routes/cabs.js";
 import { adminDestinationsRouter, destinationsRouter } from "./routes/destinations.js";
 import { adminHotelsRouter, hotelsRouter } from "./routes/hotels.js";
-import { inquiriesRouter } from "./routes/inquiries.js";
+import { inquiriesRouter, adminInquiriesRouter } from "./routes/inquiries.js";
 import { adminItinerariesRouter, itinerariesRouter } from "./routes/itineraries.js";
 import { adminMediaRouter, mediaRouter } from "./routes/media.js";
 import { adminLookupsRouter, lookupsRouter } from "./routes/lookups.js";
@@ -47,6 +47,7 @@ export function createApp() {
   app.use("/api/cabs", cabsRouter);
   app.use("/api/admin/cabs", adminCabsRouter);
   app.use("/api/inquiries", inquiriesRouter);
+  app.use("/api/admin/inquiries", adminInquiriesRouter);
   app.use("/api/blogs", blogsRouter);
   app.use("/api/admin/blogs", adminBlogsRouter);
   app.use("/api/media", mediaRouter);

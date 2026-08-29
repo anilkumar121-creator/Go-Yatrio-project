@@ -13,3 +13,22 @@ export function sendMessage(response: Response, message: string, statusCode = 20
     message,
   });
 }
+
+export function sendPaginated<T>(
+  response: Response,
+  data: T[],
+  total: number,
+  page: number,
+  pageSize: number,
+) {
+  response.status(200).json({
+    success: true,
+    data,
+    pagination: {
+      total,
+      page,
+      pageSize,
+      totalPages: Math.ceil(total / pageSize),
+    },
+  });
+}

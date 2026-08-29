@@ -1,6 +1,6 @@
 ﻿import type { NextFunction, Request, Response } from "express";
 import jwt from "jsonwebtoken";
-import { UserRole } from "@goyatrio/database";
+import { UserRole } from "../db.js";
 import { requireJwtSecret } from "../config/env.js";
 import { AppError } from "../utils/app-error.js";
 
@@ -35,7 +35,6 @@ export function verifyJWT(request: Request, _response: Response, next: NextFunct
 export const authenticate = verifyJWT;
 
 export function requireAdmin(request: Request, _response: Response, next: NextFunction) {
-
   if ((request as AuthenticatedRequest).user?.role !== UserRole.ADMIN) {
     next(new AppError("Admin access is required.", 403, "ADMIN_ACCESS_REQUIRED"));
     return;

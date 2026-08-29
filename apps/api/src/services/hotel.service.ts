@@ -1,20 +1,14 @@
-import { prisma, HotelCategory, HotelStatus, HotelInquiryStatus } from "@goyatrio/database";
+import { prisma, HotelCategory, HotelStatus, HotelInquiryStatus } from "../db.js";
 import { attachMediaToItems, getMediaForModule } from "../utils/media-resolver.js";
 
-type HotelImageInput = {
-  imageUrl: string;
-  altText?: string;
-  sortOrder?: number;
-};
-
 type HotelRoomTypeInput = {
-  roomName: string;
-  roomDescription: string;
+  name: string;
+  description?: string;
   maxGuests?: number;
   bedType: string;
   roomSize?: string;
   priceFrom: number;
-  active?: boolean;
+  isActive?: boolean;
 };
 
 type HotelCreateInput = {
@@ -27,26 +21,26 @@ type HotelCreateInput = {
   city: string;
   state?: string;
   country?: string;
-  latitude?: number;
-  longitude?: number;
   hotelCategory?: HotelCategory;
   starRating?: number;
   featured?: boolean;
   status?: HotelStatus;
   amenities?: string[];
-  images?: HotelImageInput[];
+  images?: string[];
   roomTypes?: HotelRoomTypeInput[];
 };
 
 type HotelUpdateInput = Partial<HotelCreateInput>;
 
 type HotelInquiryInput = {
-  customerName: string;
+  name: string;
   email: string;
   phone: string;
-  checkInDate: Date;
-  checkOutDate: Date;
-  guests?: number;
+  checkIn: Date;
+  checkOut: Date;
+  adults?: number;
+  children?: number;
+  rooms?: number;
   message?: string;
 };
 
@@ -81,18 +75,20 @@ async function generateUniqueHotelSlug(name: string, excludeId?: string) {
 }
 
 export const hotelService = {
-  list: async (query: {
-    take?: number;
-    skip?: number;
-    search?: string;
-    destinationId?: string;
-    destinationSlug?: string;
-    category?: HotelCategory;
-    starRating?: number;
-    status?: HotelStatus;
-    featuredOnly?: boolean;
-    sort?: "price_asc" | "price_desc" | "rating_desc" | "newest";
-  } = {}) => {
+  list: async (
+    query: {
+      take?: number;
+      skip?: number;
+      search?: string;
+      destinationId?: string;
+      destinationSlug?: string;
+      category?: HotelCategory;
+      starRating?: number;
+      status?: HotelStatus;
+      featuredOnly?: boolean;
+      sort?: "rating_desc" | "newest";
+    } = {},
+  ) => {
     const {
       take = 50,
       skip = 0,
@@ -139,13 +135,8 @@ export const hotelService = {
           destination: {
             select: { id: true, name: true, slug: true, state: true, country: true },
           },
-          images: {
-            orderBy: { sortOrder: "asc" },
-            take: 5,
-          },
-          amenities: true,
           roomTypes: {
-            where: { active: true },
+            where: { isActive: true },
             orderBy: { priceFrom: "asc" },
           },
         },
@@ -159,37 +150,37 @@ export const hotelService = {
   },
 
   listFeatured: async (take = 6) => {
-    return prisma.hotel.findMany({
-      where: {
-        status: HotelStatus.ACTIVE,
-        featured: true,
-      },
-      take,
-      orderBy: { createdAt: "desc" },
-      include: {
-        destination: { select: { id: true, name: true, slug: true } },
-        images: { orderBy: { sortOrder: "asc" }, take: 3 },
-        amenities: true,
-        roomTypes: { where: { active: true }, orderBy: { priceFrom: "asc" } },
-      },
-    }).then((items) => attachMediaToItems("HOTEL", items));
+    return prisma.hotel
+      .findMany({
+        where: {
+          status: HotelStatus.ACTIVE,
+          featured: true,
+        },
+        take,
+        orderBy: { createdAt: "desc" },
+        include: {
+          destination: { select: { id: true, name: true, slug: true } },
+          roomTypes: { where: { isActive: true }, orderBy: { priceFrom: "asc" } },
+        },
+      })
+      .then((items) => attachMediaToItems("HOTEL", items));
   },
 
   listByDestinationSlug: async (destinationSlug: string, take = 20) => {
-    return prisma.hotel.findMany({
-      where: {
-        destination: { slug: destinationSlug },
-        status: HotelStatus.ACTIVE,
-      },
-      take,
-      orderBy: [{ featured: "desc" }, { starRating: "desc" }],
-      include: {
-        destination: true,
-        images: { orderBy: { sortOrder: "asc" }, take: 3 },
-        amenities: true,
-        roomTypes: { where: { active: true }, orderBy: { priceFrom: "asc" } },
-      },
-    }).then((items) => attachMediaToItems("HOTEL", items));
+    return prisma.hotel
+      .findMany({
+        where: {
+          destination: { slug: destinationSlug },
+          status: HotelStatus.ACTIVE,
+        },
+        take,
+        orderBy: [{ featured: "desc" }, { starRating: "desc" }],
+        include: {
+          destination: true,
+          roomTypes: { where: { isActive: true }, orderBy: { priceFrom: "asc" } },
+        },
+      })
+      .then((items) => attachMediaToItems("HOTEL", items));
   },
 
   getBySlug: async (slug: string) => {
@@ -199,9 +190,7 @@ export const hotelService = {
       },
       include: {
         destination: true,
-        images: { orderBy: { sortOrder: "asc" } },
-        amenities: true,
-        roomTypes: { where: { active: true }, orderBy: { priceFrom: "asc" } },
+        roomTypes: { where: { isActive: true }, orderBy: { priceFrom: "asc" } },
         packages: {
           where: { status: "PUBLISHED", isActive: true },
           select: { id: true, title: true, slug: true, durationDays: true, priceFrom: true },
@@ -220,8 +209,6 @@ export const hotelService = {
       where: { id },
       include: {
         destination: true,
-        images: { orderBy: { sortOrder: "asc" } },
-        amenities: true,
         roomTypes: { orderBy: { priceFrom: "asc" } },
         inquiries: { orderBy: { createdAt: "desc" }, take: 20 },
       },
@@ -247,47 +234,29 @@ export const hotelService = {
         city: data.city,
         state: data.state,
         country: data.country ?? "India",
-        latitude: data.latitude,
-        longitude: data.longitude,
         hotelCategory: data.hotelCategory ?? HotelCategory.STANDARD,
         starRating: data.starRating ?? 3,
         featured: data.featured ?? false,
         status: data.status ?? HotelStatus.DRAFT,
-        amenities: data.amenities && data.amenities.length > 0
-          ? {
-              connectOrCreate: data.amenities.map((name) => ({
-                where: { name },
-                create: { name, active: true },
-              })),
-            }
-          : undefined,
-        images: data.images && data.images.length > 0
-          ? {
-              create: data.images.map((img, idx) => ({
-                imageUrl: img.imageUrl,
-                altText: img.altText ?? data.name,
-                sortOrder: img.sortOrder ?? idx + 1,
-              })),
-            }
-          : undefined,
-        roomTypes: data.roomTypes && data.roomTypes.length > 0
-          ? {
-              create: data.roomTypes.map((rt) => ({
-                roomName: rt.roomName,
-                roomDescription: rt.roomDescription,
-                maxGuests: rt.maxGuests ?? 2,
-                bedType: rt.bedType,
-                roomSize: rt.roomSize,
-                priceFrom: rt.priceFrom,
-                active: rt.active ?? true,
-              })),
-            }
-          : undefined,
+        amenities: data.amenities ?? [],
+        images: data.images ?? [],
+        roomTypes:
+          data.roomTypes && data.roomTypes.length > 0
+            ? {
+                create: data.roomTypes.map((rt) => ({
+                  name: rt.name,
+                  description: rt.description,
+                  maxGuests: rt.maxGuests ?? 2,
+                  bedType: rt.bedType,
+                  roomSize: rt.roomSize,
+                  priceFrom: rt.priceFrom,
+                  isActive: rt.isActive ?? true,
+                })),
+              }
+            : undefined,
       },
       include: {
         destination: true,
-        images: true,
-        amenities: true,
         roomTypes: true,
       },
     });
@@ -311,17 +280,15 @@ export const hotelService = {
         city: data.city,
         state: data.state,
         country: data.country,
-        latitude: data.latitude,
-        longitude: data.longitude,
         hotelCategory: data.hotelCategory,
         starRating: data.starRating,
         featured: data.featured,
         status: data.status,
+        amenities: data.amenities,
+        images: data.images,
       },
       include: {
         destination: true,
-        images: true,
-        amenities: true,
         roomTypes: true,
       },
     });
@@ -344,12 +311,14 @@ export const hotelService = {
     return prisma.hotelInquiry.create({
       data: {
         hotelId,
-        customerName: data.customerName,
+        name: data.name,
         email: data.email,
         phone: data.phone,
-        checkInDate: data.checkInDate,
-        checkOutDate: data.checkOutDate,
-        guests: data.guests ?? 1,
+        checkIn: data.checkIn,
+        checkOut: data.checkOut,
+        adults: data.adults ?? 1,
+        children: data.children ?? 0,
+        rooms: data.rooms ?? 1,
         message: data.message,
         status: HotelInquiryStatus.NEW,
       },
@@ -360,9 +329,6 @@ export const hotelService = {
   },
 
   getAmenities: async () => {
-    return prisma.hotelAmenity.findMany({
-      where: { active: true },
-      orderBy: { name: "asc" },
-    });
+    return [];
   },
 };

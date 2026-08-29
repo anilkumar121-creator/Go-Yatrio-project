@@ -1,4 +1,4 @@
-import { prisma } from "@goyatrio/database";
+import { prisma } from "../db.js";
 
 export async function getHealth() {
   let database = "not_configured";

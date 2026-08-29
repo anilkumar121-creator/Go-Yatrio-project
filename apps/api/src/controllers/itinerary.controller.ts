@@ -154,7 +154,13 @@ export async function reorderDays(req: Request, res: Response) {
   const id = getParam(req.params.id);
   const validated = reorderDaysSchema.parse(req.body);
 
-  const updatedItinerary = await itineraryService.reorderDays(id, validated.dayOrders);
+  const dayOrders = validated.dayOrders.map((d) => ({
+    dayId: d.id,
+    sortOrder: d.sortOrder,
+    dayNumber: d.dayNumber,
+  }));
+
+  const updatedItinerary = await itineraryService.reorderDays(id, dayOrders);
 
   res.json({
     success: true,

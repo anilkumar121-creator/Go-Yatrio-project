@@ -1,4 +1,4 @@
-import { prisma, HotelStatus } from "@goyatrio/database";
+import { prisma, HotelStatus } from "../db.js";
 import { attachMediaToItems, getFeaturedMedia, getGalleryMedia } from "../utils/media-resolver.js";
 
 type DestinationCreateInput = {
@@ -50,7 +50,15 @@ async function generateUniqueSlug(name: string, excludeId?: string) {
 }
 
 export const destinationService = {
-  list(query: { take?: number; skip?: number; search?: string; status?: string; country?: string } = {}) {
+  list(
+    query: {
+      take?: number;
+      skip?: number;
+      search?: string;
+      status?: string;
+      country?: string;
+    } = {},
+  ) {
     const { take = 50, skip = 0, search, status, country } = query;
 
     return prisma.destination.findMany({
@@ -95,85 +103,86 @@ export const destinationService = {
     });
   },
 
-  listPublished(query: { take?: number; skip?: number; search?: string; featuredOnly?: boolean } = {}) {
+  listPublished(
+    query: { take?: number; skip?: number; search?: string; featuredOnly?: boolean } = {},
+  ) {
     const { take = 50, skip = 0, search, featuredOnly = false } = query;
 
-    return prisma.destination.findMany({
-      where: {
-        status: "PUBLISHED",
-        isActive: true,
-        ...(featuredOnly ? { featured: true } : {}),
-        ...(search
-          ? {
-              OR: [
-                { name: { contains: search, mode: "insensitive" } },
-                { state: { contains: search, mode: "insensitive" } },
-                { shortDescription: { contains: search, mode: "insensitive" } },
-              ],
-            }
-          : {}),
-      },
-      orderBy: [{ featured: "desc" }, { createdAt: "desc" }],
-      skip,
-      take,
-    }).then((items) => attachMediaToItems("DESTINATION", items));
+    return prisma.destination
+      .findMany({
+        where: {
+          status: "PUBLISHED",
+          isActive: true,
+          ...(featuredOnly ? { featured: true } : {}),
+          ...(search
+            ? {
+                OR: [
+                  { name: { contains: search, mode: "insensitive" } },
+                  { state: { contains: search, mode: "insensitive" } },
+                  { shortDescription: { contains: search, mode: "insensitive" } },
+                ],
+              }
+            : {}),
+        },
+        orderBy: [{ featured: "desc" }, { createdAt: "desc" }],
+        skip,
+        take,
+      })
+      .then((items) => attachMediaToItems("DESTINATION", items));
   },
 
   getBySlug(slug: string, publishedOnly = false) {
-    return prisma.destination.findFirst({
-      where: {
-        slug,
-        isActive: true,
-        ...(publishedOnly ? { status: "PUBLISHED" } : {}),
-      },
-      include: {
-        packages: { where: { isActive: true }, orderBy: { createdAt: "desc" } },
-        hotels: {
-          where: { status: HotelStatus.ACTIVE },
-          orderBy: [{ featured: "desc" }, { starRating: "desc" }],
-          include: {
-            images: { orderBy: { sortOrder: "asc" }, take: 1 },
-            amenities: true,
-            roomTypes: { where: { active: true }, orderBy: { priceFrom: "asc" }, take: 1 },
+    return prisma.destination
+      .findFirst({
+        where: {
+          slug,
+          isActive: true,
+          ...(publishedOnly ? { status: "PUBLISHED" } : {}),
+        },
+        include: {
+          packages: { where: { isActive: true }, orderBy: { createdAt: "desc" } },
+          hotels: {
+            where: { status: HotelStatus.ACTIVE },
+            orderBy: [{ featured: "desc" }, { starRating: "desc" }],
+            include: {
+              roomTypes: { where: { isActive: true }, orderBy: { priceFrom: "asc" }, take: 1 },
+            },
+          },
+          vehicles: {
+            where: { status: "ACTIVE", isActive: true },
+            orderBy: [{ featured: "desc" }, { createdAt: "desc" }],
+          },
+          blogs: {
+            where: { status: "PUBLISHED" },
+            orderBy: [{ publishedAt: "desc" }],
+            take: 4,
+            select: {
+              id: true,
+              title: true,
+              slug: true,
+              excerpt: true,
+              featuredImage: true,
+              publishedAt: true,
+              readingTimeMinutes: true,
+              author: { select: { id: true, name: true, slug: true } },
+            },
           },
         },
-        vehicles: {
-          where: { status: "ACTIVE", isActive: true },
-          orderBy: [{ featured: "desc" }, { createdAt: "desc" }],
-          include: {
-            amenities: true,
-          },
-        },
-        blogs: {
-          where: { status: "PUBLISHED" },
-          orderBy: [{ publishedAt: "desc" }],
-          take: 4,
-          select: {
-            id: true,
-            title: true,
-            slug: true,
-            excerpt: true,
-            featuredImage: true,
-            publishedAt: true,
-            readingTimeMinutes: true,
-            author: { select: { id: true, name: true, slug: true } },
-          },
-        },
-      },
-    }).then(async (destination) => {
-      if (!destination) return null;
+      })
+      .then(async (destination) => {
+        if (!destination) return null;
 
-      const [featuredMedia, galleryMedia] = await Promise.all([
-        getFeaturedMedia("DESTINATION", destination.id),
-        getGalleryMedia("DESTINATION", destination.id),
-      ]);
+        const [featuredMedia, galleryMedia] = await Promise.all([
+          getFeaturedMedia("DESTINATION", destination.id),
+          getGalleryMedia("DESTINATION", destination.id),
+        ]);
 
-      return {
-        ...destination,
-        featuredMedia,
-        galleryMedia,
-      };
-    });
+        return {
+          ...destination,
+          featuredMedia,
+          galleryMedia,
+        };
+      });
   },
 
   get(id: string) {

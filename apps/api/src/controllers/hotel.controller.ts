@@ -6,7 +6,7 @@ import {
   hotelStatusSchema,
   hotelUpdateSchema,
 } from "../validators/schemas.js";
-import { HotelCategory, HotelStatus } from "@goyatrio/database";
+import { HotelCategory, HotelStatus } from "../db.js";
 
 function getParam(param: string | string[] | undefined): string {
   if (Array.isArray(param)) return param[0] ?? "";
@@ -21,7 +21,8 @@ export async function listHotels(req: Request, res: Response) {
   const destinationSlug = req.query.destinationSlug as string | undefined;
   const category = req.query.category as HotelCategory | undefined;
   const starRating = req.query.starRating ? Number(req.query.starRating) : undefined;
-  const sort = req.query.sort as "price_asc" | "price_desc" | "rating_desc" | "newest" | undefined;
+  // Hotel service only supports "newest" | "rating_desc"
+  const sort = (req.query.sort as "rating_desc" | "newest" | undefined) ?? "newest";
 
   const result = await hotelService.list({
     take,
@@ -116,7 +117,17 @@ export async function submitHotelInquiry(req: Request, res: Response) {
     return;
   }
 
-  const inquiry = await hotelService.createInquiry(existing.id, validated);
+  const inquiry = await hotelService.createInquiry(existing.id, {
+    name: validated.customerName,
+    email: validated.email,
+    phone: validated.phone,
+    checkIn: validated.checkInDate,
+    checkOut: validated.checkOutDate,
+    adults: validated.guests ?? 1,
+    children: 0,
+    rooms: 1,
+    message: validated.message,
+  });
 
   res.status(201).json({
     success: true,
@@ -172,7 +183,26 @@ export async function adminGetHotel(req: Request, res: Response) {
 
 export async function createHotel(req: Request, res: Response) {
   const validated = hotelCreateSchema.parse(req.body);
-  const created = await hotelService.create(validated);
+
+  // Map images from { imageUrl, altText, sortOrder }[] to string[]
+  const images = validated.images?.map((img) => img.imageUrl) ?? [];
+
+  // Map roomTypes from schema format to service format
+  const roomTypes = validated.roomTypes?.map((rt) => ({
+    name: rt.roomName,
+    description: rt.roomDescription,
+    maxGuests: rt.maxGuests,
+    bedType: rt.bedType,
+    roomSize: rt.roomSize,
+    priceFrom: rt.priceFrom,
+    isActive: rt.active ?? true,
+  }));
+
+  const created = await hotelService.create({
+    ...validated,
+    images,
+    roomTypes,
+  });
 
   res.status(201).json({
     success: true,
@@ -194,7 +224,25 @@ export async function updateHotel(req: Request, res: Response) {
     return;
   }
 
-  const updated = await hotelService.update(id, validated);
+  // Map images from { imageUrl, altText, sortOrder }[] to string[]
+  const images = validated.images?.map((img) => img.imageUrl);
+
+  // Map roomTypes from schema format to service format
+  const roomTypes = validated.roomTypes?.map((rt) => ({
+    name: rt.roomName,
+    description: rt.roomDescription,
+    maxGuests: rt.maxGuests,
+    bedType: rt.bedType,
+    roomSize: rt.roomSize,
+    priceFrom: rt.priceFrom,
+    isActive: rt.active ?? true,
+  }));
+
+  const updated = await hotelService.update(id, {
+    ...validated,
+    images,
+    roomTypes,
+  });
 
   res.json({
     success: true,

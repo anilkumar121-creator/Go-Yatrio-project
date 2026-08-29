@@ -1,6 +1,6 @@
-import { prisma } from "@goyatrio/database";
+import { prisma } from "../db.js";
 
-export type DayActivityInput = {
+export type ActivityInput = {
   title: string;
   description?: string;
   location?: string;
@@ -8,60 +8,32 @@ export type DayActivityInput = {
   sortOrder?: number;
 };
 
-export type ItineraryDayInput = {
+export type ItineraryCreateInput = {
+  packageId: string;
+  dayNumber: number;
+  title: string;
+  description: string;
+  location?: string;
+  sortOrder?: number;
+  activities?: ActivityInput[];
+};
+
+export type ItineraryUpdateInput = Partial<ItineraryCreateInput>;
+
+export type DayCreateInput = {
   dayNumber: number;
   sortOrder?: number;
   title: string;
   description: string;
-  city?: string;
-  hotel?: string;
-  meals?: string;
-  transfers?: string;
-  notes?: string;
-  activities?: DayActivityInput[];
 };
 
-export type ItineraryCreateInput = {
-  packageId: string;
-  title: string;
-  slug?: string;
-  description?: string;
-  isDefault?: boolean;
-  isActive?: boolean;
-  days?: ItineraryDayInput[];
+export type DayUpdateInput = Partial<DayCreateInput>;
+
+export type ReorderDayInput = {
+  dayId: string;
+  sortOrder: number;
+  dayNumber?: number;
 };
-
-export type ItineraryUpdateInput = Partial<Omit<ItineraryCreateInput, "packageId">>;
-
-function slugify(value: string) {
-  return value
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9\s-]/g, "")
-    .replace(/\s+/g, "-")
-    .replace(/-+/g, "-")
-    .replace(/^-|-$/g, "");
-}
-
-async function generateUniqueItinerarySlug(title: string, excludeId?: string) {
-  const base = slugify(title) || "itinerary";
-  let candidate = base;
-  let counter = 1;
-
-  while (true) {
-    const existing = await prisma.itinerary.findUnique({
-      where: { slug: candidate },
-      select: { id: true },
-    });
-
-    if (!existing || (excludeId && existing.id === excludeId)) {
-      return candidate;
-    }
-
-    candidate = `${base}-${counter}`;
-    counter++;
-  }
-}
 
 export const itineraryService = {
   list: async (take = 50, skip = 0, packageId?: string) => {
@@ -72,7 +44,7 @@ export const itineraryService = {
         where,
         take,
         skip,
-        orderBy: [{ isDefault: "desc" }, { createdAt: "desc" }],
+        orderBy: [{ dayNumber: "asc" }],
         include: {
           package: {
             select: {
@@ -81,13 +53,8 @@ export const itineraryService = {
               slug: true,
             },
           },
-          days: {
+          activities: {
             orderBy: { sortOrder: "asc" },
-            include: {
-              activities: {
-                orderBy: { sortOrder: "asc" },
-              },
-            },
           },
         },
       }),
@@ -96,11 +63,9 @@ export const itineraryService = {
     return { total, items };
   },
 
-  get: async (idOrSlug: string) => {
-    return prisma.itinerary.findFirst({
-      where: {
-        OR: [{ id: idOrSlug }, { slug: idOrSlug }],
-      },
+  get: async (id: string) => {
+    return prisma.itinerary.findUnique({
+      where: { id },
       include: {
         package: {
           select: {
@@ -120,94 +85,58 @@ export const itineraryService = {
             },
           },
         },
-        days: {
+        activities: {
           orderBy: { sortOrder: "asc" },
-          include: {
-            activities: {
-              orderBy: { sortOrder: "asc" },
-            },
-          },
         },
       },
     });
   },
 
   create: async (data: ItineraryCreateInput) => {
-    const slug = data.slug ? slugify(data.slug) : await generateUniqueItinerarySlug(data.title);
-
     return prisma.itinerary.create({
       data: {
         packageId: data.packageId,
+        dayNumber: data.dayNumber,
         title: data.title,
-        slug,
         description: data.description,
-        isDefault: data.isDefault ?? true,
-        isActive: data.isActive ?? true,
-        days: data.days && data.days.length > 0
-          ? {
-              create: data.days.map((day, dayIndex) => ({
-                dayNumber: day.dayNumber ?? dayIndex + 1,
-                sortOrder: day.sortOrder ?? day.dayNumber ?? dayIndex + 1,
-                title: day.title,
-                description: day.description,
-                city: day.city,
-                hotel: day.hotel,
-                meals: day.meals,
-                transfers: day.transfers,
-                notes: day.notes,
-                activities: day.activities && day.activities.length > 0
-                  ? {
-                      create: day.activities.map((act, actIndex) => ({
-                        title: act.title,
-                        description: act.description,
-                        location: act.location,
-                        timing: act.timing,
-                        sortOrder: act.sortOrder ?? actIndex + 1,
-                      })),
-                    }
-                  : undefined,
-              })),
-            }
-          : undefined,
+        location: data.location,
+        sortOrder: data.sortOrder ?? data.dayNumber,
+        activities:
+          data.activities && data.activities.length > 0
+            ? {
+                create: data.activities.map((act, actIndex) => ({
+                  title: act.title,
+                  description: act.description,
+                  location: act.location,
+                  timing: act.timing,
+                  sortOrder: act.sortOrder ?? actIndex + 1,
+                })),
+              }
+            : undefined,
       },
       include: {
         package: true,
-        days: {
+        activities: {
           orderBy: { sortOrder: "asc" },
-          include: {
-            activities: {
-              orderBy: { sortOrder: "asc" },
-            },
-          },
         },
       },
     });
   },
 
   update: async (id: string, data: ItineraryUpdateInput) => {
-    let slug: string | undefined = undefined;
-    if (data.slug || data.title) {
-      slug = await generateUniqueItinerarySlug(data.slug ?? data.title ?? "itinerary", id);
-    }
-
     return prisma.itinerary.update({
       where: { id },
       data: {
+        dayNumber: data.dayNumber,
         title: data.title,
-        slug,
         description: data.description,
-        isDefault: data.isDefault,
-        isActive: data.isActive,
+        location: data.location,
+        sortOrder: data.sortOrder,
       },
       include: {
         package: true,
-        days: {
+        activities: {
           orderBy: { sortOrder: "asc" },
-          include: {
-            activities: {
-              orderBy: { sortOrder: "asc" },
-            },
-          },
         },
       },
     });
@@ -219,32 +148,26 @@ export const itineraryService = {
     });
   },
 
-  addDay: async (itineraryId: string, dayData: ItineraryDayInput) => {
-    return prisma.itineraryDay.create({
+  addDay: async (packageId: string, data: DayCreateInput) => {
+    // Find the highest sortOrder for this package to append at the end
+    const lastDay = await prisma.itinerary.findFirst({
+      where: { packageId },
+      orderBy: { sortOrder: "desc" },
+      select: { sortOrder: true },
+    });
+
+    const nextSortOrder = (lastDay?.sortOrder ?? 0) + 1;
+
+    return prisma.itinerary.create({
       data: {
-        itineraryId,
-        dayNumber: dayData.dayNumber,
-        sortOrder: dayData.sortOrder ?? dayData.dayNumber,
-        title: dayData.title,
-        description: dayData.description,
-        city: dayData.city,
-        hotel: dayData.hotel,
-        meals: dayData.meals,
-        transfers: dayData.transfers,
-        notes: dayData.notes,
-        activities: dayData.activities && dayData.activities.length > 0
-          ? {
-              create: dayData.activities.map((act, idx) => ({
-                title: act.title,
-                description: act.description,
-                location: act.location,
-                timing: act.timing,
-                sortOrder: act.sortOrder ?? idx + 1,
-              })),
-            }
-          : undefined,
+        packageId,
+        dayNumber: data.dayNumber,
+        title: data.title,
+        description: data.description,
+        sortOrder: data.sortOrder ?? nextSortOrder,
       },
       include: {
+        package: true,
         activities: {
           orderBy: { sortOrder: "asc" },
         },
@@ -252,21 +175,17 @@ export const itineraryService = {
     });
   },
 
-  updateDay: async (dayId: string, dayData: Partial<ItineraryDayInput>) => {
-    return prisma.itineraryDay.update({
+  updateDay: async (dayId: string, data: DayUpdateInput) => {
+    return prisma.itinerary.update({
       where: { id: dayId },
       data: {
-        dayNumber: dayData.dayNumber,
-        sortOrder: dayData.sortOrder,
-        title: dayData.title,
-        description: dayData.description,
-        city: dayData.city,
-        hotel: dayData.hotel,
-        meals: dayData.meals,
-        transfers: dayData.transfers,
-        notes: dayData.notes,
+        dayNumber: data.dayNumber,
+        title: data.title,
+        description: data.description,
+        sortOrder: data.sortOrder,
       },
       include: {
+        package: true,
         activities: {
           orderBy: { sortOrder: "asc" },
         },
@@ -275,46 +194,42 @@ export const itineraryService = {
   },
 
   removeDay: async (dayId: string) => {
-    return prisma.itineraryDay.delete({
+    return prisma.itinerary.delete({
       where: { id: dayId },
     });
   },
 
-  reorderDays: async (
-    itineraryId: string,
-    dayOrders: { dayId: string; sortOrder: number; dayNumber?: number }[]
-  ) => {
-    const transactions = dayOrders.map((item) =>
-      prisma.itineraryDay.update({
-        where: { id: item.dayId, itineraryId },
-        data: {
-          sortOrder: item.sortOrder,
-          dayNumber: item.dayNumber ?? item.sortOrder,
-        },
-      })
+  reorderDays: async (packageId: string, dayOrders: ReorderDayInput[]) => {
+    // Use a transaction to update all days atomically
+    await prisma.$transaction(
+      dayOrders.map(({ dayId, sortOrder, dayNumber }) =>
+        prisma.itinerary.update({
+          where: { id: dayId },
+          data: {
+            sortOrder,
+            ...(dayNumber !== undefined && { dayNumber }),
+          },
+        }),
+      ),
     );
 
-    await prisma.$transaction(transactions);
-
-    return prisma.itinerary.findUnique({
-      where: { id: itineraryId },
+    // Return the updated itinerary list for the package
+    return prisma.itinerary.findMany({
+      where: { packageId },
+      orderBy: [{ dayNumber: "asc" }],
       include: {
-        days: {
+        package: true,
+        activities: {
           orderBy: { sortOrder: "asc" },
-          include: {
-            activities: {
-              orderBy: { sortOrder: "asc" },
-            },
-          },
         },
       },
     });
   },
 
-  addActivity: async (dayId: string, activityData: DayActivityInput) => {
-    return prisma.dayActivity.create({
+  addActivity: async (itineraryId: string, activityData: ActivityInput) => {
+    return prisma.activity.create({
       data: {
-        dayId,
+        itineraryId,
         title: activityData.title,
         description: activityData.description,
         location: activityData.location,
@@ -324,8 +239,8 @@ export const itineraryService = {
     });
   },
 
-  updateActivity: async (activityId: string, activityData: Partial<DayActivityInput>) => {
-    return prisma.dayActivity.update({
+  updateActivity: async (activityId: string, activityData: Partial<ActivityInput>) => {
+    return prisma.activity.update({
       where: { id: activityId },
       data: {
         title: activityData.title,
@@ -338,7 +253,7 @@ export const itineraryService = {
   },
 
   removeActivity: async (activityId: string) => {
-    return prisma.dayActivity.delete({
+    return prisma.activity.delete({
       where: { id: activityId },
     });
   },

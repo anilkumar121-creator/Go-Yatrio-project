@@ -1,4 +1,4 @@
-import { prisma, CabStatus, CabTripType, CabFuelType, VehicleType } from "@goyatrio/database";
+import { prisma, CabStatus, CabTripType, CabFuelType, VehicleType } from "../db.js";
 import { attachMediaToItems, getMediaForModule } from "../utils/media-resolver.js";
 
 type CabCreateInput = {
@@ -29,13 +29,12 @@ type CabUpdateInput = Partial<CabCreateInput>;
 
 type CabInquiryInput = {
   tripType: CabTripType;
-  customerName: string;
+  name: string;
   email: string;
   phone: string;
-  pickupLocation?: string;
-  dropLocation?: string;
-  travelDate?: Date;
-  returnDate?: Date;
+  pickupLocation: string;
+  dropLocation: string;
+  pickupDate: Date;
   passengers?: number;
   message?: string;
 };
@@ -71,18 +70,20 @@ async function generateUniqueCabSlug(name: string, excludeId?: string) {
 }
 
 export const cabService = {
-  list: async (query: {
-    take?: number;
-    skip?: number;
-    search?: string;
-    vehicleType?: VehicleType;
-    tripType?: CabTripType;
-    destinationId?: string;
-    destinationSlug?: string;
-    status?: CabStatus;
-    featuredOnly?: boolean;
-    sort?: "price_asc" | "price_desc" | "capacity_desc" | "newest";
-  } = {}) => {
+  list: async (
+    query: {
+      take?: number;
+      skip?: number;
+      search?: string;
+      vehicleType?: VehicleType;
+      tripType?: CabTripType;
+      destinationId?: string;
+      destinationSlug?: string;
+      status?: CabStatus;
+      featuredOnly?: boolean;
+      sort?: "price_asc" | "price_desc" | "capacity_desc" | "newest";
+    } = {},
+  ) => {
     const {
       take = 50,
       skip = 0,
@@ -130,7 +131,6 @@ export const cabService = {
         orderBy,
         include: {
           destination: { select: { id: true, name: true, slug: true, state: true, country: true } },
-          amenities: true,
         },
       }),
     ]);
@@ -142,31 +142,33 @@ export const cabService = {
   },
 
   listFeatured: async (take = 6) => {
-    return prisma.vehicle.findMany({
-      where: { status: CabStatus.ACTIVE, isActive: true, featured: true },
-      take,
-      orderBy: { createdAt: "desc" },
-      include: {
-        destination: { select: { id: true, name: true, slug: true } },
-        amenities: true,
-      },
-    }).then((items) => attachMediaToItems("CAB", items));
+    return prisma.vehicle
+      .findMany({
+        where: { status: CabStatus.ACTIVE, isActive: true, featured: true },
+        take,
+        orderBy: { createdAt: "desc" },
+        include: {
+          destination: { select: { id: true, name: true, slug: true } },
+        },
+      })
+      .then((items) => attachMediaToItems("CAB", items));
   },
 
   listByDestinationSlug: async (destinationSlug: string, take = 20) => {
-    return prisma.vehicle.findMany({
-      where: {
-        destination: { slug: destinationSlug },
-        status: CabStatus.ACTIVE,
-        isActive: true,
-      },
-      take,
-      orderBy: [{ featured: "desc" }, { createdAt: "desc" }],
-      include: {
-        destination: true,
-        amenities: true,
-      },
-    }).then((items) => attachMediaToItems("CAB", items));
+    return prisma.vehicle
+      .findMany({
+        where: {
+          destination: { slug: destinationSlug },
+          status: CabStatus.ACTIVE,
+          isActive: true,
+        },
+        take,
+        orderBy: [{ featured: "desc" }, { createdAt: "desc" }],
+        include: {
+          destination: true,
+        },
+      })
+      .then((items) => attachMediaToItems("CAB", items));
   },
 
   getBySlug: async (slug: string) => {
@@ -174,7 +176,6 @@ export const cabService = {
       where: { OR: [{ id: slug }, { slug }] },
       include: {
         destination: true,
-        amenities: true,
         packages: {
           where: { status: "PUBLISHED", isActive: true },
           select: { id: true, title: true, slug: true, durationDays: true, priceFrom: true },
@@ -193,7 +194,6 @@ export const cabService = {
       where: { id },
       include: {
         destination: true,
-        amenities: true,
         inquiries: { orderBy: { createdAt: "desc" }, take: 20 },
       },
     });
@@ -230,18 +230,10 @@ export const cabService = {
         status: data.status ?? CabStatus.DRAFT,
         isActive: true,
         destinationId: data.destinationId || null,
-        amenities: data.amenities && data.amenities.length > 0
-          ? {
-              connectOrCreate: data.amenities.map((name) => ({
-                where: { name },
-                create: { name, active: true },
-              })),
-            }
-          : undefined,
+        amenities: data.amenities ?? [],
       },
       include: {
         destination: true,
-        amenities: true,
       },
     });
   },
@@ -275,10 +267,10 @@ export const cabService = {
         featured: data.featured,
         status: data.status,
         destinationId: data.destinationId ?? null,
+        amenities: data.amenities,
       },
       include: {
         destination: true,
-        amenities: true,
       },
     });
   },
@@ -304,31 +296,27 @@ export const cabService = {
     });
   },
 
-  createInquiry: async (cabId: string, data: CabInquiryInput) => {
+  createInquiry: async (vehicleId: string, data: CabInquiryInput) => {
     return prisma.cabInquiry.create({
       data: {
-        cabId,
+        vehicleId,
         tripType: data.tripType,
-        customerName: data.customerName,
+        name: data.name,
         email: data.email,
         phone: data.phone,
         pickupLocation: data.pickupLocation,
         dropLocation: data.dropLocation,
-        travelDate: data.travelDate,
-        returnDate: data.returnDate,
+        pickupDate: data.pickupDate,
         passengers: data.passengers ?? 1,
         message: data.message,
       },
       include: {
-        cab: { select: { id: true, vehicleName: true, slug: true } },
+        vehicle: { select: { id: true, vehicleName: true, slug: true } },
       },
     });
   },
 
   getAmenities: async () => {
-    return prisma.cabAmenity.findMany({
-      where: { active: true },
-      orderBy: { name: "asc" },
-    });
+    return [];
   },
 };

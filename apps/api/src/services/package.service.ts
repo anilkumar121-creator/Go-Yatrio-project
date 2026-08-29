@@ -1,4 +1,4 @@
-import { prisma, PackageType, HotelStatus, type PackageAvailability } from "@goyatrio/database";
+import { prisma, PackageType, HotelStatus, type PackageAvailability } from "../db.js";
 import { attachMediaToItems, getMediaForModule } from "../utils/media-resolver.js";
 
 type PackageSeasonalInput = {
@@ -87,15 +87,24 @@ async function generateUniqueSlug(title: string, excludeId?: string) {
   }
 }
 
-/**
- * Effective price priority (frozen design):
- * 1. Active PackageOffer (highest priority)
- * 2. Active PackageSeasonalPrice
- * 3. TourPackage.discountedPrice
- * 4. TourPackage.priceFrom
- */
-type PricingOffer = { discountedPrice: unknown; priority: number; startDate: Date; endDate: Date; active: boolean; badge: string | null; label: string };
-type PricingSeasonal = { discountedPrice: unknown; priceFrom: unknown; displayOrder: number; startDate: Date; endDate: Date; active: boolean; label?: string | null };
+type PricingOffer = {
+  discountedPrice: unknown;
+  priority: number;
+  startDate: Date;
+  endDate: Date;
+  active: boolean;
+  badge: string | null;
+  label: string;
+};
+type PricingSeasonal = {
+  discountedPrice: unknown;
+  priceFrom: unknown;
+  displayOrder: number;
+  startDate: Date;
+  endDate: Date;
+  active: boolean;
+  label?: string | null;
+};
 type PricingInput = {
   priceFrom: unknown;
   discountedPrice: unknown;
@@ -108,10 +117,17 @@ function computePricing(
   discountedPrice: unknown,
   offers: PricingOffer[],
   seasonal: PricingSeasonal[],
-): { effectivePrice: number; originalPrice: number; badge: string | null; offerLabel: string | null; seasonalLabel: string | null } {
+): {
+  effectivePrice: number;
+  originalPrice: number;
+  badge: string | null;
+  offerLabel: string | null;
+  seasonalLabel: string | null;
+} {
   const today = now();
   const basePrice = Number(priceFrom ?? 0);
-  const baseDiscounted = discountedPrice !== null && discountedPrice !== undefined ? Number(discountedPrice) : null;
+  const baseDiscounted =
+    discountedPrice !== null && discountedPrice !== undefined ? Number(discountedPrice) : null;
 
   const activeOffers = offers
     .filter((o) => o.active && o.startDate <= today && o.endDate >= today)
@@ -123,7 +139,9 @@ function computePricing(
 
   if (activeOffers.length > 0) {
     const offer = activeOffers[0];
-    const offerPrice = offer.discountedPrice ? Number(offer.discountedPrice) : baseDiscounted ?? basePrice;
+    const offerPrice = offer.discountedPrice
+      ? Number(offer.discountedPrice)
+      : (baseDiscounted ?? basePrice);
     return {
       effectivePrice: offerPrice < basePrice ? offerPrice : basePrice,
       originalPrice: basePrice,
@@ -135,7 +153,9 @@ function computePricing(
 
   if (activeSeasonal.length > 0) {
     const sPrice = activeSeasonal[0];
-    const seasonalPrice = sPrice.discountedPrice ? Number(sPrice.discountedPrice) : Number(sPrice.priceFrom);
+    const seasonalPrice = sPrice.discountedPrice
+      ? Number(sPrice.discountedPrice)
+      : Number(sPrice.priceFrom);
     return {
       effectivePrice: seasonalPrice < basePrice ? seasonalPrice : basePrice,
       originalPrice: basePrice,
@@ -188,14 +208,16 @@ function withPricing<T extends PricingInput>(item: T) {
 }
 
 export const packageService = {
-  list(query: {
-    take?: number;
-    skip?: number;
-    search?: string;
-    packageType?: string;
-    destinationId?: string;
-    status?: string;
-  } = {}) {
+  list(
+    query: {
+      take?: number;
+      skip?: number;
+      search?: string;
+      packageType?: string;
+      destinationId?: string;
+      status?: string;
+    } = {},
+  ) {
     const { take = 50, skip = 0, search, packageType, destinationId, status } = query;
 
     return prisma.tourPackage.findMany({
@@ -224,12 +246,14 @@ export const packageService = {
     });
   },
 
-  count(query: {
-    search?: string;
-    packageType?: string;
-    destinationId?: string;
-    status?: string;
-  } = {}) {
+  count(
+    query: {
+      search?: string;
+      packageType?: string;
+      destinationId?: string;
+      status?: string;
+    } = {},
+  ) {
     const { search, packageType, destinationId, status } = query;
 
     return prisma.tourPackage.count({
@@ -251,16 +275,18 @@ export const packageService = {
     });
   },
 
-  async listPublished(query: {
-    take?: number;
-    skip?: number;
-    search?: string;
-    packageType?: string;
-    destinationId?: string;
-    featuredOnly?: boolean;
-    availability?: PackageAvailability;
-    sort?: "price_asc" | "price_desc" | "duration_asc" | "duration_desc" | "newest";
-  } = {}) {
+  async listPublished(
+    query: {
+      take?: number;
+      skip?: number;
+      search?: string;
+      packageType?: string;
+      destinationId?: string;
+      featuredOnly?: boolean;
+      availability?: PackageAvailability;
+      sort?: "price_asc" | "price_desc" | "duration_asc" | "duration_desc" | "newest";
+    } = {},
+  ) {
     const {
       take = 50,
       skip = 0,
@@ -320,32 +346,21 @@ export const packageService = {
       include: {
         destination: true,
         itineraries: {
-          where: { isActive: true },
-          orderBy: [{ isDefault: "desc" }, { createdAt: "desc" }],
+          orderBy: [{ dayNumber: "asc" }],
           include: {
-            days: {
+            activities: {
               orderBy: { sortOrder: "asc" },
-              include: {
-                activities: {
-                  orderBy: { sortOrder: "asc" },
-                },
-              },
             },
           },
         },
         hotels: {
           where: { status: HotelStatus.ACTIVE },
           include: {
-            images: { orderBy: { sortOrder: "asc" }, take: 1 },
-            amenities: true,
-            roomTypes: { where: { active: true }, orderBy: { priceFrom: "asc" }, take: 1 },
+            roomTypes: { where: { isActive: true }, orderBy: { priceFrom: "asc" }, take: 1 },
           },
         },
         vehicles: {
           where: { status: "ACTIVE", isActive: true },
-          include: {
-            amenities: true,
-          },
         },
         blogs: {
           where: { status: "PUBLISHED" },
@@ -382,32 +397,21 @@ export const packageService = {
       include: {
         destination: true,
         itineraries: {
-          where: { isActive: true },
-          orderBy: [{ isDefault: "desc" }, { createdAt: "desc" }],
+          orderBy: [{ dayNumber: "asc" }],
           include: {
-            days: {
+            activities: {
               orderBy: { sortOrder: "asc" },
-              include: {
-                activities: {
-                  orderBy: { sortOrder: "asc" },
-                },
-              },
             },
           },
         },
         hotels: {
           where: { status: HotelStatus.ACTIVE },
           include: {
-            images: { orderBy: { sortOrder: "asc" }, take: 1 },
-            amenities: true,
-            roomTypes: { where: { active: true }, orderBy: { priceFrom: "asc" }, take: 1 },
+            roomTypes: { where: { isActive: true }, orderBy: { priceFrom: "asc" }, take: 1 },
           },
         },
         vehicles: {
           where: { status: "ACTIVE", isActive: true },
-          include: {
-            amenities: true,
-          },
         },
         blogs: {
           where: { status: "PUBLISHED" },
@@ -432,7 +436,11 @@ export const packageService = {
     if (!item) return null;
 
     const media = await getMediaForModule("PACKAGE", item.id);
-    return withPricing({ ...item, featuredMedia: media.featuredMedia, galleryMedia: media.galleryMedia });
+    return withPricing({
+      ...item,
+      featuredMedia: media.featuredMedia,
+      galleryMedia: media.galleryMedia,
+    });
   },
 
   async create(data: PackageCreateInput) {
@@ -464,29 +472,35 @@ export const packageService = {
         metaTitle: data.metaTitle,
         metaDescription: data.metaDescription,
         isActive: data.isActive ?? true,
-        seasonalPrices: data.seasonalPrices && data.seasonalPrices.length > 0
-          ? { create: data.seasonalPrices.map((s) => ({
-              label: s.label,
-              priceFrom: s.priceFrom,
-              discountedPrice: s.discountedPrice,
-              displayOrder: s.displayOrder ?? 0,
-              startDate: s.startDate,
-              endDate: s.endDate,
-              active: s.active ?? true,
-            })) }
-          : undefined,
-        offers: data.offers && data.offers.length > 0
-          ? { create: data.offers.map((o) => ({
-              label: o.label,
-              badge: o.badge,
-              discountedPrice: o.discountedPrice,
-              priority: o.priority ?? 0,
-              startDate: o.startDate,
-              endDate: o.endDate,
-              featured: o.featured ?? false,
-              active: o.active ?? true,
-            })) }
-          : undefined,
+        seasonalPrices:
+          data.seasonalPrices && data.seasonalPrices.length > 0
+            ? {
+                create: data.seasonalPrices.map((s) => ({
+                  label: s.label,
+                  priceFrom: s.priceFrom,
+                  discountedPrice: s.discountedPrice,
+                  displayOrder: s.displayOrder ?? 0,
+                  startDate: s.startDate,
+                  endDate: s.endDate,
+                  active: s.active ?? true,
+                })),
+              }
+            : undefined,
+        offers:
+          data.offers && data.offers.length > 0
+            ? {
+                create: data.offers.map((o) => ({
+                  label: o.label,
+                  badge: o.badge,
+                  discountedPrice: o.discountedPrice,
+                  priority: o.priority ?? 0,
+                  startDate: o.startDate,
+                  endDate: o.endDate,
+                  featured: o.featured ?? false,
+                  active: o.active ?? true,
+                })),
+              }
+            : undefined,
       },
       include: {
         destination: true,
@@ -574,7 +588,6 @@ export const packageService = {
     return prisma.tourPackage.update({ where: { id }, data: { isActive: false } });
   },
 
-  // --- Seasonal Price Management ---
   addSeasonalPrice(packageId: string, data: Omit<PackageSeasonalInput, "id">) {
     return prisma.packageSeasonalPrice.create({
       data: {
@@ -601,7 +614,6 @@ export const packageService = {
     return prisma.packageSeasonalPrice.delete({ where: { id } });
   },
 
-  // --- Offer Management ---
   addOffer(packageId: string, data: Omit<PackageOfferInput, "id">) {
     return prisma.packageOffer.create({
       data: {

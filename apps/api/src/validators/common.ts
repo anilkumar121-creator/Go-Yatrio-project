@@ -6,9 +6,9 @@ export const slugSchema = z
   .max(120)
   .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Slug must use lowercase letters, numbers, and hyphens.");
 
-export const idParamSchema = z.object({
-  id: z.string().min(1),
-});
+export const idParamSchema = z.object({ id: z.string().min(1) });
+
+export const noteIdParamSchema = z.object({ noteId: z.string().min(1) });
 
 export const optionalPaginationSchema = z.object({
   take: z.coerce.number().int().positive().max(100).optional(),

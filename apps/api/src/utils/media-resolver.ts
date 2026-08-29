@@ -1,5 +1,5 @@
-import { prisma } from "@goyatrio/database";
-import type { MediaModule } from "@goyatrio/database";
+import { prisma } from "../db.js";
+import type { MediaModule } from "../db.js";
 
 export type MediaItem = {
   id: string;
@@ -27,7 +27,6 @@ export type MediaItem = {
   role?: string;
   sortOrder?: number;
 };
-
 
 export async function getMediaForModule(
   module: string,
@@ -75,7 +74,9 @@ export async function getMediaForModule(
     }));
 
   const featuredMedia = mediaItems.find((m) => m.role === "FEATURED") ?? null;
-  const galleryMedia = mediaItems.filter((m) => m.role !== "FEATURED").sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
+  const galleryMedia = mediaItems
+    .filter((m) => m.role !== "FEATURED")
+    .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
 
   return { featuredMedia, galleryMedia };
 }
@@ -107,7 +108,6 @@ export async function getFeaturedMedia(
         },
       },
     },
-
   });
 
   if (!link?.media || link.media.deletedAt !== null || link.media.status !== "ACTIVE") {
@@ -152,7 +152,6 @@ export async function getGalleryMedia(
         },
       },
     },
-
   });
 
   return (links ?? [])
@@ -172,7 +171,8 @@ export async function attachMediaToItems<T extends { id: string }>(
   module: string,
   items: T[],
 ): Promise<Array<T & { featuredMedia: MediaItem | null; galleryMedia: MediaItem[] }>> {
-  if (items.length === 0) return items as Array<T & { featuredMedia: MediaItem | null; galleryMedia: MediaItem[] }>;
+  if (items.length === 0)
+    return items as Array<T & { featuredMedia: MediaItem | null; galleryMedia: MediaItem[] }>;
 
   const ids = items.map((item) => item.id);
 
@@ -223,7 +223,9 @@ export async function attachMediaToItems<T extends { id: string }>(
     return {
       ...item,
       featuredMedia: mediaItems.find((m) => m.role === "FEATURED") ?? null,
-      galleryMedia: mediaItems.filter((m) => m.role !== "FEATURED").sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0)),
+      galleryMedia: mediaItems
+        .filter((m) => m.role !== "FEATURED")
+        .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0)),
     };
   });
 }

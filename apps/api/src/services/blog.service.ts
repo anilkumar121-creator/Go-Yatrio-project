@@ -1,4 +1,4 @@
-import { prisma, BlogStatus, BlogContentFormat } from "@goyatrio/database";
+import { prisma, BlogStatus, BlogContentFormat } from "../db.js";
 import { attachMediaToItems, getMediaForModule } from "../utils/media-resolver.js";
 
 type BlogCreateInput = {
@@ -76,18 +76,20 @@ const blogIncludes = {
 } as const;
 
 export const blogService = {
-  list: async (query: {
-    take?: number;
-    skip?: number;
-    search?: string;
-    status?: BlogStatus;
-    categorySlug?: string;
-    tagSlug?: string;
-    destinationSlug?: string;
-    packageId?: string;
-    featuredOnly?: boolean;
-    sort?: "newest" | "oldest" | "most_viewed";
-  } = {}) => {
+  list: async (
+    query: {
+      take?: number;
+      skip?: number;
+      search?: string;
+      status?: BlogStatus;
+      categorySlug?: string;
+      tagSlug?: string;
+      destinationSlug?: string;
+      packageId?: string;
+      featuredOnly?: boolean;
+      sort?: "newest" | "oldest" | "most_viewed";
+    } = {},
+  ) => {
     const {
       take = 50,
       skip = 0,
@@ -118,7 +120,10 @@ export const blogService = {
       ];
     }
 
-    let orderBy: Record<string, "asc" | "desc">[] = [{ publishedAt: "desc" }, { createdAt: "desc" }];
+    let orderBy: Record<string, "asc" | "desc">[] = [
+      { publishedAt: "desc" },
+      { createdAt: "desc" },
+    ];
     if (sort === "oldest") orderBy = [{ publishedAt: "asc" }];
     if (sort === "most_viewed") orderBy = [{ viewCount: "desc" }];
 
@@ -140,12 +145,14 @@ export const blogService = {
   },
 
   listFeatured: async (take = 6) => {
-    return prisma.blog.findMany({
-      where: { status: BlogStatus.PUBLISHED, featured: true },
-      take,
-      orderBy: [{ publishedAt: "desc" }],
-      include: blogIncludes,
-    }).then((items) => attachMediaToItems("BLOG", items));
+    return prisma.blog
+      .findMany({
+        where: { status: BlogStatus.PUBLISHED, featured: true },
+        take,
+        orderBy: [{ publishedAt: "desc" }],
+        include: blogIncludes,
+      })
+      .then((items) => attachMediaToItems("BLOG", items));
   },
 
   listCategories: async () => {
@@ -240,18 +247,22 @@ export const blogService = {
         seoDescription: data.seoDescription,
         canonicalUrl: data.canonicalUrl,
         ogImage: data.ogImage,
-        categories: data.categoryIds && data.categoryIds.length > 0
-          ? { connect: data.categoryIds.map((id) => ({ id })) }
-          : undefined,
-        tags: data.tagIds && data.tagIds.length > 0
-          ? { connect: data.tagIds.map((id) => ({ id })) }
-          : undefined,
-        destinations: data.destinationIds && data.destinationIds.length > 0
-          ? { connect: data.destinationIds.map((id) => ({ id })) }
-          : undefined,
-        packages: data.packageIds && data.packageIds.length > 0
-          ? { connect: data.packageIds.map((id) => ({ id })) }
-          : undefined,
+        categories:
+          data.categoryIds && data.categoryIds.length > 0
+            ? { connect: data.categoryIds.map((id) => ({ id })) }
+            : undefined,
+        tags:
+          data.tagIds && data.tagIds.length > 0
+            ? { connect: data.tagIds.map((id) => ({ id })) }
+            : undefined,
+        destinations:
+          data.destinationIds && data.destinationIds.length > 0
+            ? { connect: data.destinationIds.map((id) => ({ id })) }
+            : undefined,
+        packages:
+          data.packageIds && data.packageIds.length > 0
+            ? { connect: data.packageIds.map((id) => ({ id })) }
+            : undefined,
       },
       include: blogIncludes,
     });
@@ -266,7 +277,7 @@ export const blogService = {
     const status = data.status;
     const publishedAt =
       status === BlogStatus.PUBLISHED
-        ? data.publishedAt ?? new Date()
+        ? (data.publishedAt ?? new Date())
         : status === BlogStatus.DRAFT || status === BlogStatus.ARCHIVED
           ? null
           : data.publishedAt;
@@ -293,10 +304,16 @@ export const blogService = {
         seoDescription: data.seoDescription,
         canonicalUrl: data.canonicalUrl,
         ogImage: data.ogImage,
-        categories: data.categoryIds ? { set: data.categoryIds.map((cid) => ({ id: cid })) } : undefined,
+        categories: data.categoryIds
+          ? { set: data.categoryIds.map((cid) => ({ id: cid })) }
+          : undefined,
         tags: data.tagIds ? { set: data.tagIds.map((tid) => ({ id: tid })) } : undefined,
-        destinations: data.destinationIds ? { set: data.destinationIds.map((did) => ({ id: did })) } : undefined,
-        packages: data.packageIds ? { set: data.packageIds.map((pid) => ({ id: pid })) } : undefined,
+        destinations: data.destinationIds
+          ? { set: data.destinationIds.map((did) => ({ id: did })) }
+          : undefined,
+        packages: data.packageIds
+          ? { set: data.packageIds.map((pid) => ({ id: pid })) }
+          : undefined,
       },
       include: blogIncludes,
     });
@@ -325,7 +342,9 @@ export const blogService = {
 
   createCategory: (data: { name: string; slug?: string; description?: string }) => {
     const slug = data.slug ? slugify(data.slug) : slugify(data.name);
-    return prisma.blogCategory.create({ data: { name: data.name, slug, description: data.description } });
+    return prisma.blogCategory.create({
+      data: { name: data.name, slug, description: data.description },
+    });
   },
 
   updateCategory: (id: string, data: { name?: string; slug?: string; description?: string }) => {
@@ -349,12 +368,29 @@ export const blogService = {
     return prisma.blogTag.delete({ where: { id } });
   },
 
-  createAuthor: (data: { name: string; slug?: string; bio?: string; avatar?: string; role?: string; email?: string }) => {
+  createAuthor: (data: {
+    name: string;
+    slug?: string;
+    bio?: string;
+    avatar?: string;
+    role?: string;
+    email?: string;
+  }) => {
     const slug = data.slug ? slugify(data.slug) : slugify(data.name);
     return prisma.blogAuthor.create({ data: { ...data, slug } });
   },
 
-  updateAuthor: (id: string, data: { name?: string; slug?: string; bio?: string; avatar?: string; role?: string; email?: string }) => {
+  updateAuthor: (
+    id: string,
+    data: {
+      name?: string;
+      slug?: string;
+      bio?: string;
+      avatar?: string;
+      role?: string;
+      email?: string;
+    },
+  ) => {
     return prisma.blogAuthor.update({ where: { id }, data });
   },
 

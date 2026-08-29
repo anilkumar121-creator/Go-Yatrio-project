@@ -1,5 +1,5 @@
 import type { Request, Response } from "express";
-import { BlogStatus } from "@goyatrio/database";
+import { BlogStatus } from "../db.js";
 import { blogService } from "../services/blog.service.js";
 import {
   blogAuthorCreateSchema,

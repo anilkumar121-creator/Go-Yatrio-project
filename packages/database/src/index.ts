@@ -1,21 +1,6 @@
 ﻿import { PrismaClient } from "@prisma/client";
 
-const globalForPrisma = globalThis as typeof globalThis & {
-  goYatrioPrisma?: PrismaClient;
-};
+const prisma: PrismaClient = new PrismaClient();
 
-function getPrismaClient() {
-  if (!globalForPrisma.goYatrioPrisma) {
-    globalForPrisma.goYatrioPrisma = new PrismaClient();
-  }
-
-  return globalForPrisma.goYatrioPrisma;
-}
-
-export const prisma = new Proxy({} as PrismaClient, {
-  get(_target, property, receiver) {
-    return Reflect.get(getPrismaClient(), property, receiver);
-  },
-});
-
+export { prisma, PrismaClient };
 export * from "@prisma/client";

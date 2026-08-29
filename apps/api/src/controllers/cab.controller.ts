@@ -1,5 +1,5 @@
 import type { Request, Response } from "express";
-import { CabStatus, CabTripType, VehicleType } from "@goyatrio/database";
+import { CabStatus, CabTripType, VehicleType } from "../db.js";
 import { cabService } from "../services/cab.service.js";
 import {
   cabCreateSchema,
@@ -21,7 +21,8 @@ export async function listCabs(req: Request, res: Response) {
   const tripType = req.query.tripType as CabTripType | undefined;
   const destinationId = req.query.destinationId as string | undefined;
   const destinationSlug = req.query.destinationSlug as string | undefined;
-  const sort = req.query.sort as "price_asc" | "price_desc" | "capacity_desc" | "newest" | undefined;
+  const sort = req.query.sort as
+    "price_asc" | "price_desc" | "capacity_desc" | "newest" | undefined;
 
   const result = await cabService.list({
     take,
@@ -91,7 +92,17 @@ export async function submitCabInquiry(req: Request, res: Response) {
     return;
   }
 
-  const inquiry = await cabService.createInquiry(existing.id, validated);
+  const inquiry = await cabService.createInquiry(existing.id, {
+    tripType: validated.tripType,
+    name: validated.customerName,
+    email: validated.email,
+    phone: validated.phone,
+    pickupLocation: validated.pickupLocation ?? "",
+    dropLocation: validated.dropLocation ?? "",
+    pickupDate: validated.travelDate ?? new Date(),
+    passengers: validated.passengers,
+    message: validated.message,
+  });
 
   res.status(201).json({
     success: true,

@@ -1382,7 +1382,8 @@ async function main() {
         },
         {
           question: "How much does an Alleppey houseboat cost?",
-          answer: "Deluxe houseboats start around Ã¢â€šÂ¹7,500 per night including meals.",
+          answer:
+            "Deluxe houseboats start around ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¹7,500 per night including meals.",
         },
       ],
       contentBlocks: makeBlocks([
@@ -1432,7 +1433,7 @@ async function main() {
       viewCount: 760,
       publishedAt: new Date("2026-08-05T10:00:00Z"),
       contentBlocks: makeBlocks([
-        "Rajasthan is India's most cinematic state Ã¢â‚¬â€ amber forts, blue cities, and mirror-work palaces at every turn.",
+        "Rajasthan is India's most cinematic state ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â amber forts, blue cities, and mirror-work palaces at every turn.",
         "Start in Jaipur with Amber Fort and Hawa Mahal, then drive through Pushkar to the blue city of Jodhpur.",
         "Finish with Udaipur's Lake Pichola and a sunset boat cruise that ends the journey on a perfect note.",
       ]),
@@ -1441,7 +1442,7 @@ async function main() {
       slug: "ladakh-bike-trip-tips",
       title: "Ladakh on a Road Trip: The Ultimate High-Altitude Adventure Guide",
       excerpt:
-        "Mountain passes, cold deserts, and starry camps Ã¢â‚¬â€ everything you need to plan a Ladakh road trip.",
+        "Mountain passes, cold deserts, and starry camps ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â everything you need to plan a Ladakh road trip.",
       authorSlug: "vikram-singh",
       categorySlug: "travel-tips",
       tagSlugs: ["ladakh"],
@@ -1456,7 +1457,7 @@ async function main() {
       publishedAt: new Date("2026-07-30T10:00:00Z"),
       contentBlocks: makeBlocks([
         "Ladakh sits at an average elevation of 11,000 feet, so acclimatization is non-negotiable. Spend at least two nights in Leh before crossing high passes.",
-        "Khardung La, Pangong Tso, and Nubra Valley are the highlights. Carry warm layers even in summer Ã¢â‚¬â€ nights dip below freezing.",
+        "Khardung La, Pangong Tso, and Nubra Valley are the highlights. Carry warm layers even in summer ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â nights dip below freezing.",
         "Book camps in advance during peak season and always carry a first-aid kit and extra oxygen cans.",
       ]),
     },
@@ -1464,7 +1465,7 @@ async function main() {
       slug: "goa-beach-guide",
       title: "Goa Beach Guide: North vs South for Every Kind of Traveller",
       excerpt:
-        "Party in North Goa, unwind in South Goa Ã¢â‚¬â€ a complete guide to picking the right beach.",
+        "Party in North Goa, unwind in South Goa ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â a complete guide to picking the right beach.",
       authorSlug: "ananya-sharma",
       categorySlug: "destination-guides",
       tagSlugs: ["goa", "budget", "luxury"],
@@ -1478,7 +1479,7 @@ async function main() {
       viewCount: 890,
       publishedAt: new Date("2026-07-25T10:00:00Z"),
       contentBlocks: makeBlocks([
-        "North Goa is loud, colorful, and full of energy Ã¢â‚¬â€ perfect for first-timers who want beach shacks, water sports, and night markets.",
+        "North Goa is loud, colorful, and full of energy ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â perfect for first-timers who want beach shacks, water sports, and night markets.",
         "South Goa offers quieter sands, luxury resorts, and picture-perfect sunsets at Palolem and Agonda.",
         "Whichever side you choose, December to February delivers the best weather for beach days.",
       ]),
@@ -1487,7 +1488,7 @@ async function main() {
       slug: "andaman-island-hopping",
       title: "Andaman Island Hopping: Port Blair, Havelock & Neil Island",
       excerpt:
-        "Coral reefs, white sands, and cellular jail history Ã¢â‚¬â€ a complete Andaman trip plan.",
+        "Coral reefs, white sands, and cellular jail history ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â a complete Andaman trip plan.",
       authorSlug: "goyatrio-editorial",
       categorySlug: "experiences",
       tagSlugs: ["andaman", "family"],
@@ -1503,14 +1504,14 @@ async function main() {
       contentBlocks: makeBlocks([
         "Start in Port Blair with the Cellular Jail light-and-sound show, then take a ferry to Havelock for Radhanagar Beach.",
         "Snorkel at Elephant Beach, catch the sunset at Neil Island, and return to Port Blair for departure.",
-        "Book ferry tickets in advance Ã¢â‚¬â€ they sell out fast during winter months.",
+        "Book ferry tickets in advance ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â they sell out fast during winter months.",
       ]),
     },
     {
       slug: "packing-checklist-india-travel",
       title: "The Perfect Packing Checklist for Travelling Across India",
       excerpt:
-        "From mountain passes to tropical beaches Ã¢â‚¬â€ pack smart with this destination-proof checklist.",
+        "From mountain passes to tropical beaches ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â pack smart with this destination-proof checklist.",
       authorSlug: "goyatrio-editorial",
       categorySlug: "travel-tips",
       tagSlugs: ["family", "budget"],
@@ -1524,7 +1525,7 @@ async function main() {
       viewCount: 540,
       publishedAt: new Date("2026-07-15T10:00:00Z"),
       contentBlocks: makeBlocks([
-        "Layering is the secret to Indian travel Ã¢â‚¬â€ the same lightweight jacket works for hill mornings and desert evenings.",
+        "Layering is the secret to Indian travel ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â the same lightweight jacket works for hill mornings and desert evenings.",
         "Always carry a power bank, reusable water bottle, and a small first-aid kit. Sunscreen and insect repellent are non-negotiable.",
         "Keep documents digital and offline: scan your ID, tickets, and insurance before you leave.",
       ]),
@@ -1533,7 +1534,7 @@ async function main() {
       slug: "ai-generated-draft-kerala-festivals",
       title: "Draft: Onam and Kerala Festival Calendar (AI Draft)",
       excerpt:
-        "A working draft exploring Kerala's festival calendar Ã¢â‚¬â€ prepared with AI-assisted content.",
+        "A working draft exploring Kerala's festival calendar ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â prepared with AI-assisted content.",
       authorSlug: "goyatrio-editorial",
       categorySlug: "experiences",
       tagSlugs: ["kerala"],

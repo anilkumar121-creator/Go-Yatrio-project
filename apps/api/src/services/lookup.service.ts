@@ -1,4 +1,4 @@
-import { prisma } from "@goyatrio/database";
+import { prisma } from "../db.js";
 
 export const lookupService = {
   listGroups(query: { search?: string; take?: number; skip?: number } = {}) {

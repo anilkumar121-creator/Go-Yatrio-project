@@ -1,4 +1,4 @@
-import { prisma, MediaResourceType, MediaStatus } from "@goyatrio/database";
+import { prisma, MediaResourceType, MediaStatus } from "../db.js";
 import { destroyMedia } from "../utils/cloudinary.js";
 
 type MediaUploadInput = {
@@ -28,15 +28,17 @@ function mapResourceType(type: string): MediaResourceType {
 }
 
 export const mediaService = {
-  list(query: {
-    take?: number;
-    skip?: number;
-    search?: string;
-    resourceType?: MediaResourceType;
-    folder?: string;
-    tag?: string;
-    status?: MediaStatus;
-  } = {}) {
+  list(
+    query: {
+      take?: number;
+      skip?: number;
+      search?: string;
+      resourceType?: MediaResourceType;
+      folder?: string;
+      tag?: string;
+      status?: MediaStatus;
+    } = {},
+  ) {
     const { take = 50, skip = 0, search, resourceType, folder, tag, status } = query;
 
     const where: Record<string, unknown> = {
@@ -65,13 +67,15 @@ export const mediaService = {
     });
   },
 
-  count(query: {
-    search?: string;
-    resourceType?: MediaResourceType;
-    folder?: string;
-    tag?: string;
-    status?: MediaStatus;
-  } = {}) {
+  count(
+    query: {
+      search?: string;
+      resourceType?: MediaResourceType;
+      folder?: string;
+      tag?: string;
+      status?: MediaStatus;
+    } = {},
+  ) {
     const { search, resourceType, folder, tag, status } = query;
 
     const where: Record<string, unknown> = { deletedAt: null };
@@ -93,11 +97,9 @@ export const mediaService = {
     return prisma.media.count({ where });
   },
 
-  get: (id: string) =>
-    prisma.media.findUnique({ where: { id }, include: { links: true } }),
+  get: (id: string) => prisma.media.findUnique({ where: { id }, include: { links: true } }),
 
-  getByPublicId: (publicId: string) =>
-    prisma.media.findUnique({ where: { publicId } }),
+  getByPublicId: (publicId: string) => prisma.media.findUnique({ where: { publicId } }),
 
   createFromUpload: (data: MediaUploadInput) =>
     prisma.media.create({
@@ -124,8 +126,16 @@ export const mediaService = {
       },
     }),
 
-  updateMetadata: (id: string, data: { altText?: string; caption?: string; tags?: string[]; folder?: string; status?: MediaStatus }) =>
-    prisma.media.update({ where: { id }, data }),
+  updateMetadata: (
+    id: string,
+    data: {
+      altText?: string;
+      caption?: string;
+      tags?: string[];
+      folder?: string;
+      status?: MediaStatus;
+    },
+  ) => prisma.media.update({ where: { id }, data }),
 
   async replaceUpload(id: string, data: MediaUploadInput) {
     return prisma.media.update({
@@ -150,7 +160,11 @@ export const mediaService = {
     // Attempt Cloudinary destroy; never fail the soft-delete if the asset is already gone.
     try {
       const resourceType =
-        existing.resourceType === MediaResourceType.VIDEO ? "video" : existing.resourceType === MediaResourceType.RAW ? "raw" : "image";
+        existing.resourceType === MediaResourceType.VIDEO
+          ? "video"
+          : existing.resourceType === MediaResourceType.RAW
+            ? "raw"
+            : "image";
       await destroyMedia(existing.publicId, resourceType);
     } catch {
       // Cloudinary asset may not exist; continue with local soft delete.

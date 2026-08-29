@@ -3,12 +3,10 @@ import {
   BlogStatus,
   CabFuelType,
   PackageAvailability,
-  CabInquiryStatus,
   CabStatus,
   CabTripType,
   DestinationStatus,
   HotelCategory,
-  HotelInquiryStatus,
   HotelStatus,
   InquiryServiceType,
   InquiryStatus,
@@ -16,7 +14,7 @@ import {
   PackageStatus,
   PackageType,
   VehicleType,
-} from "@goyatrio/database";
+} from "../db.js";
 import { z } from "zod";
 import { moneySchema, optionalStringField, slugSchema, stringField } from "./common.js";
 
@@ -48,7 +46,16 @@ export const destinationCreateSchema = z.object({
   state: optionalStringField(80),
   country: stringField(80).default("India"),
   featuredImage: optionalStringField(500),
-  galleryImages: z.array(z.string().trim().min(1).max(500)).max(20).optional(),
+  galleryimages: z
+    .array(
+      z.object({
+        imageUrl: z.string().url(),
+        altText: z.string().optional(),
+        sortOrder: z.coerce.number().int().optional(),
+      }),
+    )
+    .max(20)
+    .optional(),
   featured: z.boolean().optional(),
   status: z.enum(DestinationStatus).optional(),
   metaTitle: optionalStringField(120),
@@ -104,7 +111,16 @@ export const packageCreateSchema = z.object({
   inclusions: z.array(z.string().trim().min(1).max(300)).max(50).optional(),
   exclusions: z.array(z.string().trim().min(1).max(300)).max(50).optional(),
   featuredImage: optionalStringField(500),
-  galleryImages: z.array(z.string().trim().min(1).max(500)).max(20).optional(),
+  galleryimages: z
+    .array(
+      z.object({
+        imageUrl: z.string().url(),
+        altText: z.string().optional(),
+        sortOrder: z.coerce.number().int().optional(),
+      }),
+    )
+    .max(20)
+    .optional(),
   featured: z.boolean().optional(),
   status: z.enum(PackageStatus).optional(),
   availability: z.enum(PackageAvailability).optional(),
@@ -135,7 +151,7 @@ export const packageAvailabilitySchema = z.object({
 
 export const activityCreateSchema = z.object({
   title: stringField(140),
-  description: optionalStringField(1000),
+  description: stringField(1000),
   location: optionalStringField(200),
   timing: optionalStringField(100),
   sortOrder: z.coerce.number().int().min(0).default(0),
@@ -145,80 +161,72 @@ export const activityUpdateSchema = activityCreateSchema.partial();
 
 export const dayCreateSchema = z.object({
   dayNumber: z.coerce.number().int().positive().max(365),
-  sortOrder: z.coerce.number().int().min(0).optional(),
+  sortOrder: z.coerce.number().int().min(0).default(0),
   title: stringField(140),
-  description: stringField(4000),
-  city: optionalStringField(120),
-  hotel: optionalStringField(200),
-  meals: optionalStringField(200),
-  transfers: optionalStringField(200),
-  notes: optionalStringField(1000),
-  activities: z.array(activityCreateSchema).optional(),
+  description: stringField(2000),
 });
 
 export const dayUpdateSchema = dayCreateSchema.partial();
+
+export const itineraryCreateSchema = z.object({
+  packageId: z.string().min(1),
+  dayNumber: z.coerce.number().int().positive().max(365),
+  title: stringField(140),
+  description: stringField(2000),
+});
+
+export const itineraryUpdateSchema = itineraryCreateSchema.partial();
 
 export const reorderDaysSchema = z.object({
   dayOrders: z
     .array(
       z.object({
-        dayId: z.string().min(1),
+        id: z.string().min(1),
         sortOrder: z.coerce.number().int().min(0),
-        dayNumber: z.coerce.number().int().positive().optional(),
+        dayNumber: z.coerce.number().int().min(0).optional(),
       }),
     )
     .min(1),
-});
-
-export const itineraryCreateSchema = z.object({
-  packageId: z.string().min(1),
-  title: stringField(140),
-  slug: slugSchema.optional(),
-  description: optionalStringField(1000),
-  isDefault: z.boolean().optional(),
-  isActive: z.boolean().optional(),
-  days: z.array(dayCreateSchema).optional(),
-});
-
-export const itineraryUpdateSchema = itineraryCreateSchema.partial();
-
-export const hotelRoomCreateSchema = z.object({
-  roomName: stringField(140),
-  roomDescription: stringField(2000),
-  maxGuests: z.coerce.number().int().positive().max(20).default(2),
-  bedType: stringField(80),
-  roomSize: optionalStringField(80),
-  priceFrom: moneySchema,
-  active: z.boolean().optional(),
-});
-
-export const hotelRoomUpdateSchema = hotelRoomCreateSchema.partial();
-
-export const hotelImageCreateSchema = z.object({
-  imageUrl: z.url().max(1000),
-  altText: optionalStringField(180),
-  sortOrder: z.coerce.number().int().min(0).optional(),
 });
 
 export const hotelCreateSchema = z.object({
   name: stringField(140),
   slug: slugSchema.optional(),
   shortDescription: stringField(300),
-  fullDescription: stringField(8000),
+  fullDescription: stringField(5000),
   destinationId: z.string().min(1),
-  address: stringField(300),
-  city: stringField(100),
+  address: stringField(200),
+  city: stringField(120),
   state: optionalStringField(80),
   country: stringField(80).default("India"),
-  latitude: z.coerce.number().optional(),
-  longitude: z.coerce.number().optional(),
-  hotelCategory: z.enum(HotelCategory).default("STANDARD"),
+  hotelCategory: z.enum(HotelCategory),
   starRating: z.coerce.number().int().min(1).max(5).default(3),
   featured: z.boolean().optional(),
   status: z.enum(HotelStatus).optional(),
-  amenities: z.array(z.string().min(1)).optional(),
-  images: z.array(hotelImageCreateSchema).optional(),
-  roomTypes: z.array(hotelRoomCreateSchema).optional(),
+  amenities: z.array(z.string().trim().min(1).max(80)).max(30).optional(),
+  images: z
+    .array(
+      z.object({
+        imageUrl: z.string().url(),
+        altText: z.string().optional(),
+        sortOrder: z.coerce.number().int().optional(),
+      }),
+    )
+    .max(20)
+    .optional(),
+  roomTypes: z
+    .array(
+      z.object({
+        roomName: stringField(80),
+        roomDescription: stringField(500),
+        maxGuests: z.coerce.number().int().positive(),
+        bedType: stringField(60),
+        roomSize: optionalStringField(60),
+        priceFrom: moneySchema,
+        active: z.boolean().optional(),
+      }),
+    )
+    .optional(),
 });
 
 export const hotelUpdateSchema = hotelCreateSchema.partial();
@@ -227,35 +235,59 @@ export const hotelStatusSchema = z.object({
   status: z.enum(HotelStatus),
 });
 
+export const hotelFeaturedSchema = z.object({
+  featured: z.boolean(),
+});
+
 export const hotelInquiryCreateSchema = z.object({
   customerName: stringField(120),
   email: z.string().email().max(255),
   phone: stringField(30),
   checkInDate: z.coerce.date(),
   checkOutDate: z.coerce.date(),
-  guests: z.coerce.number().int().positive().max(50).default(1),
-  message: optionalStringField(2000),
-  status: z.enum(HotelInquiryStatus).optional(),
+  guests: z.coerce.number().int().positive().optional(),
+  message: optionalStringField(2000).optional(),
 });
 
 export const hotelInquiryUpdateSchema = hotelInquiryCreateSchema.partial();
 
-export const vehicleCreateSchema = z.object({
+export const cabCreateSchema = z.object({
   vehicleName: stringField(140),
+  slug: slugSchema.optional(),
   vehicleType: z.enum(VehicleType),
-  description: stringField(3000),
-  capacity: z.coerce.number().int().positive().max(100),
+  description: stringField(1000),
+  capacity: z.coerce.number().int().positive().max(50),
+  luggageCapacity: z.coerce.number().int().min(0).max(20),
+  ac: z.boolean().optional(),
+  fuelType: z.enum(CabFuelType),
+  driverAllowance: moneySchema,
+  baseFare: moneySchema,
+  extraKmCharge: moneySchema,
+  nightCharge: moneySchema,
   priceFrom: moneySchema,
   currency: z.string().length(3).default("INR"),
   image: optionalStringField(500),
-  isActive: z.boolean().optional(),
+  galleryimages: z
+    .array(
+      z.object({
+        imageUrl: z.string().url(),
+        altText: z.string().optional(),
+        sortOrder: z.coerce.number().int().optional(),
+      }),
+    )
+    .max(20)
+    .optional(),
+  tripTypes: z.array(z.enum(CabTripType)).min(1),
+  featured: z.boolean().optional(),
+  status: z.enum(CabStatus).optional(),
+  destinationId: optionalStringField(120),
+  amenities: z.array(z.string().trim().min(1).max(80)).max(30).optional(),
 });
 
-export const vehicleUpdateSchema = vehicleCreateSchema.partial();
-export const cabAmenityCreateSchema = z.object({
-  name: stringField(80),
-  icon: optionalStringField(40),
-  active: z.boolean().optional(),
+export const cabUpdateSchema = cabCreateSchema.partial();
+
+export const cabStatusSchema = z.object({
+  status: z.enum(CabStatus),
 });
 
 export const cabInquiryCreateSchema = z.object({
@@ -267,44 +299,14 @@ export const cabInquiryCreateSchema = z.object({
   dropLocation: optionalStringField(200),
   travelDate: z.coerce.date().optional(),
   returnDate: z.coerce.date().optional(),
-  passengers: z.coerce.number().int().positive().max(100).default(1),
-  message: optionalStringField(2000),
-  status: z.enum(CabInquiryStatus).optional(),
+  passengers: z.coerce.number().int().positive().max(20).optional(),
+  message: optionalStringField(2000).optional(),
 });
 
 export const cabInquiryUpdateSchema = cabInquiryCreateSchema.partial();
 
-export const cabCreateSchema = z.object({
-  vehicleName: stringField(140),
-  slug: slugSchema.optional(),
-  vehicleType: z.enum(VehicleType),
-  description: stringField(6000),
-  capacity: z.coerce.number().int().positive().max(100),
-  luggageCapacity: z.coerce.number().int().min(0).max(100).optional(),
-  ac: z.boolean().optional(),
-  fuelType: z.enum(CabFuelType).default("DIESEL"),
-  driverAllowance: moneySchema.optional(),
-  baseFare: moneySchema.optional(),
-  extraKmCharge: moneySchema.optional(),
-  nightCharge: moneySchema.optional(),
-  priceFrom: moneySchema,
-  currency: z.string().length(3).default("INR"),
-  image: optionalStringField(500),
-  galleryImages: z.array(z.url().max(1000)).max(20).optional(),
-  tripTypes: z.array(z.enum(CabTripType)).optional(),
-  featured: z.boolean().optional(),
-  status: z.enum(CabStatus).optional(),
-  destinationId: optionalStringField(255),
-  amenities: z.array(z.string().trim().min(1).max(80)).max(30).optional(),
-});
-
-export const cabUpdateSchema = cabCreateSchema.partial();
-
-export const cabStatusSchema = z.object({
-  status: z.enum(CabStatus),
-});
-
-export const inquiryCreateSchema = z.object({
+// Travel inquiry (legacy)
+export const travelInquiryCreateSchema = z.object({
   fullName: stringField(120),
   email: z.string().email().max(255),
   phone: stringField(30),
@@ -319,7 +321,97 @@ export const inquiryCreateSchema = z.object({
   source: z.string().trim().min(1).max(80).default("website"),
 });
 
-export const inquiryUpdateSchema = inquiryCreateSchema.partial();
+export const travelInquiryUpdateSchema = travelInquiryCreateSchema.partial();
+
+const inquirySourceValues = [
+  "WEBSITE",
+  "PACKAGE_PAGE",
+  "HOTEL_PAGE",
+  "CAB_PAGE",
+  "CONTACT_FORM",
+  "BLOG_PAGE",
+  "WHATSAPP",
+  "PHONE",
+  "EMAIL",
+  "MANUAL",
+] as const;
+
+const inquiryPriorityValues = ["LOW", "MEDIUM", "HIGH", "URGENT"] as const;
+const inquiryTypeValues = ["TOUR_PACKAGE", "HOTEL", "CAB", "GENERAL", "CUSTOM_TOUR"] as const;
+const inquiryStatusValues = [
+  "NEW",
+  "CONTACTED",
+  "FOLLOW_UP",
+  "QUALIFIED",
+  "PROPOSAL_SENT",
+  "NEGOTIATION",
+  "WON",
+  "LOST",
+  "CLOSED",
+] as const;
+
+// Phase 16: Inquiry & Lead Management validation schemas
+export const inquiryCreateSchema = z.object({
+  name: stringField(120),
+  email: z.string().email().max(255),
+  phone: z.string().min(8).max(20),
+  whatsapp: z.string().max(20).optional(),
+  country: optionalStringField(80),
+  city: optionalStringField(80),
+  adults: z.coerce.number().int().min(1).max(20).default(1),
+  children: z.coerce.number().int().min(0).max(10).default(0),
+  travelDate: z.coerce.date().optional(),
+  budget: moneySchema.optional(),
+  message: optionalStringField(2000),
+  source: z.enum(inquirySourceValues).default("WEBSITE"),
+  type: z.enum(inquiryTypeValues).default("GENERAL"),
+  packageId: z.string().optional(),
+  hotelId: z.string().optional(),
+  cabId: z.string().optional(),
+});
+
+export const inquiryUpdateSchema = z.object({
+  name: stringField(120).optional(),
+  email: z.string().email().max(255).optional(),
+  phone: z.string().min(8).max(20).optional(),
+  whatsapp: z.string().max(20).optional(),
+  country: optionalStringField(80).optional(),
+  city: optionalStringField(80).optional(),
+  adults: z.coerce.number().int().min(1).max(20).optional(),
+  children: z.coerce.number().int().min(0).max(10).optional(),
+  travelDate: z.coerce.date().optional(),
+  budget: moneySchema.optional(),
+  message: optionalStringField(2000).optional(),
+  source: z.enum(inquirySourceValues).optional(),
+  type: z.enum(inquiryTypeValues).optional(),
+  status: z.enum(inquiryStatusValues).optional(),
+  priority: z.enum(inquiryPriorityValues).optional(),
+  assignedTo: z.string().optional(),
+  packageId: z.string().optional(),
+  hotelId: z.string().optional(),
+  cabId: z.string().optional(),
+});
+
+export const inquiryStatusUpdateSchema = z.object({
+  status: z.enum(inquiryStatusValues),
+});
+
+export const inquiryPriorityUpdateSchema = z.object({
+  priority: z.enum(inquiryPriorityValues),
+});
+
+export const inquiryAssignSchema = z.object({
+  assignedTo: z.string().min(1),
+});
+
+export const inquiryNoteCreateSchema = z.object({
+  note: z.string().min(1).max(5000),
+  createdBy: z.string().min(1),
+});
+
+export const inquiryNoteUpdateSchema = z.object({
+  note: z.string().min(1).max(5000),
+});
 
 export const blogContentBlockSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("paragraph"), content: z.string().max(5000) }),
@@ -359,7 +451,7 @@ export const blogContentBlockSchema = z.discriminatedUnion("type", [
   z.object({
     type: z.literal("embed"),
     provider: z.enum(["youtube", "vimeo", "generic"]),
-    url: z.url().max(1000),
+    url: z.string().url().max(1000),
   }),
   z.object({ type: z.literal("divider") }),
   z.object({
@@ -389,7 +481,7 @@ export const blogContentBlockSchema = z.discriminatedUnion("type", [
   z.object({
     type: z.literal("linkCard"),
     title: z.string().max(300),
-    url: z.url().max(1000),
+    url: z.string().url().max(1000),
     description: optionalStringField(500),
   }),
 ]);
@@ -407,7 +499,7 @@ export const blogCreateSchema = z.object({
     .optional(),
   featuredImage: optionalStringField(1000),
   featuredImagePublicId: optionalStringField(255),
-  galleryImages: z.array(z.url().max(1000)).max(20).optional(),
+  galleryImages: z.array(z.string().url().max(1000)).max(20).optional(),
   authorId: optionalStringField(255),
   authorName: optionalStringField(120),
   status: z.enum(BlogStatus).optional(),
@@ -459,8 +551,8 @@ export const blogAuthorUpdateSchema = blogAuthorCreateSchema.partial();
 
 export const mediaCreateSchema = z.object({
   publicId: stringField(255),
-  url: z.url().max(1000),
-  secureUrl: z.url().max(1000),
+  url: z.string().url().max(1000),
+  secureUrl: z.string().url().max(1000),
   resourceType: z.enum(MediaResourceType),
   format: optionalStringField(40),
   width: z.coerce.number().int().positive().optional(),
