@@ -32,11 +32,13 @@ type DestinationSummary = {
   featured: boolean;
 };
 
+export const revalidate = 300; // 5-minute ISR
+
 async function getDestinations(): Promise<DestinationSummary[]> {
   try {
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
     const response = await fetch(`${baseUrl}/api/destinations?take=50`, {
-      cache: "no-store",
+      next: { revalidate: 300, tags: ["destinations"] },
     });
 
     if (!response.ok) return [];

@@ -16,14 +16,16 @@ import {
   updateHotelStatus,
 } from "../controllers/hotel.controller.js";
 
+import { publicCacheControl } from "../middleware/cache-control.js";
+
 export const hotelsRouter = Router();
 
 // Public Hotel Routes
-hotelsRouter.get("/", listHotels);
-hotelsRouter.get("/search", searchHotels);
-hotelsRouter.get("/featured", getFeaturedHotels);
-hotelsRouter.get("/destination/:slug", getHotelsByDestination);
-hotelsRouter.get("/:slug", getHotelBySlug);
+hotelsRouter.get("/", publicCacheControl(300, 600), listHotels);
+hotelsRouter.get("/search", publicCacheControl(180, 360), searchHotels);
+hotelsRouter.get("/featured", publicCacheControl(300, 600), getFeaturedHotels);
+hotelsRouter.get("/destination/:slug", publicCacheControl(300, 600), getHotelsByDestination);
+hotelsRouter.get("/:slug", publicCacheControl(300, 600), getHotelBySlug);
 hotelsRouter.post("/:id/inquiry", submitHotelInquiry);
 
 // Admin Hotel Routes

@@ -18,11 +18,13 @@ import {
   updatePackageStatus,
 } from "../controllers/package.controller.js";
 
+import { publicCacheControl } from "../middleware/cache-control.js";
+
 export const packagesRouter = Router();
 
 // Public routes
-packagesRouter.get("/", listPackages);
-packagesRouter.get("/:slug", getPackageBySlug);
+packagesRouter.get("/", publicCacheControl(300, 600), listPackages);
+packagesRouter.get("/:slug", publicCacheControl(300, 600), getPackageBySlug);
 
 // Admin-only routes
 export const adminPackagesRouter = Router();

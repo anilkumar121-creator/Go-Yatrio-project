@@ -290,6 +290,7 @@ model TourPackage {
 
   @@index([destinationId])
   @@index([status, featured, isActive, packageType])
+  @@index([status, isActive, priceFrom])
   @@index([availability])
   @@map("tour_packages")
 }
@@ -356,6 +357,7 @@ model Hotel {
 
   @@index([destinationId])
   @@index([status, featured, hotelCategory])
+  @@index([status, starRating])
   @@map("hotels")
 }
 
@@ -431,6 +433,7 @@ model Vehicle {
   inquiries       CabInquiry[]
 
   @@index([vehicleType, status, isActive])
+  @@index([status, isActive, priceFrom])
   @@index([destinationId])
   @@map("vehicles")
 }

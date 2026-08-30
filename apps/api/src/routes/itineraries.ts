@@ -15,11 +15,13 @@ import {
   updateItinerary,
 } from "../controllers/itinerary.controller.js";
 
+import { publicCacheControl } from "../middleware/cache-control.js";
+
 export const itinerariesRouter = Router();
 
 // Public routes
-itinerariesRouter.get("/", listItineraries);
-itinerariesRouter.get("/:id", getItinerary);
+itinerariesRouter.get("/", publicCacheControl(300, 600), listItineraries);
+itinerariesRouter.get("/:id", publicCacheControl(300, 600), getItinerary);
 
 // Admin-only routes
 export const adminItinerariesRouter = Router();

@@ -42,11 +42,13 @@ type PackageSummary = {
   destination?: { name: string; slug: string };
 };
 
+export const revalidate = 300; // 5-minute ISR
+
 async function getPackages(): Promise<PackageSummary[]> {
   try {
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
     const response = await fetch(`${baseUrl}/api/packages?take=50`, {
-      cache: "no-store",
+      next: { revalidate: 300, tags: ["packages"] },
     });
 
     if (!response.ok) return [];

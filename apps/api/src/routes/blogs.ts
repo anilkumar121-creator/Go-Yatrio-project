@@ -27,16 +27,18 @@ import {
   updateBlogStatus,
 } from "../controllers/blog.controller.js";
 
+import { publicCacheControl } from "../middleware/cache-control.js";
+
 export const blogsRouter = Router();
 
 // Public Blog Routes (static single-segment routes must precede /:slug)
-blogsRouter.get("/", listBlogs);
-blogsRouter.get("/featured", getFeaturedBlogs);
-blogsRouter.get("/categories", getBlogCategories);
-blogsRouter.get("/tags", getBlogTags);
-blogsRouter.get("/authors", getBlogAuthors);
-blogsRouter.get("/:slug", getBlogBySlug);
-blogsRouter.get("/:slug/related", getRelatedBlogs);
+blogsRouter.get("/", publicCacheControl(300, 600), listBlogs);
+blogsRouter.get("/featured", publicCacheControl(300, 600), getFeaturedBlogs);
+blogsRouter.get("/categories", publicCacheControl(600, 1200), getBlogCategories);
+blogsRouter.get("/tags", publicCacheControl(600, 1200), getBlogTags);
+blogsRouter.get("/authors", publicCacheControl(600, 1200), getBlogAuthors);
+blogsRouter.get("/:slug", publicCacheControl(300, 600), getBlogBySlug);
+blogsRouter.get("/:slug/related", publicCacheControl(300, 600), getRelatedBlogs);
 blogsRouter.post("/:slug/view", incrementBlogView);
 
 // Admin Blog Routes

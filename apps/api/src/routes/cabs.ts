@@ -17,14 +17,16 @@ import {
   updateCabStatus,
 } from "../controllers/cab.controller.js";
 
+import { publicCacheControl } from "../middleware/cache-control.js";
+
 export const cabsRouter = Router();
 
 // Public Cab Routes
-cabsRouter.get("/", listCabs);
-cabsRouter.get("/search", searchCabs);
-cabsRouter.get("/featured", getFeaturedCabs);
-cabsRouter.get("/destination/:slug", getCabsByDestination);
-cabsRouter.get("/:slug", getCabBySlug);
+cabsRouter.get("/", publicCacheControl(300, 600), listCabs);
+cabsRouter.get("/search", publicCacheControl(180, 360), searchCabs);
+cabsRouter.get("/featured", publicCacheControl(300, 600), getFeaturedCabs);
+cabsRouter.get("/destination/:slug", publicCacheControl(300, 600), getCabsByDestination);
+cabsRouter.get("/:slug", publicCacheControl(300, 600), getCabBySlug);
 cabsRouter.post("/:id/inquiry", submitCabInquiry);
 
 // Admin Cab Routes

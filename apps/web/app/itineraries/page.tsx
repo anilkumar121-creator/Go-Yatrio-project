@@ -50,11 +50,13 @@ type ItineraryListItem = {
   }[];
 };
 
+export const revalidate = 300; // 5-minute ISR
+
 async function getItineraries(): Promise<ItineraryListItem[]> {
   try {
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
     const res = await fetch(`${baseUrl}/api/itineraries?take=50`, {
-      cache: "no-store",
+      next: { revalidate: 300, tags: ["itineraries"] },
     });
     if (!res.ok) return [];
     const payload = await res.json();

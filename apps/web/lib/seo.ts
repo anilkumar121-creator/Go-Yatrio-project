@@ -41,7 +41,7 @@ export async function fetchSeoMetadata(
     if (entityId) params.set("entityId", entityId);
 
     const res = await fetch(`${BASE_APP_URL}/api/seo-metadata/by-page?${params.toString()}`, {
-      cache: "no-store",
+      next: { revalidate: 600, tags: ["seo-metadata"] },
     });
 
     if (!res.ok) return null;

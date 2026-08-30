@@ -1,10 +1,17 @@
 import type { Metadata, Viewport } from "next";
+import { Inter } from "next/font/google";
 import { Footer } from "@/components/layout/footer";
 import { Navbar } from "@/components/layout/navbar";
 import { PageTransition } from "@/components/layout/page-transition";
 import { ScrollToTop } from "@/components/layout/scroll-to-top";
 import { ToastProvider } from "@/components/common/toast";
 import "./globals.css";
+
+const inter = Inter({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-sans",
+});
 
 const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
 
@@ -59,7 +66,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en-IN">
+    <html lang="en-IN" className={inter.variable}>
       <body>
         <ToastProvider>
           <Navbar />

@@ -76,7 +76,9 @@ async function getHotels(
 async function getDestinations(): Promise<DestinationOption[]> {
   try {
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
-    const res = await fetch(`${baseUrl}/api/destinations?take=50`, { cache: "no-store" });
+    const res = await fetch(`${baseUrl}/api/destinations?take=50`, {
+      next: { revalidate: 600, tags: ["destinations"] },
+    });
     if (!res.ok) return [];
     const payload = await res.json();
     return payload?.data ?? [];

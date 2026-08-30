@@ -141,11 +141,15 @@ type PackageDetail = {
   blogs: PackageBlog[];
 };
 
-async function getPackage(slug: string): Promise<PackageDetail | null> {
+import { cache } from "react";
+
+export const revalidate = 300; // 5-minute ISR
+
+const getPackage = cache(async (slug: string): Promise<PackageDetail | null> => {
   try {
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
     const response = await fetch(`${baseUrl}/api/packages/${slug}`, {
-      cache: "no-store",
+      next: { revalidate: 300, tags: [`package-${slug}`, "packages"] },
     });
 
     if (!response.ok) return null;
@@ -155,7 +159,7 @@ async function getPackage(slug: string): Promise<PackageDetail | null> {
   } catch {
     return null;
   }
-}
+});
 
 type Props = {
   params: Promise<{ slug: string }>;

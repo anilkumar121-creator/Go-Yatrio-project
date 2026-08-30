@@ -77,17 +77,23 @@ type RelatedHotel = {
   roomTypes: HotelRoomType[];
 };
 
-async function getHotel(slug: string): Promise<HotelDetail | null> {
+import { cache } from "react";
+
+export const revalidate = 300; // 5-minute ISR
+
+const getHotel = cache(async (slug: string): Promise<HotelDetail | null> => {
   try {
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
-    const response = await fetch(`${baseUrl}/api/hotels/${slug}`, { cache: "no-store" });
+    const response = await fetch(`${baseUrl}/api/hotels/${slug}`, {
+      next: { revalidate: 300, tags: [`hotel-${slug}`, "hotels"] },
+    });
     if (!response.ok) return null;
     const payload = await response.json();
     return payload?.data ?? null;
   } catch {
     return null;
   }
-}
+});
 
 async function getRelatedHotels(
   destinationSlug: string,
@@ -96,7 +102,7 @@ async function getRelatedHotels(
   try {
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
     const response = await fetch(`${baseUrl}/api/hotels/destination/${destinationSlug}?take=3`, {
-      cache: "no-store",
+      next: { revalidate: 300, tags: ["hotels"] },
     });
     if (!response.ok) return [];
     const payload = await response.json();

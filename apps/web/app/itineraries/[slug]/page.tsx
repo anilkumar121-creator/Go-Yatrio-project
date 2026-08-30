@@ -1,7 +1,17 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { MapPin, Calendar, Hotel, Utensils, Car, Clock, FileText, ArrowLeft, CheckCircle2 } from "lucide-react";
+import {
+  MapPin,
+  Calendar,
+  Hotel,
+  Utensils,
+  Car,
+  Clock,
+  FileText,
+  ArrowLeft,
+  CheckCircle2,
+} from "lucide-react";
 import { Container } from "@/components/common/container";
 import { Badge } from "@/components/common/badge";
 import { Card } from "@/components/common/card";
@@ -54,11 +64,15 @@ type ItineraryDetail = {
   days: ItineraryDay[];
 };
 
-async function getItinerary(slug: string): Promise<ItineraryDetail | null> {
+import { cache } from "react";
+
+export const revalidate = 300; // 5-minute ISR
+
+const getItinerary = cache(async (slug: string): Promise<ItineraryDetail | null> => {
   try {
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
     const response = await fetch(`${baseUrl}/api/itineraries/${slug}`, {
-      cache: "no-store",
+      next: { revalidate: 300, tags: [`itinerary-${slug}`, "itineraries"] },
     });
 
     if (!response.ok) return null;
@@ -67,7 +81,7 @@ async function getItinerary(slug: string): Promise<ItineraryDetail | null> {
   } catch {
     return null;
   }
-}
+});
 
 type Props = {
   params: Promise<{ slug: string }>;
@@ -110,7 +124,12 @@ export default async function PublicItineraryDetailPage({ params }: Props) {
       <section className="bg-gradient-to-r from-primary via-primary/95 to-secondary py-12 text-white">
         <Container>
           <div className="mb-4">
-            <Button asChild variant="ghost" size="sm" className="text-white hover:bg-white/10 hover:text-white gap-1">
+            <Button
+              asChild
+              variant="ghost"
+              size="sm"
+              className="text-white hover:bg-white/10 hover:text-white gap-1"
+            >
               <Link href="/itineraries">
                 <ArrowLeft className="size-4" />
                 Back to Itineraries
@@ -128,9 +147,13 @@ export default async function PublicItineraryDetailPage({ params }: Props) {
             ) : null}
           </div>
 
-          <h1 className="text-3xl font-semibold leading-tight tablet:text-4xl">{itinerary.title}</h1>
+          <h1 className="text-3xl font-semibold leading-tight tablet:text-4xl">
+            {itinerary.title}
+          </h1>
           {itinerary.description ? (
-            <p className="mt-2 max-w-3xl text-base text-white/85 leading-relaxed">{itinerary.description}</p>
+            <p className="mt-2 max-w-3xl text-base text-white/85 leading-relaxed">
+              {itinerary.description}
+            </p>
           ) : null}
 
           {itinerary.package ? (
@@ -147,9 +170,17 @@ export default async function PublicItineraryDetailPage({ params }: Props) {
               <div className="ml-auto flex items-center gap-4">
                 <div>
                   <span className="text-xs text-white/70 block">Starting From</span>
-                  <Price amount={Number(itinerary.package.priceFrom)} className="text-white" size="sm" />
+                  <Price
+                    amount={Number(itinerary.package.priceFrom)}
+                    className="text-white"
+                    size="sm"
+                  />
                 </div>
-                <Button asChild size="sm" className="bg-accent text-accent-foreground hover:bg-accent/90">
+                <Button
+                  asChild
+                  size="sm"
+                  className="bg-accent text-accent-foreground hover:bg-accent/90"
+                >
                   <Link href={`/packages/${itinerary.package.slug}`}>View Package & Book</Link>
                 </Button>
               </div>
@@ -187,28 +218,36 @@ export default async function PublicItineraryDetailPage({ params }: Props) {
                     ) : null}
                   </div>
 
-                  <p className="text-sm leading-relaxed text-muted-foreground mt-2">{day.description}</p>
+                  <p className="text-sm leading-relaxed text-muted-foreground mt-2">
+                    {day.description}
+                  </p>
 
                   {/* Day Metadata Highlights */}
                   <div className="mt-5 grid grid-cols-1 gap-3 tablet:grid-cols-3 pt-4 border-t border-border text-xs">
                     {day.hotel ? (
                       <div className="flex items-center gap-2 text-foreground font-medium bg-muted/20 p-2.5 rounded-md">
                         <Hotel className="size-4 text-primary shrink-0" />
-                        <span><strong>Stay:</strong> {day.hotel}</span>
+                        <span>
+                          <strong>Stay:</strong> {day.hotel}
+                        </span>
                       </div>
                     ) : null}
 
                     {day.meals ? (
                       <div className="flex items-center gap-2 text-foreground font-medium bg-muted/20 p-2.5 rounded-md">
                         <Utensils className="size-4 text-primary shrink-0" />
-                        <span><strong>Meals:</strong> {day.meals}</span>
+                        <span>
+                          <strong>Meals:</strong> {day.meals}
+                        </span>
                       </div>
                     ) : null}
 
                     {day.transfers ? (
                       <div className="flex items-center gap-2 text-foreground font-medium bg-muted/20 p-2.5 rounded-md">
                         <Car className="size-4 text-primary shrink-0" />
-                        <span><strong>Transfers:</strong> {day.transfers}</span>
+                        <span>
+                          <strong>Transfers:</strong> {day.transfers}
+                        </span>
                       </div>
                     ) : null}
                   </div>

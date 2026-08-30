@@ -1,5 +1,7 @@
 import type { MetadataRoute } from "next";
 
+export const revalidate = 86400; // Cache sitemap for 24 hours
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
 
@@ -46,22 +48,30 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   try {
     const [destinations, packages, hotels, cabs, blogs, seoMetadata] = await Promise.all([
-      fetch(`${baseUrl}/api/destinations?take=200`, { cache: "no-store" })
+      fetch(`${baseUrl}/api/destinations?take=200`, {
+        next: { revalidate: 86400, tags: ["sitemap-destinations"] },
+      })
         .then((r) => r.json())
         .catch(() => null),
-      fetch(`${baseUrl}/api/packages?take=200`, { cache: "no-store" })
+      fetch(`${baseUrl}/api/packages?take=200`, {
+        next: { revalidate: 86400, tags: ["sitemap-packages"] },
+      })
         .then((r) => r.json())
         .catch(() => null),
-      fetch(`${baseUrl}/api/hotels?take=200`, { cache: "no-store" })
+      fetch(`${baseUrl}/api/hotels?take=200`, {
+        next: { revalidate: 86400, tags: ["sitemap-hotels"] },
+      })
         .then((r) => r.json())
         .catch(() => null),
-      fetch(`${baseUrl}/api/cabs?take=200`, { cache: "no-store" })
+      fetch(`${baseUrl}/api/cabs?take=200`, { next: { revalidate: 86400, tags: ["sitemap-cabs"] } })
         .then((r) => r.json())
         .catch(() => null),
-      fetch(`${baseUrl}/api/blogs?take=200`, { cache: "no-store" })
+      fetch(`${baseUrl}/api/blogs?take=200`, {
+        next: { revalidate: 86400, tags: ["sitemap-blogs"] },
+      })
         .then((r) => r.json())
         .catch(() => null),
-      fetch(`${baseUrl}/api/seo-metadata`, { cache: "no-store" })
+      fetch(`${baseUrl}/api/seo-metadata`, { next: { revalidate: 86400, tags: ["sitemap-seo"] } })
         .then((r) => r.json())
         .catch(() => null),
     ]);

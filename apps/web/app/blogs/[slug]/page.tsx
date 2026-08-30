@@ -29,7 +29,14 @@ type BlogDetail = {
   featuredMedia: { secureUrl: string; altText?: string | null } | null;
   galleryMedia: { secureUrl: string }[] | null;
   galleryImages: string[];
-  author: { id: string; name: string; slug: string; avatar: string | null; role: string | null; bio: string | null } | null;
+  author: {
+    id: string;
+    name: string;
+    slug: string;
+    avatar: string | null;
+    role: string | null;
+    bio: string | null;
+  } | null;
   status: string;
   seoTitle: string | null;
   seoDescription: string | null;
@@ -45,22 +52,30 @@ type BlogDetail = {
   packages: { id: string; title: string; slug: string; durationDays: number; priceFrom: number }[];
 };
 
-async function getBlog(slug: string): Promise<BlogDetail | null> {
+import { cache } from "react";
+
+export const revalidate = 300; // 5-minute ISR
+
+const getBlog = cache(async (slug: string): Promise<BlogDetail | null> => {
   try {
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
-    const res = await fetch(`${baseUrl}/api/blogs/${slug}`, { cache: "no-store" });
+    const res = await fetch(`${baseUrl}/api/blogs/${slug}`, {
+      next: { revalidate: 300, tags: [`blog-${slug}`, "blogs"] },
+    });
     if (!res.ok) return null;
     const payload = await res.json();
     return payload?.data ?? null;
   } catch {
     return null;
   }
-}
+});
 
 async function getRelatedBlogs(slug: string): Promise<BlogCardData[]> {
   try {
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
-    const res = await fetch(`${baseUrl}/api/blogs/${slug}/related`, { cache: "no-store" });
+    const res = await fetch(`${baseUrl}/api/blogs/${slug}/related`, {
+      next: { revalidate: 300, tags: ["blogs"] },
+    });
     if (!res.ok) return [];
     const payload = await res.json();
     return payload?.data ?? [];
@@ -112,7 +127,13 @@ export default async function PublicBlogDetailPage({ params }: Props) {
   }
 
   const relatedBlogs = await getRelatedBlogs(blog.slug);
-  const date = blog.publishedAt ? new Date(blog.publishedAt).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" }) : "Draft";
+  const date = blog.publishedAt
+    ? new Date(blog.publishedAt).toLocaleDateString("en-IN", {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      })
+    : "Draft";
 
   return (
     <PageWrapper>
@@ -140,10 +161,14 @@ export default async function PublicBlogDetailPage({ params }: Props) {
 
           <div className="mt-6 flex flex-wrap gap-2">
             {blog.categories.map((c) => (
-              <Badge key={c.id} variant="secondary">{c.name}</Badge>
+              <Badge key={c.id} variant="secondary">
+                {c.name}
+              </Badge>
             ))}
             {blog.tags.map((t) => (
-              <Badge key={t.id} variant="outline" className="text-[11px]">#{t.slug}</Badge>
+              <Badge key={t.id} variant="outline" className="text-[11px]">
+                #{t.slug}
+              </Badge>
             ))}
           </div>
 
@@ -156,7 +181,11 @@ export default async function PublicBlogDetailPage({ params }: Props) {
             {blog.author ? (
               <span className="flex items-center gap-2">
                 {blog.author.avatar ? (
-                  <CardMedia src={blog.author.avatar} alt={blog.author.name} className="size-7 rounded-full" />
+                  <CardMedia
+                    src={blog.author.avatar}
+                    alt={blog.author.name}
+                    className="size-7 rounded-full"
+                  />
                 ) : null}
                 <span className="font-semibold text-foreground">{blog.author.name}</span>
                 {blog.author.role ? <span>· {blog.author.role}</span> : null}
@@ -180,14 +209,23 @@ export default async function PublicBlogDetailPage({ params }: Props) {
 
       <section className="py-12">
         <Container className="max-w-4xl">
-          {blog.featuredMedia?.secureUrl ?? blog.featuredImage ? (
+          {(blog.featuredMedia?.secureUrl ?? blog.featuredImage) ? (
             <div className="mb-10 overflow-hidden rounded-xl">
-              <Image src={blog.featuredMedia?.secureUrl ?? blog.featuredImage ?? ""} alt={blog.title} width={1200} height={675} className="w-full object-cover" />
+              <Image
+                src={blog.featuredMedia?.secureUrl ?? blog.featuredImage ?? ""}
+                alt={blog.title}
+                width={1200}
+                height={675}
+                className="w-full object-cover"
+              />
             </div>
           ) : null}
 
           <article>
-            <BlogContentRenderer blocks={blog.contentBlocks as never} fallbackContent={blog.content} />
+            <BlogContentRenderer
+              blocks={blog.contentBlocks as never}
+              fallbackContent={blog.content}
+            />
           </article>
 
           <div className="mt-10">
@@ -204,7 +242,10 @@ export default async function PublicBlogDetailPage({ params }: Props) {
               <div className="grid grid-cols-1 gap-4 tablet:grid-cols-2">
                 {blog.destinations.map((dest) => (
                   <Card key={dest.id} className="p-5 border-border">
-                    <Link href={`/destinations/${dest.slug}`} className="font-semibold text-foreground hover:text-primary">
+                    <Link
+                      href={`/destinations/${dest.slug}`}
+                      className="font-semibold text-foreground hover:text-primary"
+                    >
                       {dest.name}
                     </Link>
                     <div className="mt-2">
@@ -231,7 +272,10 @@ export default async function PublicBlogDetailPage({ params }: Props) {
               <div className="grid grid-cols-1 gap-4 tablet:grid-cols-2">
                 {blog.packages.map((pkg) => (
                   <Card key={pkg.id} className="p-5 border-border">
-                    <Link href={`/packages/${pkg.slug}`} className="font-semibold text-foreground hover:text-primary">
+                    <Link
+                      href={`/packages/${pkg.slug}`}
+                      className="font-semibold text-foreground hover:text-primary"
+                    >
                       {pkg.title}
                     </Link>
                     <div className="mt-2 flex items-center justify-between">

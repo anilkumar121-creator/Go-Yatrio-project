@@ -38,7 +38,9 @@ async function getBlogs(
     if (tag) params.set("tag", tag);
     if (sort !== "newest") params.set("sort", sort);
 
-    const res = await fetch(`${baseUrl}/api/blogs?${params.toString()}`, { cache: "no-store" });
+    const res = await fetch(`${baseUrl}/api/blogs?${params.toString()}`, {
+      next: { revalidate: 180, tags: ["blogs"] },
+    });
     if (!res.ok) return { items: [], total: 0 };
     const payload = await res.json();
     return { items: payload?.data ?? [], total: payload?.meta?.total ?? 0 };
@@ -50,7 +52,9 @@ async function getBlogs(
 async function getCategories(): Promise<CategoryOption[]> {
   try {
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
-    const res = await fetch(`${baseUrl}/api/blogs/categories`, { cache: "no-store" });
+    const res = await fetch(`${baseUrl}/api/blogs/categories`, {
+      next: { revalidate: 600, tags: ["blog-categories"] },
+    });
     if (!res.ok) return [];
     const payload = await res.json();
     return payload?.data ?? [];

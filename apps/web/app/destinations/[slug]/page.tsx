@@ -94,11 +94,15 @@ type DestinationDetail = {
   blogs: DestinationBlog[];
 };
 
-async function getDestination(slug: string): Promise<DestinationDetail | null> {
+import { cache } from "react";
+
+export const revalidate = 300; // 5-minute ISR
+
+const getDestination = cache(async (slug: string): Promise<DestinationDetail | null> => {
   try {
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
     const response = await fetch(`${baseUrl}/api/destinations/${slug}`, {
-      cache: "no-store",
+      next: { revalidate: 300, tags: [`destination-${slug}`, "destinations"] },
     });
 
     if (!response.ok) return null;
@@ -108,7 +112,7 @@ async function getDestination(slug: string): Promise<DestinationDetail | null> {
   } catch {
     return null;
   }
-}
+});
 
 type Props = {
   params: Promise<{ slug: string }>;

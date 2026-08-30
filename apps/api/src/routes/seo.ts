@@ -7,10 +7,12 @@ import {
   upsertSeoMetadata,
 } from "../controllers/seo.controller.js";
 
+import { publicCacheControl } from "../middleware/cache-control.js";
+
 export const seoRouter = Router();
 
 // Public routes
-seoRouter.get("/by-page", getSeoMetadataByPage);
+seoRouter.get("/by-page", publicCacheControl(600, 1200), getSeoMetadataByPage);
 
 // Admin-only routes
 export const adminSeoRouter = Router();

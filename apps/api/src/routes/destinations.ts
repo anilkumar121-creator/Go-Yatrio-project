@@ -1,4 +1,4 @@
-﻿import { Router } from "express";
+import { Router } from "express";
 import { authenticate, requireAdmin } from "../middleware/auth.js";
 import {
   adminListDestinations,
@@ -11,11 +11,13 @@ import {
   updateDestinationStatus,
 } from "../controllers/destination.controller.js";
 
+import { publicCacheControl } from "../middleware/cache-control.js";
+
 export const destinationsRouter = Router();
 
 // Public routes
-destinationsRouter.get("/", listDestinations);
-destinationsRouter.get("/:slug", getDestinationBySlug);
+destinationsRouter.get("/", publicCacheControl(300, 600), listDestinations);
+destinationsRouter.get("/:slug", publicCacheControl(300, 600), getDestinationBySlug);
 
 // Admin-only routes
 export const adminDestinationsRouter = Router();

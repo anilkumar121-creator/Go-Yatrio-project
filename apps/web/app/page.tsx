@@ -21,7 +21,43 @@ import {
 } from "@/components/sections";
 import { MotionDiv } from "@/components/animation/motion";
 
-const mockDestinations = [
+export const revalidate = 300; // 5-minute ISR
+
+type DestinationSummary = {
+  id: string;
+  name: string;
+  slug: string;
+  shortDescription: string;
+  state: string | null;
+  country: string;
+  featuredImage: string | null;
+  featuredMedia: { secureUrl: string; altText?: string | null } | null;
+  featured: boolean;
+};
+
+type PackageSummary = {
+  id: string;
+  title: string;
+  slug: string;
+  shortDescription: string;
+  durationDays: number;
+  durationNights: number;
+  priceFrom: number | string;
+  discountedPrice: number | string | null;
+  effectivePrice: number | string;
+  originalPrice: number | string;
+  priceBadge: string | null;
+  currency: string;
+  packageType: string;
+  featuredImage: string | null;
+  featuredMedia: { secureUrl: string; altText?: string | null } | null;
+  featured: boolean;
+  availability: "AVAILABLE" | "LIMITED_SEATS" | "SOLD_OUT" | "UPCOMING";
+  availableSeats: number;
+  destination?: { name: string; slug: string };
+};
+
+const fallbackDestinations = [
   {
     id: "kashmir",
     name: "Kashmir",
@@ -78,7 +114,7 @@ const mockDestinations = [
   },
 ];
 
-const mockPackages = [
+const fallbackPackages = [
   {
     id: "kashmir-escape",
     title: "Kashmir Paradise Escape",
@@ -152,6 +188,34 @@ const mockPackages = [
     ctaHref: "/packages/andaman-island-paradise",
   },
 ];
+
+async function getFeaturedDestinations(): Promise<DestinationSummary[]> {
+  try {
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+    const res = await fetch(`${baseUrl}/api/destinations?take=6&featured=true`, {
+      next: { revalidate: 300, tags: ["homepage-destinations", "destinations"] },
+    });
+    if (!res.ok) return [];
+    const payload = await res.json();
+    return payload?.data?.data ?? payload?.data ?? [];
+  } catch {
+    return [];
+  }
+}
+
+async function getFeaturedPackages(): Promise<PackageSummary[]> {
+  try {
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+    const res = await fetch(`${baseUrl}/api/packages?take=6&featured=true`, {
+      next: { revalidate: 300, tags: ["homepage-packages", "packages"] },
+    });
+    if (!res.ok) return [];
+    const payload = await res.json();
+    return payload?.data?.data ?? payload?.data ?? [];
+  } catch {
+    return [];
+  }
+}
 
 const mockTestimonials = [
   {
@@ -229,7 +293,55 @@ export async function generateMetadata(): Promise<Metadata> {
   });
 }
 
-export default function HomePage() {
+export default async function HomePage() {
+  const [dbDestinations, dbPackages] = await Promise.all([
+    getFeaturedDestinations(),
+    getFeaturedPackages(),
+  ]);
+
+  const destinations =
+    dbDestinations.length > 0
+      ? dbDestinations.map((d) => ({
+          id: d.id,
+          name: d.name,
+          location: d.state ?? d.country,
+          description: d.shortDescription,
+          badge: d.featured ? "Featured" : undefined,
+          ctaHref: `/destinations/${d.slug}`,
+          image:
+            (d.featuredMedia?.secureUrl ?? d.featuredImage)
+              ? {
+                  src: d.featuredMedia?.secureUrl ?? d.featuredImage ?? "",
+                  alt: d.name,
+                }
+              : undefined,
+        }))
+      : fallbackDestinations;
+
+  const packages =
+    dbPackages.length > 0
+      ? dbPackages.map((p) => ({
+          id: p.id,
+          title: p.title,
+          destination: p.destination?.name ?? "India",
+          duration: `${p.durationDays}D / ${p.durationNights}N`,
+          price: Number(p.effectivePrice ?? p.priceFrom),
+          originalPrice:
+            Number(p.effectivePrice ?? p.priceFrom) < Number(p.originalPrice ?? p.priceFrom)
+              ? Number(p.originalPrice ?? p.priceFrom)
+              : undefined,
+          badge: p.priceBadge ?? (p.featured ? "Featured" : p.packageType),
+          ctaHref: `/packages/${p.slug}`,
+          image:
+            (p.featuredMedia?.secureUrl ?? p.featuredImage)
+              ? {
+                  src: p.featuredMedia?.secureUrl ?? p.featuredImage ?? "",
+                  alt: p.title,
+                }
+              : undefined,
+        }))
+      : fallbackPackages;
+
   return (
     <PageWrapper>
       <JsonLd data={generateOrganizationSchema()} />
@@ -262,7 +374,7 @@ export default function HomePage() {
             </Button>
           </div>
           <div className="mt-12 grid grid-cols-1 gap-6 tablet:grid-cols-2 desktop:grid-cols-3">
-            {mockDestinations.map((dest, index) => (
+            {destinations.map((dest, index) => (
               <MotionDiv
                 key={dest.id}
                 initial={{ opacity: 0, y: 20 }}
@@ -275,6 +387,7 @@ export default function HomePage() {
                   location={dest.location}
                   description={dest.description}
                   badge={dest.badge}
+                  image={"image" in dest ? (dest.image as { src: string; alt: string }) : undefined}
                   ctaHref={dest.ctaHref}
                 />
               </MotionDiv>
@@ -301,7 +414,7 @@ export default function HomePage() {
             </Button>
           </div>
           <div className="mt-12 grid grid-cols-1 gap-6 tablet:grid-cols-2 desktop:grid-cols-3">
-            {mockPackages.map((pkg, index) => (
+            {packages.map((pkg, index) => (
               <MotionDiv
                 key={pkg.id}
                 initial={{ opacity: 0, y: 20 }}
@@ -315,9 +428,8 @@ export default function HomePage() {
                   duration={pkg.duration}
                   price={pkg.price}
                   originalPrice={pkg.originalPrice}
-                  rating={pkg.rating}
-                  reviews={pkg.reviews}
                   badge={pkg.badge}
+                  image={"image" in pkg ? (pkg.image as { src: string; alt: string }) : undefined}
                   ctaHref={pkg.ctaHref}
                 />
               </MotionDiv>
