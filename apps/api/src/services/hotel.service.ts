@@ -27,6 +27,8 @@ type HotelCreateInput = {
   status?: HotelStatus;
   amenities?: string[];
   images?: string[];
+  metaTitle?: string;
+  metaDescription?: string;
   roomTypes?: HotelRoomTypeInput[];
 };
 
@@ -240,6 +242,8 @@ export const hotelService = {
         status: data.status ?? HotelStatus.DRAFT,
         amenities: data.amenities ?? [],
         images: data.images ?? [],
+        metaTitle: data.metaTitle,
+        metaDescription: data.metaDescription,
         roomTypes:
           data.roomTypes && data.roomTypes.length > 0
             ? {
@@ -286,6 +290,8 @@ export const hotelService = {
         status: data.status,
         amenities: data.amenities,
         images: data.images,
+        metaTitle: data.metaTitle,
+        metaDescription: data.metaDescription,
       },
       include: {
         destination: true,

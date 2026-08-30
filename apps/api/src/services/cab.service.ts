@@ -23,6 +23,8 @@ type CabCreateInput = {
   status?: CabStatus;
   destinationId?: string;
   amenities?: string[];
+  metaTitle?: string;
+  metaDescription?: string;
 };
 
 type CabUpdateInput = Partial<CabCreateInput>;
@@ -231,6 +233,8 @@ export const cabService = {
         isActive: true,
         destinationId: data.destinationId || null,
         amenities: data.amenities ?? [],
+        metaTitle: data.metaTitle,
+        metaDescription: data.metaDescription,
       },
       include: {
         destination: true,
@@ -268,6 +272,8 @@ export const cabService = {
         status: data.status,
         destinationId: data.destinationId ?? null,
         amenities: data.amenities,
+        metaTitle: data.metaTitle,
+        metaDescription: data.metaDescription,
       },
       include: {
         destination: true,

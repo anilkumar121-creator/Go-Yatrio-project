@@ -9,17 +9,27 @@ import { Input } from "@/components/common/input";
 import { PageWrapper } from "@/components/layout/page-wrapper";
 import { BlogCard, type BlogCardData } from "@/components/blogs/blog-card";
 
-export const metadata: Metadata = {
-  title: "Travel Blog & Destination Guides | GoYatrio",
-  description: "Read expert travel guides, destination insights, package highlights, and trip-planning tips from the GoYatrio blog.",
-  alternates: {
-    canonical: "/blogs",
-  },
-};
+import { resolvePageMetadata } from "@/components/seo/seo";
+
+export async function generateMetadata(): Promise<Metadata> {
+  return resolvePageMetadata({
+    pageType: "blogs",
+    fallbackTitle: "Travel Blog & Destination Guides | GoYatrio",
+    fallbackDescription:
+      "Read expert travel guides, destination insights, package highlights, and trip-planning tips from the GoYatrio blog.",
+    path: "/blogs",
+  });
+}
 
 type CategoryOption = { id: string; name: string; slug: string };
 
-async function getBlogs(search = "", category = "", tag = "", sort = "newest", skip = 0): Promise<{ items: BlogCardData[]; total: number }> {
+async function getBlogs(
+  search = "",
+  category = "",
+  tag = "",
+  sort = "newest",
+  skip = 0,
+): Promise<{ items: BlogCardData[]; total: number }> {
   try {
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
     const params = new URLSearchParams({ take: "9", skip: String(skip) });
@@ -50,7 +60,13 @@ async function getCategories(): Promise<CategoryOption[]> {
 }
 
 type Props = {
-  searchParams: Promise<{ search?: string; category?: string; tag?: string; sort?: string; page?: string }>;
+  searchParams: Promise<{
+    search?: string;
+    category?: string;
+    tag?: string;
+    sort?: string;
+    page?: string;
+  }>;
 };
 
 export default async function PublicBlogsPage({ searchParams }: Props) {
@@ -63,7 +79,10 @@ export default async function PublicBlogsPage({ searchParams }: Props) {
   const page = Number(params.page) || 1;
   const skip = (page - 1) * 9;
 
-  const [result, categories] = await Promise.all([getBlogs(search, category, tag, sort, skip), getCategories()]);
+  const [result, categories] = await Promise.all([
+    getBlogs(search, category, tag, sort, skip),
+    getCategories(),
+  ]);
 
   const totalPages = Math.ceil(result.total / 9);
 
@@ -72,7 +91,6 @@ export default async function PublicBlogsPage({ searchParams }: Props) {
   if (category) baseQuery.set("category", category);
   if (tag) baseQuery.set("tag", tag);
   if (sort) baseQuery.set("sort", sort);
-
 
   return (
     <PageWrapper>
@@ -92,25 +110,43 @@ export default async function PublicBlogsPage({ searchParams }: Props) {
             <div className="tablet:col-span-3">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-                <Input type="text" name="search" defaultValue={search} placeholder="Search articles, destinations, tips..." className="pl-9" />
+                <Input
+                  type="text"
+                  name="search"
+                  defaultValue={search}
+                  placeholder="Search articles, destinations, tips..."
+                  className="pl-9"
+                />
               </div>
             </div>
 
-            <select name="category" defaultValue={category} className="rounded-md border border-input bg-background px-3 py-2 text-sm">
+            <select
+              name="category"
+              defaultValue={category}
+              className="rounded-md border border-input bg-background px-3 py-2 text-sm"
+            >
               <option value="">All Categories</option>
               {categories.map((c) => (
-                <option key={c.id} value={c.slug}>{c.name}</option>
+                <option key={c.id} value={c.slug}>
+                  {c.name}
+                </option>
               ))}
             </select>
 
-            <select name="sort" defaultValue={sort} className="rounded-md border border-input bg-background px-3 py-2 text-sm">
+            <select
+              name="sort"
+              defaultValue={sort}
+              className="rounded-md border border-input bg-background px-3 py-2 text-sm"
+            >
               <option value="newest">Newest First</option>
               <option value="oldest">Oldest First</option>
               <option value="most_viewed">Most Viewed</option>
             </select>
 
             <div className="tablet:col-span-full flex items-center gap-3">
-              <Button type="submit" size="sm">Apply Filters</Button>
+              <Button type="submit" size="sm">
+                Apply Filters
+              </Button>
               {search || category || tag || sort !== "newest" ? (
                 <Button asChild variant="ghost" size="sm" className="text-muted-foreground">
                   <Link href="/blogs">Clear All</Link>
@@ -146,7 +182,13 @@ export default async function PublicBlogsPage({ searchParams }: Props) {
                     const qs = new URLSearchParams(baseQuery);
                     qs.set("page", String(pageNum));
                     return (
-                      <Button key={pageNum} asChild size="sm" variant={pageNum === page ? "primary" : "outline"} className="h-9 w-9 p-0 font-mono">
+                      <Button
+                        key={pageNum}
+                        asChild
+                        size="sm"
+                        variant={pageNum === page ? "primary" : "outline"}
+                        className="h-9 w-9 p-0 font-mono"
+                      >
                         <Link href={`/blogs?${qs.toString()}`}>{pageNum}</Link>
                       </Button>
                     );

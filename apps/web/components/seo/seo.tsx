@@ -7,7 +7,12 @@ export type SeoInput = {
   image?: string;
 };
 
-export function createSeoMetadata({ title, description, path = "/", image = "/brand/goyatrio-logo.png" }: SeoInput): Metadata {
+export function createSeoMetadata({
+  title,
+  description,
+  path = "/",
+  image = "/brand/goyatrio-logo.png",
+}: SeoInput): Metadata {
   return {
     title,
     description,
@@ -28,3 +33,14 @@ export function createSeoMetadata({ title, description, path = "/", image = "/br
     },
   };
 }
+
+/**
+ * JsonLd Component for injecting structured data safely into page heads / bodies
+ */
+export function JsonLd({ data }: { data: Record<string, unknown> }) {
+  return (
+    <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }} />
+  );
+}
+
+export * from "@/lib/seo";

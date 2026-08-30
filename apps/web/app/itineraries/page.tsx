@@ -9,10 +9,17 @@ import { Price } from "@/components/common/price";
 import { Button } from "@/components/common/button";
 import { PageWrapper } from "@/components/layout/page-wrapper";
 
-export const metadata: Metadata = {
-  title: "Custom Travel Itineraries | GoYatrio",
-  description: "Explore curated day-by-day travel itineraries with detailed activities, hotel stays, meal plans, and transfers.",
-};
+import { resolvePageMetadata } from "@/components/seo/seo";
+
+export async function generateMetadata(): Promise<Metadata> {
+  return resolvePageMetadata({
+    pageType: "itineraries",
+    fallbackTitle: "Custom Travel Itineraries | GoYatrio",
+    fallbackDescription:
+      "Explore curated day-by-day travel itineraries with detailed activities, hotel stays, meal plans, and transfers.",
+    path: "/itineraries",
+  });
+}
 
 type ItineraryListItem = {
   id: string;
@@ -79,7 +86,8 @@ export default async function PublicItinerariesPage() {
               <Calendar className="mx-auto size-12 text-muted-foreground/60 mb-4" />
               <h3 className="text-xl font-semibold text-foreground">No Itineraries Available</h3>
               <p className="text-sm text-muted-foreground mt-2 max-w-md mx-auto">
-                Our team is actively crafting new holiday itineraries. Please check back shortly or request a custom plan.
+                Our team is actively crafting new holiday itineraries. Please check back shortly or
+                request a custom plan.
               </p>
               <Button asChild className="mt-6" size="sm">
                 <Link href="/packages">Explore Holiday Packages</Link>
@@ -130,7 +138,9 @@ export default async function PublicItinerariesPage() {
                       <ul className="space-y-1.5 text-xs text-foreground">
                         {itin.days.slice(0, 3).map((day) => (
                           <li key={day.id} className="flex items-start gap-2">
-                            <span className="font-bold text-primary shrink-0">Day {day.dayNumber}:</span>
+                            <span className="font-bold text-primary shrink-0">
+                              Day {day.dayNumber}:
+                            </span>
                             <span className="line-clamp-1 text-muted-foreground">{day.title}</span>
                           </li>
                         ))}
@@ -150,7 +160,9 @@ export default async function PublicItinerariesPage() {
                         <Price amount={Number(itin.package.priceFrom)} size="sm" />
                       </div>
                     ) : (
-                      <span className="text-xs text-muted-foreground font-medium">Customizable Plan</span>
+                      <span className="text-xs text-muted-foreground font-medium">
+                        Customizable Plan
+                      </span>
                     )}
 
                     <Button asChild size="sm" variant="outline" className="gap-1.5">

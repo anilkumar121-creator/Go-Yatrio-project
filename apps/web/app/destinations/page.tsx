@@ -8,18 +8,17 @@ import { DestinationCard } from "@/components/cards/destination-card";
 import { PageWrapper } from "@/components/layout/page-wrapper";
 import { EmptyState } from "@/components/admin/empty-state";
 
-export const metadata: Metadata = {
-  title: "Explore Travel Destinations | GoYatrio",
-  description:
-    "Discover India's most beautiful travel destinations with GoYatrio. Explore handcrafted tour packages, hotels, and experiences.",
-  openGraph: {
-    title: "Explore Travel Destinations | GoYatrio",
-    description:
+import { resolvePageMetadata } from "@/components/seo/seo";
+
+export async function generateMetadata(): Promise<Metadata> {
+  return resolvePageMetadata({
+    pageType: "destinations",
+    fallbackTitle: "Explore Travel Destinations | GoYatrio",
+    fallbackDescription:
       "Discover India's most beautiful travel destinations with GoYatrio. Explore handcrafted tour packages, hotels, and experiences.",
-    type: "website",
-    locale: "en_IN",
-  },
-};
+    path: "/destinations",
+  });
+}
 
 type DestinationSummary = {
   id: string;
@@ -81,8 +80,12 @@ export default async function DestinationsPage() {
                   location={destination.state ?? destination.country}
                   description={destination.shortDescription}
                   image={
-                    destination.featuredMedia?.secureUrl ?? destination.featuredImage
-                      ? { src: destination.featuredMedia?.secureUrl ?? destination.featuredImage ?? "", alt: destination.name }
+                    (destination.featuredMedia?.secureUrl ?? destination.featuredImage)
+                      ? {
+                          src:
+                            destination.featuredMedia?.secureUrl ?? destination.featuredImage ?? "",
+                          alt: destination.name,
+                        }
                       : undefined
                   }
                   badge={destination.featured ? "Featured" : undefined}

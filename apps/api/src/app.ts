@@ -16,6 +16,7 @@ import { adminItinerariesRouter, itinerariesRouter } from "./routes/itineraries.
 import { adminMediaRouter, mediaRouter } from "./routes/media.js";
 import { adminLookupsRouter, lookupsRouter } from "./routes/lookups.js";
 import { adminPackagesRouter, packagesRouter } from "./routes/packages.js";
+import { adminSeoRouter, seoRouter } from "./routes/seo.js";
 
 export function createApp() {
   const app = express();
@@ -54,6 +55,8 @@ export function createApp() {
   app.use("/api/admin/media", adminMediaRouter);
   app.use("/api/lookups", lookupsRouter);
   app.use("/api/admin/lookups", adminLookupsRouter);
+  app.use("/api/seo-metadata", seoRouter);
+  app.use("/api/admin/seo-metadata", adminSeoRouter);
 
   app.use(notFound);
   app.use(errorHandler);

@@ -2,7 +2,18 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import { MapPin, ImageIcon, ArrowRight, Calendar, IndianRupee, Star, Building2, Car, Users, FileText } from "lucide-react";
+import {
+  MapPin,
+  ImageIcon,
+  ArrowRight,
+  Calendar,
+  IndianRupee,
+  Star,
+  Building2,
+  Car,
+  Users,
+  FileText,
+} from "lucide-react";
 import { Container } from "@/components/common/container";
 import { Button } from "@/components/common/button";
 import { Badge } from "@/components/common/badge";
@@ -11,6 +22,11 @@ import { Price } from "@/components/common/price";
 import { PageWrapper } from "@/components/layout/page-wrapper";
 import { CardMedia } from "@/components/cards/card-media";
 import { BlogCard } from "@/components/blogs/blog-card";
+import {
+  generateTouristDestinationSchema,
+  generateBreadcrumbSchema,
+  JsonLd,
+} from "@/components/seo/seo";
 
 type DestinationHotel = {
   id: string;
@@ -144,18 +160,35 @@ export default async function DestinationDetailPage({ params }: Props) {
       ? destination.galleryMedia.map((m) => m.secureUrl)
       : destination.galleryImages.length > 0
         ? destination.galleryImages
-        : destination.featuredMedia?.secureUrl ?? destination.featuredImage
+        : (destination.featuredMedia?.secureUrl ?? destination.featuredImage)
           ? [destination.featuredMedia?.secureUrl ?? destination.featuredImage ?? ""]
           : [];
 
   const featuredHotels = destination.hotels.filter((h) => h.featured);
   const otherHotels = destination.hotels.filter((h) => !h.featured);
 
+  const breadcrumbSchema = generateBreadcrumbSchema([
+    { name: "Home", url: "/" },
+    { name: "Destinations", url: "/destinations" },
+    { name: destination.name, url: `/destinations/${destination.slug}` },
+  ]);
+
+  const destinationSchema = generateTouristDestinationSchema({
+    name: destination.name,
+    description: destination.shortDescription,
+    slug: destination.slug,
+    featuredImage: destination.featuredMedia?.secureUrl ?? destination.featuredImage,
+    state: destination.state,
+    country: destination.country,
+  });
+
   return (
     <PageWrapper>
+      <JsonLd data={breadcrumbSchema} />
+      <JsonLd data={destinationSchema} />
       {/* Hero Banner */}
       <section className="relative overflow-hidden bg-primary">
-        {destination.featuredMedia?.secureUrl ?? destination.featuredImage ? (
+        {(destination.featuredMedia?.secureUrl ?? destination.featuredImage) ? (
           <>
             <Image
               src={destination.featuredMedia?.secureUrl ?? destination.featuredImage ?? ""}
@@ -168,7 +201,10 @@ export default async function DestinationDetailPage({ params }: Props) {
             <div className="absolute inset-0 bg-black/55" aria-hidden="true" />
           </>
         ) : (
-          <div className="absolute inset-0 bg-gradient-to-br from-primary via-blue-800 to-secondary" aria-hidden="true" />
+          <div
+            className="absolute inset-0 bg-gradient-to-br from-primary via-blue-800 to-secondary"
+            aria-hidden="true"
+          />
         )}
 
         <Container className="relative flex min-h-[24rem] flex-col justify-end py-14 tablet:min-h-[28rem]">
@@ -194,14 +230,19 @@ export default async function DestinationDetailPage({ params }: Props) {
             <div className="tablet:col-span-2">
               <h2 className="text-2xl font-semibold text-foreground">Destination Overview</h2>
               <div className="mt-4 space-y-4 text-base leading-7 text-muted-foreground">
-                {destination.description.split("\n").filter(Boolean).map((paragraph, index) => (
-                  <p key={index}>{paragraph}</p>
-                ))}
+                {destination.description
+                  .split("\n")
+                  .filter(Boolean)
+                  .map((paragraph, index) => (
+                    <p key={index}>{paragraph}</p>
+                  ))}
               </div>
 
               {destination.packages.length > 0 ? (
                 <div className="mt-10">
-                  <h2 className="text-2xl font-semibold text-foreground">Tour Packages in {destination.name}</h2>
+                  <h2 className="text-2xl font-semibold text-foreground">
+                    Tour Packages in {destination.name}
+                  </h2>
                   <div className="mt-5 grid grid-cols-1 gap-5 tablet:grid-cols-2">
                     {destination.packages.map((pkg) => (
                       <Card key={pkg.id} className="p-5 hover-lift">
@@ -216,7 +257,10 @@ export default async function DestinationDetailPage({ params }: Props) {
                             From {Number(pkg.priceFrom).toLocaleString("en-IN")}
                           </span>
                         </div>
-                        <Link href={`/packages/${pkg.slug}`} className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:text-primary/80">
+                        <Link
+                          href={`/packages/${pkg.slug}`}
+                          className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:text-primary/80"
+                        >
                           View Package
                           <ArrowRight className="size-4" aria-hidden="true" />
                         </Link>
@@ -245,7 +289,9 @@ export default async function DestinationDetailPage({ params }: Props) {
                   {/* Featured Hotels */}
                   {featuredHotels.length > 0 ? (
                     <div className="mt-6">
-                      <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Featured Stays</span>
+                      <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                        Featured Stays
+                      </span>
                       <div className="mt-3 grid grid-cols-1 gap-5 tablet:grid-cols-2">
                         {featuredHotels.map((hotel) => (
                           <HotelCard key={hotel.id} hotel={hotel} />
@@ -256,7 +302,9 @@ export default async function DestinationDetailPage({ params }: Props) {
 
                   {otherHotels.length > 0 ? (
                     <div className="mt-6">
-                      <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">More Hotels</span>
+                      <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                        More Hotels
+                      </span>
                       <div className="mt-3 grid grid-cols-1 gap-5 tablet:grid-cols-2">
                         {otherHotels.map((hotel) => (
                           <HotelCard key={hotel.id} hotel={hotel} />
@@ -268,81 +316,95 @@ export default async function DestinationDetailPage({ params }: Props) {
               ) : null}
             </div>
 
-              {/* Cabs in Destination */}
-              {destination.vehicles.length > 0 ? (
-                <div className="mt-10">
-                  <div className="flex items-center justify-between">
-                    <h2 className="text-2xl font-semibold text-foreground flex items-center gap-2">
-                      <Car className="size-6 text-primary" />
-                      Cab Options in {destination.name}
-                    </h2>
-                    <Button asChild variant="outline" size="sm" className="gap-1">
-                      <Link href={`/cabs?destination=${destination.slug}`}>
-                        View All Cabs
-                        <ArrowRight className="size-3.5" />
-                      </Link>
-                    </Button>
-                  </div>
-                  <div className="mt-6 grid grid-cols-1 gap-5 tablet:grid-cols-2">
-                    {destination.vehicles.map((cab) => (
-                      <CabCard key={cab.id} cab={cab} />
-                    ))}
-                  </div>
+            {/* Cabs in Destination */}
+            {destination.vehicles.length > 0 ? (
+              <div className="mt-10">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-2xl font-semibold text-foreground flex items-center gap-2">
+                    <Car className="size-6 text-primary" />
+                    Cab Options in {destination.name}
+                  </h2>
+                  <Button asChild variant="outline" size="sm" className="gap-1">
+                    <Link href={`/cabs?destination=${destination.slug}`}>
+                      View All Cabs
+                      <ArrowRight className="size-3.5" />
+                    </Link>
+                  </Button>
                 </div>
-              ) : null}
-              {/* Related Blogs */}
-              {destination.blogs.length > 0 ? (
-                <div className="mt-10">
-                  <div className="flex items-center justify-between">
-                    <h2 className="text-2xl font-semibold text-foreground flex items-center gap-2">
-                      <FileText className="size-6 text-primary" />
-                      Travel Stories from {destination.name}
-                    </h2>
-                    <Button asChild variant="outline" size="sm" className="gap-1">
-                      <Link href={`/blogs?destination=${destination.slug}`}>
-                        All Articles
-                        <ArrowRight className="size-3.5" />
-                      </Link>
-                    </Button>
-                  </div>
-                  <div className="mt-6 grid grid-cols-1 gap-5 tablet:grid-cols-2">
-                    {destination.blogs.map((blog) => (
-                      <BlogCard key={blog.id} blog={blog} />
-                    ))}
-                  </div>
+                <div className="mt-6 grid grid-cols-1 gap-5 tablet:grid-cols-2">
+                  {destination.vehicles.map((cab) => (
+                    <CabCard key={cab.id} cab={cab} />
+                  ))}
                 </div>
-              ) : null}
+              </div>
+            ) : null}
+            {/* Related Blogs */}
+            {destination.blogs.length > 0 ? (
+              <div className="mt-10">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-2xl font-semibold text-foreground flex items-center gap-2">
+                    <FileText className="size-6 text-primary" />
+                    Travel Stories from {destination.name}
+                  </h2>
+                  <Button asChild variant="outline" size="sm" className="gap-1">
+                    <Link href={`/blogs?destination=${destination.slug}`}>
+                      All Articles
+                      <ArrowRight className="size-3.5" />
+                    </Link>
+                  </Button>
+                </div>
+                <div className="mt-6 grid grid-cols-1 gap-5 tablet:grid-cols-2">
+                  {destination.blogs.map((blog) => (
+                    <BlogCard key={blog.id} blog={blog} />
+                  ))}
+                </div>
+              </div>
+            ) : null}
             {/* Highlights sidebar */}
             <aside>
               <Card className="p-6">
                 <h3 className="text-lg font-semibold text-foreground">Quick Highlights</h3>
                 <ul className="mt-4 space-y-3 text-sm text-muted-foreground">
                   <li className="flex items-center gap-2">
-                    <Badge variant="accent" className="shrink-0">Region</Badge>
+                    <Badge variant="accent" className="shrink-0">
+                      Region
+                    </Badge>
                     {destination.state ?? destination.country}
                   </li>
                   <li className="flex items-center gap-2">
-                    <Badge variant="accent" className="shrink-0">Country</Badge>
+                    <Badge variant="accent" className="shrink-0">
+                      Country
+                    </Badge>
                     {destination.country}
                   </li>
                   <li className="flex items-center gap-2">
-                    <Badge variant="accent" className="shrink-0">Status</Badge>
+                    <Badge variant="accent" className="shrink-0">
+                      Status
+                    </Badge>
                     {destination.featured ? "Featured Destination" : "Popular Destination"}
                   </li>
                   <li className="flex items-center gap-2">
-                    <Badge variant="accent" className="shrink-0">Packages</Badge>
+                    <Badge variant="accent" className="shrink-0">
+                      Packages
+                    </Badge>
                     {destination.packages.length} Available
                   </li>
                   <li className="flex items-center gap-2">
-                    <Badge variant="accent" className="shrink-0">Hotels</Badge>
+                    <Badge variant="accent" className="shrink-0">
+                      Hotels
+                    </Badge>
                     {destination.hotels.length} Stays
                   </li>
                   <li className="flex items-center gap-2">
-                    <Badge variant="accent" className="shrink-0">Cabs</Badge>
+                    <Badge variant="accent" className="shrink-0">
+                      Cabs
+                    </Badge>
                     {destination.vehicles.length} Vehicles
                   </li>
                   <li className="flex items-center gap-2">
-                    <Badge variant="accent" className="shrink-0">Blogs</Badge>
+                    <Badge variant="accent" className="shrink-0">
+                      Blogs
+                    </Badge>
                     {destination.blogs.length} Articles
                   </li>
                 </ul>
@@ -389,11 +451,18 @@ function HotelCard({ hotel }: { hotel: DestinationHotel }) {
             <Building2 className="size-6" />
           </div>
         )}
-        {hotel.featured ? <Badge variant="accent" className="absolute left-3 top-3">Featured</Badge> : null}
+        {hotel.featured ? (
+          <Badge variant="accent" className="absolute left-3 top-3">
+            Featured
+          </Badge>
+        ) : null}
       </div>
       <div className="p-5">
         <div className="flex items-center justify-between gap-2">
-          <Link href={`/hotels/${hotel.slug}`} className="text-lg font-semibold text-foreground hover:text-primary">
+          <Link
+            href={`/hotels/${hotel.slug}`}
+            className="text-lg font-semibold text-foreground hover:text-primary"
+          >
             {hotel.name}
           </Link>
           <div className="flex items-center gap-0.5 text-amber-500">
@@ -439,14 +508,23 @@ function CabCard({ cab }: { cab: DestinationCab }) {
             <Car className="size-6" />
           </div>
         )}
-        {cab.featured ? <Badge variant="accent" className="absolute left-3 top-3">Featured</Badge> : null}
+        {cab.featured ? (
+          <Badge variant="accent" className="absolute left-3 top-3">
+            Featured
+          </Badge>
+        ) : null}
       </div>
       <div className="p-5">
         <div className="flex items-center justify-between gap-2">
-          <Link href={`/cabs/${cab.slug}`} className="text-lg font-semibold text-foreground hover:text-primary">
+          <Link
+            href={`/cabs/${cab.slug}`}
+            className="text-lg font-semibold text-foreground hover:text-primary"
+          >
             {cab.vehicleName}
           </Link>
-          <Badge variant="secondary" className="text-xs">{cab.vehicleType}</Badge>
+          <Badge variant="secondary" className="text-xs">
+            {cab.vehicleType}
+          </Badge>
         </div>
         <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
           <Users className="size-3.5 text-primary" />

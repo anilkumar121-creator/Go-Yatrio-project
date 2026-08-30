@@ -1,9 +1,11 @@
-﻿import Link from "next/link";
+import type { Metadata } from "next";
+import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { Container } from "@/components/common/container";
 import { SectionTitle } from "@/components/common/section-title";
 import { Button } from "@/components/common/button";
 import { PageWrapper } from "@/components/layout/page-wrapper";
+import { resolvePageMetadata, generateOrganizationSchema, JsonLd } from "@/components/seo/seo";
 import { DestinationCard } from "@/components/cards/destination-card";
 import { PackageCard } from "@/components/cards/package-card";
 import { TestimonialCard } from "@/components/cards/testimonial-card";
@@ -24,7 +26,8 @@ const mockDestinations = [
     id: "kashmir",
     name: "Kashmir",
     location: "Jammu & Kashmir, India",
-    description: "Paradise on Earth featuring snow-capped Himalayas, serene Dal Lake shikaras, and Gulmarg meadows.",
+    description:
+      "Paradise on Earth featuring snow-capped Himalayas, serene Dal Lake shikaras, and Gulmarg meadows.",
     badge: "Trending",
     ctaHref: "/destinations/kashmir",
   },
@@ -32,7 +35,8 @@ const mockDestinations = [
     id: "goa",
     name: "Goa",
     location: "West Coast, India",
-    description: "Sun-kissed golden beaches, vibrant nightlife, Portuguese heritage, and thrilling watersports.",
+    description:
+      "Sun-kissed golden beaches, vibrant nightlife, Portuguese heritage, and thrilling watersports.",
     badge: "Popular",
     ctaHref: "/destinations/goa",
   },
@@ -40,7 +44,8 @@ const mockDestinations = [
     id: "kerala",
     name: "Kerala",
     location: "South India",
-    description: "God's Own Country with tranquil Alleppey backwater houseboats and Munnar tea gardens.",
+    description:
+      "God's Own Country with tranquil Alleppey backwater houseboats and Munnar tea gardens.",
     badge: "Top Rated",
     ctaHref: "/destinations/kerala",
   },
@@ -48,7 +53,8 @@ const mockDestinations = [
     id: "rajasthan",
     name: "Rajasthan",
     location: "North West India",
-    description: "Land of Kings featuring royal palaces, majestic desert forts, cultural heritage, and camel safaris.",
+    description:
+      "Land of Kings featuring royal palaces, majestic desert forts, cultural heritage, and camel safaris.",
     badge: "Heritage",
     ctaHref: "/destinations/rajasthan",
   },
@@ -56,7 +62,8 @@ const mockDestinations = [
     id: "andaman",
     name: "Andaman",
     location: "Bay of Bengal",
-    description: "Exotic tropical islands, turquoise waters, pristine white-sand beaches, and vibrant coral reefs.",
+    description:
+      "Exotic tropical islands, turquoise waters, pristine white-sand beaches, and vibrant coral reefs.",
     badge: "Exotic",
     ctaHref: "/destinations/andaman",
   },
@@ -64,7 +71,8 @@ const mockDestinations = [
     id: "odisha",
     name: "Odisha",
     location: "East Coast, India",
-    description: "Ancient heritage temples, golden Puri sea beach, Chilika Lake, and rich tribal art culture.",
+    description:
+      "Ancient heritage temples, golden Puri sea beach, Chilika Lake, and rich tribal art culture.",
     badge: "Cultural",
     ctaHref: "/destinations/odisha",
   },
@@ -211,9 +219,20 @@ const mockPartners = [
   { name: "Luxury Hotel Alliance" },
 ];
 
+export async function generateMetadata(): Promise<Metadata> {
+  return resolvePageMetadata({
+    pageType: "homepage",
+    fallbackTitle: "GoYatrio — Pack Your Bags, We Plan The Rest | India Travel Packages & Booking",
+    fallbackDescription:
+      "Discover handpicked tour packages, verified hotels, reliable cabs, and custom travel itineraries across India. Book seamless domestic and international holiday packages.",
+    path: "/",
+  });
+}
+
 export default function HomePage() {
   return (
     <PageWrapper>
+      <JsonLd data={generateOrganizationSchema()} />
       {/* SECTION 1 — HERO */}
       <Hero
         title="Discover India With GoYatrio"

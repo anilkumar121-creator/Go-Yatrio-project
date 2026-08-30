@@ -47,6 +47,8 @@ type CabDetail = {
   featured: boolean;
   destination?: { id: string; name: string; slug: string };
   amenities: { id: string; name: string }[];
+  metaTitle?: string | null;
+  metaDescription?: string | null;
   packages: { id: string; title: string; slug: string; durationDays: number; priceFrom: number }[];
 };
 
@@ -75,7 +77,9 @@ async function getCab(slug: string): Promise<CabDetail | null> {
 async function getRelatedCabs(destinationSlug: string, excludeId: string): Promise<RelatedCab[]> {
   try {
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
-    const response = await fetch(`${baseUrl}/api/cabs/destination/${destinationSlug}?take=3`, { cache: "no-store" });
+    const response = await fetch(`${baseUrl}/api/cabs/destination/${destinationSlug}?take=3`, {
+      cache: "no-store",
+    });
     if (!response.ok) return [];
     const payload = await response.json();
     return (payload?.data ?? []).filter((c: RelatedCab) => c.id !== excludeId).slice(0, 3);
@@ -97,8 +101,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     return { title: "Cab Not Found | GoYatrio" };
   }
 
-  const title = `${cab.vehicleName} | ${cab.vehicleType} Cab Rental | GoYatrio`;
-  const description = `${cab.description} Check tariffs, seating, features, and availability for ${cab.vehicleName}.`;
+  const title = cab.metaTitle ?? `${cab.vehicleName} | ${cab.vehicleType} Cab Rental | GoYatrio`;
+  const description =
+    cab.metaDescription ??
+    `${cab.description} Check tariffs, seating, features, and availability for ${cab.vehicleName}.`;
   const imageUrl = cab.image ?? cab.galleryImages[0] ?? null;
 
   return {
@@ -149,23 +155,67 @@ export default async function PublicCabDetailPage({ params }: Props) {
     },
   };
 
+  const breadcrumbsData = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "Home",
+        item: `${process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"}`,
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: "Cabs",
+        item: `${process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"}/cabs`,
+      },
+      {
+        "@type": "ListItem",
+        position: 3,
+        name: cab.vehicleName,
+        item: `${process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"}/cabs/${cab.slug}`,
+      },
+    ],
+  };
+
   return (
     <PageWrapper>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }} />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbsData) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+      />
 
       <section className="relative overflow-hidden bg-primary">
         {gallery[0] ? (
           <div className="relative">
-            <CardMedia src={gallery[0]} alt={cab.vehicleName} className="w-full h-[22rem] tablet:h-[26rem]" />
+            <CardMedia
+              src={gallery[0]}
+              alt={cab.vehicleName}
+              className="w-full h-[22rem] tablet:h-[26rem]"
+            />
             <div className="absolute inset-0 bg-black/50" aria-hidden="true" />
           </div>
         ) : (
-          <div className="absolute inset-0 bg-gradient-to-br from-primary via-blue-800 to-secondary" aria-hidden="true" />
+          <div
+            className="absolute inset-0 bg-gradient-to-br from-primary via-blue-800 to-secondary"
+            aria-hidden="true"
+          />
         )}
 
         <Container className="relative flex min-h-[18rem] flex-col justify-end py-10 tablet:min-h-[20rem]">
           <div className="mb-4">
-            <Button asChild variant="ghost" size="sm" className="text-white hover:bg-white/10 hover:text-white gap-1">
+            <Button
+              asChild
+              variant="ghost"
+              size="sm"
+              className="text-white hover:bg-white/10 hover:text-white gap-1"
+            >
               <Link href="/cabs">
                 <ArrowLeft className="size-4" />
                 Back to Cabs
@@ -192,10 +242,17 @@ export default async function PublicCabDetailPage({ params }: Props) {
           <h1 className="mt-2 max-w-3xl text-3xl font-semibold leading-tight text-white tablet:text-5xl">
             {cab.vehicleName}
           </h1>
-          <p className="mt-3 max-w-2xl text-base leading-7 text-white/85 tablet:text-lg">{cab.description}</p>
+          <p className="mt-3 max-w-2xl text-base leading-7 text-white/85 tablet:text-lg">
+            {cab.description}
+          </p>
 
           <div className="mt-6 flex items-center gap-4">
-            <Price amount={Number(cab.priceFrom)} per="rental starting" className="text-white" size="lg" />
+            <Price
+              amount={Number(cab.priceFrom)}
+              per="rental starting"
+              className="text-white"
+              size="lg"
+            />
           </div>
         </Container>
       </section>
@@ -209,7 +266,12 @@ export default async function PublicCabDetailPage({ params }: Props) {
                   <h2 className="text-2xl font-semibold text-foreground mb-5">Cab Gallery</h2>
                   <div className="grid grid-cols-2 gap-4 tablet:grid-cols-3">
                     {gallery.map((src, idx) => (
-                      <CardMedia key={`${src}-${idx}`} src={src} alt={`${cab.vehicleName} photo ${idx + 1}`} className="aspect-[4/3]" />
+                      <CardMedia
+                        key={`${src}-${idx}`}
+                        src={src}
+                        alt={`${cab.vehicleName} photo ${idx + 1}`}
+                        className="aspect-[4/3]"
+                      />
                     ))}
                   </div>
                 </div>
@@ -220,12 +282,16 @@ export default async function PublicCabDetailPage({ params }: Props) {
                 <div className="grid grid-cols-2 gap-4 tablet:grid-cols-4">
                   <Card className="p-4 text-center bg-card">
                     <Users className="mx-auto size-5 text-primary" />
-                    <p className="mt-2 text-sm font-semibold text-foreground">{cab.capacity} Passengers</p>
+                    <p className="mt-2 text-sm font-semibold text-foreground">
+                      {cab.capacity} Passengers
+                    </p>
                     <p className="text-[11px] text-muted-foreground">Seating Capacity</p>
                   </Card>
                   <Card className="p-4 text-center bg-card">
                     <Luggage className="mx-auto size-5 text-primary" />
-                    <p className="mt-2 text-sm font-semibold text-foreground">{cab.luggageCapacity} Bags</p>
+                    <p className="mt-2 text-sm font-semibold text-foreground">
+                      {cab.luggageCapacity} Bags
+                    </p>
                     <p className="text-[11px] text-muted-foreground">Luggage Space</p>
                   </Card>
                   <Card className="p-4 text-center bg-card">
@@ -235,7 +301,9 @@ export default async function PublicCabDetailPage({ params }: Props) {
                   </Card>
                   <Card className="p-4 text-center bg-card">
                     <Snowflake className="mx-auto size-5 text-primary" />
-                    <p className="mt-2 text-sm font-semibold text-foreground">{cab.ac ? "Yes" : "No"}</p>
+                    <p className="mt-2 text-sm font-semibold text-foreground">
+                      {cab.ac ? "Yes" : "No"}
+                    </p>
                     <p className="text-[11px] text-muted-foreground">Air Conditioning</p>
                   </Card>
                 </div>
@@ -251,7 +319,9 @@ export default async function PublicCabDetailPage({ params }: Props) {
                   </div>
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-muted-foreground">Extra KM Charge</span>
-                    <span className="font-semibold text-foreground">?{Number(cab.extraKmCharge)} / km</span>
+                    <span className="font-semibold text-foreground">
+                      ?{Number(cab.extraKmCharge)} / km
+                    </span>
                   </div>
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-muted-foreground">Night Charge</span>
@@ -271,10 +341,14 @@ export default async function PublicCabDetailPage({ params }: Props) {
               {/* Trip Types */}
               {cab.tripTypes.length > 0 ? (
                 <div>
-                  <h2 className="text-2xl font-semibold text-foreground mb-4">Available Trip Types</h2>
+                  <h2 className="text-2xl font-semibold text-foreground mb-4">
+                    Available Trip Types
+                  </h2>
                   <div className="flex flex-wrap gap-2">
                     {cab.tripTypes.map((trip) => (
-                      <Badge key={trip} variant="secondary" className="text-xs">{trip}</Badge>
+                      <Badge key={trip} variant="secondary" className="text-xs">
+                        {trip}
+                      </Badge>
                     ))}
                   </div>
                 </div>
@@ -286,7 +360,10 @@ export default async function PublicCabDetailPage({ params }: Props) {
                   <h2 className="text-2xl font-semibold text-foreground mb-4">Vehicle Features</h2>
                   <div className="grid grid-cols-1 gap-3 tablet:grid-cols-2">
                     {cab.amenities.map((am) => (
-                      <div key={am.id} className="flex items-center gap-2 rounded-md border border-border bg-muted/20 p-3 text-sm font-medium text-foreground">
+                      <div
+                        key={am.id}
+                        className="flex items-center gap-2 rounded-md border border-border bg-muted/20 p-3 text-sm font-medium text-foreground"
+                      >
                         <CheckCircle2 className="size-4 text-success shrink-0" />
                         {am.name}
                       </div>
@@ -298,15 +375,22 @@ export default async function PublicCabDetailPage({ params }: Props) {
               {/* Packages */}
               {cab.packages.length > 0 ? (
                 <div>
-                  <h2 className="text-2xl font-semibold text-foreground mb-4">Popular Tour Packages Using This Cab</h2>
+                  <h2 className="text-2xl font-semibold text-foreground mb-4">
+                    Popular Tour Packages Using This Cab
+                  </h2>
                   <div className="grid grid-cols-1 gap-4 tablet:grid-cols-2">
                     {cab.packages.map((pkg) => (
                       <Card key={pkg.id} className="p-5 border border-border bg-card shadow-sm">
-                        <Link href={`/packages/${pkg.slug}`} className="font-semibold text-foreground hover:text-primary">
+                        <Link
+                          href={`/packages/${pkg.slug}`}
+                          className="font-semibold text-foreground hover:text-primary"
+                        >
                           {pkg.title}
                         </Link>
                         <div className="mt-2 flex items-center justify-between">
-                          <span className="text-xs text-muted-foreground">{pkg.durationDays} Days Tour</span>
+                          <span className="text-xs text-muted-foreground">
+                            {pkg.durationDays} Days Tour
+                          </span>
                           <Price amount={Number(pkg.priceFrom)} size="sm" />
                         </div>
                       </Card>
@@ -356,10 +440,17 @@ export default async function PublicCabDetailPage({ params }: Props) {
               </h2>
               <div className="grid grid-cols-1 gap-6 tablet:grid-cols-3">
                 {relatedCabs.map((rel) => (
-                  <Card key={rel.id} className="overflow-hidden border border-border bg-card shadow-sm transition-all hover:shadow-md">
+                  <Card
+                    key={rel.id}
+                    className="overflow-hidden border border-border bg-card shadow-sm transition-all hover:shadow-md"
+                  >
                     <div className="relative aspect-[16/10]">
                       {rel.image ? (
-                        <CardMedia src={rel.image} alt={rel.vehicleName} className="h-full w-full" />
+                        <CardMedia
+                          src={rel.image}
+                          alt={rel.vehicleName}
+                          className="h-full w-full"
+                        />
                       ) : (
                         <div className="flex h-full w-full items-center justify-center bg-primary/10 text-primary">
                           <Car className="size-6" />

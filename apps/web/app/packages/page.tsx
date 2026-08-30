@@ -8,18 +8,17 @@ import { PackageCard } from "@/components/cards/package-card";
 import { PageWrapper } from "@/components/layout/page-wrapper";
 import { EmptyState } from "@/components/admin/empty-state";
 
-export const metadata: Metadata = {
-  title: "All Tour Packages | GoYatrio",
-  description:
-    "Explore best-selling all-inclusive tour packages across India with GoYatrio. Customized holiday itineraries for couples, families, and solo travelers.",
-  openGraph: {
-    title: "All Tour Packages | GoYatrio",
-    description:
+import { resolvePageMetadata } from "@/components/seo/seo";
+
+export async function generateMetadata(): Promise<Metadata> {
+  return resolvePageMetadata({
+    pageType: "packages",
+    fallbackTitle: "All Tour Packages | GoYatrio",
+    fallbackDescription:
       "Explore best-selling all-inclusive tour packages across India with GoYatrio. Customized holiday itineraries for couples, families, and solo travelers.",
-    type: "website",
-    locale: "en_IN",
-  },
-};
+    path: "/packages",
+  });
+}
 
 type PackageSummary = {
   id: string;
@@ -92,7 +91,8 @@ export default async function PackagesPage() {
                   duration={`${pkg.durationDays}D / ${pkg.durationNights}N`}
                   price={Number(pkg.effectivePrice ?? pkg.priceFrom)}
                   originalPrice={
-                    Number(pkg.effectivePrice ?? pkg.priceFrom) < Number(pkg.originalPrice ?? pkg.priceFrom)
+                    Number(pkg.effectivePrice ?? pkg.priceFrom) <
+                    Number(pkg.originalPrice ?? pkg.priceFrom)
                       ? Number(pkg.originalPrice ?? pkg.priceFrom)
                       : undefined
                   }
@@ -100,8 +100,11 @@ export default async function PackagesPage() {
                   availability={pkg.availability ?? "AVAILABLE"}
                   availableSeats={pkg.availableSeats ?? 0}
                   image={
-                    pkg.featuredMedia?.secureUrl ?? pkg.featuredImage
-                      ? { src: pkg.featuredMedia?.secureUrl ?? pkg.featuredImage ?? "", alt: pkg.title }
+                    (pkg.featuredMedia?.secureUrl ?? pkg.featuredImage)
+                      ? {
+                          src: pkg.featuredMedia?.secureUrl ?? pkg.featuredImage ?? "",
+                          alt: pkg.title,
+                        }
                       : undefined
                   }
                   ctaHref={`/packages/${pkg.slug}`}

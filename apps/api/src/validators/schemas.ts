@@ -203,6 +203,8 @@ export const hotelCreateSchema = z.object({
   starRating: z.coerce.number().int().min(1).max(5).default(3),
   featured: z.boolean().optional(),
   status: z.enum(HotelStatus).optional(),
+  metaTitle: optionalStringField(120),
+  metaDescription: optionalStringField(180),
   amenities: z.array(z.string().trim().min(1).max(80)).max(30).optional(),
   images: z
     .array(
@@ -281,6 +283,8 @@ export const cabCreateSchema = z.object({
   featured: z.boolean().optional(),
   status: z.enum(CabStatus).optional(),
   destinationId: optionalStringField(120),
+  metaTitle: optionalStringField(120),
+  metaDescription: optionalStringField(180),
   amenities: z.array(z.string().trim().min(1).max(80)).max(30).optional(),
 });
 
@@ -595,3 +599,17 @@ export const lookupItemStatusSchema = z.object({
 export const lookupItemOrderSchema = z.object({
   sortOrder: z.coerce.number().int().min(0),
 });
+
+// Phase 17: SEO Metadata schemas
+export const seoMetadataCreateSchema = z.object({
+  pageType: stringField(80),
+  entityType: optionalStringField(80).nullable(),
+  entityId: optionalStringField(120).nullable(),
+  title: stringField(160),
+  description: stringField(300),
+  canonicalUrl: optionalStringField(1000),
+  ogImage: optionalStringField(1000),
+  robots: optionalStringField(100),
+});
+
+export const seoMetadataUpdateSchema = seoMetadataCreateSchema.partial();

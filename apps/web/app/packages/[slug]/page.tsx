@@ -2,7 +2,21 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import { MapPin, Calendar, CheckCircle2, XCircle, ImageIcon, Hotel, Utensils, Car, ArrowRight, Star, Building2, Users, FileText } from "lucide-react";
+import {
+  MapPin,
+  Calendar,
+  CheckCircle2,
+  XCircle,
+  ImageIcon,
+  Hotel,
+  Utensils,
+  Car,
+  ArrowRight,
+  Star,
+  Building2,
+  Users,
+  FileText,
+} from "lucide-react";
 import { Container } from "@/components/common/container";
 import { Badge } from "@/components/common/badge";
 import { Card } from "@/components/common/card";
@@ -12,6 +26,7 @@ import { CardMedia } from "@/components/cards/card-media";
 import { PageWrapper } from "@/components/layout/page-wrapper";
 import { BlogCard } from "@/components/blogs/blog-card";
 import { PackageInquiryForm } from "./package-inquiry-form";
+import { generateTouristTripSchema, generateBreadcrumbSchema, JsonLd } from "@/components/seo/seo";
 
 type Activity = {
   id: string;
@@ -155,7 +170,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     return { title: "Package Not Found | GoYatrio" };
   }
 
-  const title = pkg.metaTitle ?? `${pkg.title} (${pkg.durationDays}D/${pkg.durationNights}N) | GoYatrio`;
+  const title =
+    pkg.metaTitle ?? `${pkg.title} (${pkg.durationDays}D/${pkg.durationNights}N) | GoYatrio`;
   const description =
     pkg.metaDescription ??
     `${pkg.shortDescription} Book ${pkg.title} with GoYatrio. Best price starting from ${pkg.priceFrom} ${pkg.currency}.`;
@@ -172,9 +188,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       type: "website",
       locale: "en_IN",
       url: `${baseUrl}/packages/${pkg.slug}`,
-      images: pkg.featuredImage
-        ? [{ url: pkg.featuredImage, alt: pkg.title }]
-        : undefined,
+      images: pkg.featuredImage ? [{ url: pkg.featuredImage, alt: pkg.title }] : undefined,
     },
   };
 }
@@ -192,17 +206,37 @@ export default async function PackageDetailPage({ params }: Props) {
       ? pkg.galleryMedia.map((m) => m.secureUrl)
       : pkg.galleryImages.length > 0
         ? pkg.galleryImages
-        : pkg.featuredMedia?.secureUrl ?? pkg.featuredImage
+        : (pkg.featuredMedia?.secureUrl ?? pkg.featuredImage)
           ? [pkg.featuredMedia?.secureUrl ?? pkg.featuredImage ?? ""]
           : [];
 
   const activeItinerary = pkg.itineraries.find((i) => i.isDefault) ?? pkg.itineraries[0];
 
+  const breadcrumbSchema = generateBreadcrumbSchema([
+    { name: "Home", url: "/" },
+    { name: "Packages", url: "/packages" },
+    { name: pkg.title, url: `/packages/${pkg.slug}` },
+  ]);
+
+  const tripSchema = generateTouristTripSchema({
+    title: pkg.title,
+    description: pkg.shortDescription,
+    slug: pkg.slug,
+    priceFrom: pkg.priceFrom,
+    currency: pkg.currency,
+    durationDays: pkg.durationDays,
+    durationNights: pkg.durationNights,
+    featuredImage: pkg.featuredMedia?.secureUrl ?? pkg.featuredImage,
+    destinationName: pkg.destination?.name,
+  });
+
   return (
     <PageWrapper>
+      <JsonLd data={breadcrumbSchema} />
+      <JsonLd data={tripSchema} />
       {/* Hero Banner */}
       <section className="relative overflow-hidden bg-primary">
-        {pkg.featuredMedia?.secureUrl ?? pkg.featuredImage ? (
+        {(pkg.featuredMedia?.secureUrl ?? pkg.featuredImage) ? (
           <>
             <Image
               src={pkg.featuredMedia?.secureUrl ?? pkg.featuredImage ?? ""}
@@ -215,7 +249,10 @@ export default async function PackageDetailPage({ params }: Props) {
             <div className="absolute inset-0 bg-black/60" aria-hidden="true" />
           </>
         ) : (
-          <div className="absolute inset-0 bg-gradient-to-br from-primary via-blue-800 to-secondary" aria-hidden="true" />
+          <div
+            className="absolute inset-0 bg-gradient-to-br from-primary via-blue-800 to-secondary"
+            aria-hidden="true"
+          />
         )}
 
         <Container className="relative flex min-h-[26rem] flex-col justify-end py-14 tablet:min-h-[30rem]">
@@ -247,9 +284,11 @@ export default async function PackageDetailPage({ params }: Props) {
                 className="text-white"
                 size="lg"
               />
-              {Number(pkg.effectivePrice ?? pkg.priceFrom) < Number(pkg.originalPrice ?? pkg.priceFrom) ? (
+              {Number(pkg.effectivePrice ?? pkg.priceFrom) <
+              Number(pkg.originalPrice ?? pkg.priceFrom) ? (
                 <span className="text-sm text-white/60 line-through">
-                  {pkg.currency} {Number(pkg.originalPrice ?? pkg.priceFrom).toLocaleString("en-IN")}
+                  {pkg.currency}{" "}
+                  {Number(pkg.originalPrice ?? pkg.priceFrom).toLocaleString("en-IN")}
                 </span>
               ) : null}
             </div>
@@ -281,7 +320,7 @@ export default async function PackageDetailPage({ params }: Props) {
               </div>
 
               {/* Inclusions & Exclusions */}
-              {(pkg.inclusions.length > 0 || pkg.exclusions.length > 0) ? (
+              {pkg.inclusions.length > 0 || pkg.exclusions.length > 0 ? (
                 <div className="grid grid-cols-1 gap-6 tablet:grid-cols-2">
                   {pkg.inclusions.length > 0 ? (
                     <Card className="p-6 border-l-4 border-l-success">
@@ -324,7 +363,9 @@ export default async function PackageDetailPage({ params }: Props) {
                 <div>
                   <div className="flex items-center justify-between mb-6">
                     <div>
-                      <h2 className="text-2xl font-semibold text-foreground">Day-by-Day Itinerary</h2>
+                      <h2 className="text-2xl font-semibold text-foreground">
+                        Day-by-Day Itinerary
+                      </h2>
                       <p className="text-xs text-muted-foreground mt-1">{activeItinerary.title}</p>
                     </div>
                     <Button asChild variant="outline" size="sm" className="gap-1">
@@ -352,7 +393,9 @@ export default async function PackageDetailPage({ params }: Props) {
                           ) : null}
                         </div>
 
-                        <p className="text-sm leading-relaxed text-muted-foreground mt-2">{day.description}</p>
+                        <p className="text-sm leading-relaxed text-muted-foreground mt-2">
+                          {day.description}
+                        </p>
 
                         {/* Activities */}
                         {day.activities && day.activities.length > 0 ? (
@@ -370,7 +413,7 @@ export default async function PackageDetailPage({ params }: Props) {
                           </div>
                         ) : null}
 
-                        {(day.hotel || day.meals || day.transfers) ? (
+                        {day.hotel || day.meals || day.transfers ? (
                           <div className="mt-4 flex flex-wrap gap-4 pt-3 border-t border-border text-xs text-muted-foreground">
                             {day.hotel ? (
                               <span className="flex items-center gap-1">
@@ -410,20 +453,34 @@ export default async function PackageDetailPage({ params }: Props) {
                       const minPrice = hotel.roomTypes[0]?.priceFrom ?? 0;
                       const imageUrl = hotel.images[0]?.imageUrl ?? "";
                       return (
-                        <Card key={hotel.id} className="overflow-hidden border border-border bg-card shadow-sm transition-all hover:shadow-md">
+                        <Card
+                          key={hotel.id}
+                          className="overflow-hidden border border-border bg-card shadow-sm transition-all hover:shadow-md"
+                        >
                           <div className="relative aspect-[16/9]">
                             {imageUrl ? (
-                              <CardMedia src={imageUrl} alt={hotel.name} className="h-full w-full" />
+                              <CardMedia
+                                src={imageUrl}
+                                alt={hotel.name}
+                                className="h-full w-full"
+                              />
                             ) : (
                               <div className="flex h-full w-full items-center justify-center bg-primary/10 text-primary">
                                 <Building2 className="size-6" />
                               </div>
                             )}
-                            {hotel.featured ? <Badge variant="accent" className="absolute left-3 top-3">Featured</Badge> : null}
+                            {hotel.featured ? (
+                              <Badge variant="accent" className="absolute left-3 top-3">
+                                Featured
+                              </Badge>
+                            ) : null}
                           </div>
                           <div className="p-5">
                             <div className="flex items-center justify-between gap-2">
-                              <Link href={`/hotels/${hotel.slug}`} className="text-lg font-semibold text-foreground hover:text-primary">
+                              <Link
+                                href={`/hotels/${hotel.slug}`}
+                                className="text-lg font-semibold text-foreground hover:text-primary"
+                              >
                                 {hotel.name}
                               </Link>
                               <div className="flex items-center gap-0.5 text-amber-500 shrink-0">
@@ -436,16 +493,26 @@ export default async function PackageDetailPage({ params }: Props) {
                               <MapPin className="size-3.5 text-primary" />
                               {hotel.city} • {hotel.hotelCategory}
                             </p>
-                            <p className="mt-2 text-sm text-muted-foreground line-clamp-2">{hotel.shortDescription}</p>
+                            <p className="mt-2 text-sm text-muted-foreground line-clamp-2">
+                              {hotel.shortDescription}
+                            </p>
                             <div className="mt-3 flex flex-wrap gap-1.5">
                               {hotel.amenities.slice(0, 3).map((am) => (
-                                <Badge key={am.id} variant="outline" className="text-[11px] font-normal">{am.name}</Badge>
+                                <Badge
+                                  key={am.id}
+                                  variant="outline"
+                                  className="text-[11px] font-normal"
+                                >
+                                  {am.name}
+                                </Badge>
                               ))}
                             </div>
                             <div className="mt-4 flex items-center justify-between border-t border-border pt-3">
                               {minPrice ? (
                                 <div>
-                                  <span className="block text-[11px] text-muted-foreground">From / night</span>
+                                  <span className="block text-[11px] text-muted-foreground">
+                                    From / night
+                                  </span>
                                   <Price amount={minPrice} size="sm" />
                                 </div>
                               ) : null}
@@ -473,38 +540,64 @@ export default async function PackageDetailPage({ params }: Props) {
                   </h2>
                   <div className="grid grid-cols-1 gap-5 tablet:grid-cols-2">
                     {pkg.vehicles.map((cab) => (
-                      <Card key={cab.id} className="overflow-hidden border border-border bg-card shadow-sm transition-all hover:shadow-md">
+                      <Card
+                        key={cab.id}
+                        className="overflow-hidden border border-border bg-card shadow-sm transition-all hover:shadow-md"
+                      >
                         <div className="relative aspect-[16/9]">
                           {cab.image ? (
-                            <CardMedia src={cab.image} alt={cab.vehicleName} className="h-full w-full" />
+                            <CardMedia
+                              src={cab.image}
+                              alt={cab.vehicleName}
+                              className="h-full w-full"
+                            />
                           ) : (
                             <div className="flex h-full w-full items-center justify-center bg-primary/10 text-primary">
                               <Car className="size-6" />
                             </div>
                           )}
-                          {cab.featured ? <Badge variant="accent" className="absolute left-3 top-3">Featured</Badge> : null}
+                          {cab.featured ? (
+                            <Badge variant="accent" className="absolute left-3 top-3">
+                              Featured
+                            </Badge>
+                          ) : null}
                         </div>
                         <div className="p-5">
                           <div className="flex items-center justify-between gap-2">
-                            <Link href={`/cabs/${cab.slug}`} className="text-lg font-semibold text-foreground hover:text-primary">
+                            <Link
+                              href={`/cabs/${cab.slug}`}
+                              className="text-lg font-semibold text-foreground hover:text-primary"
+                            >
                               {cab.vehicleName}
                             </Link>
-                            <Badge variant="secondary" className="text-xs">{cab.vehicleType}</Badge>
+                            <Badge variant="secondary" className="text-xs">
+                              {cab.vehicleType}
+                            </Badge>
                           </div>
                           <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
                             <Users className="size-3.5 text-primary" />
                             {cab.capacity} Seats
                           </p>
-                          <p className="mt-2 text-sm text-muted-foreground line-clamp-2">{cab.description}</p>
+                          <p className="mt-2 text-sm text-muted-foreground line-clamp-2">
+                            {cab.description}
+                          </p>
                           <div className="mt-3 flex flex-wrap gap-1.5">
                             {cab.amenities.slice(0, 3).map((am) => (
-                              <Badge key={am.id} variant="outline" className="text-[11px] font-normal">{am.name}</Badge>
+                              <Badge
+                                key={am.id}
+                                variant="outline"
+                                className="text-[11px] font-normal"
+                              >
+                                {am.name}
+                              </Badge>
                             ))}
                           </div>
                           <div className="mt-4 flex items-center justify-between border-t border-border pt-3">
                             {cab.priceFrom ? (
                               <div>
-                                <span className="block text-[11px] text-muted-foreground">Starting from</span>
+                                <span className="block text-[11px] text-muted-foreground">
+                                  Starting from
+                                </span>
                                 <Price amount={Number(cab.priceFrom)} size="sm" />
                               </div>
                             ) : null}
@@ -559,7 +652,9 @@ export default async function PackageDetailPage({ params }: Props) {
                 {pkg.availability === "SOLD_OUT" || pkg.availability === "UPCOMING" ? (
                   <Card className="p-6 border border-border bg-card shadow-md">
                     <h3 className="text-xl font-semibold text-foreground mb-1">
-                      {pkg.availability === "SOLD_OUT" ? "Temporarily Sold Out" : "Package Coming Soon"}
+                      {pkg.availability === "SOLD_OUT"
+                        ? "Temporarily Sold Out"
+                        : "Package Coming Soon"}
                     </h3>
                     <p className="text-xs text-muted-foreground">
                       {pkg.availability === "SOLD_OUT"
@@ -568,19 +663,22 @@ export default async function PackageDetailPage({ params }: Props) {
                     </p>
                   </Card>
                 ) : (
-                <Card className="p-6 border border-border bg-card shadow-md">
-                  <h3 className="text-xl font-semibold text-foreground mb-1">Book / Inquire Tour</h3>
-                  <p className="text-xs text-muted-foreground mb-5">
-                    Fill in your details below. Our travel expert will contact you within 30 minutes with a customized quote.
-                  </p>
+                  <Card className="p-6 border border-border bg-card shadow-md">
+                    <h3 className="text-xl font-semibold text-foreground mb-1">
+                      Book / Inquire Tour
+                    </h3>
+                    <p className="text-xs text-muted-foreground mb-5">
+                      Fill in your details below. Our travel expert will contact you within 30
+                      minutes with a customized quote.
+                    </p>
 
-                  {/* Package Inquiry CTA Form Component */}
-                  <PackageInquiryForm
-                    packageId={pkg.id}
-                    packageTitle={pkg.title}
-                    destinationName={pkg.destination.name}
-                  />
-                </Card>
+                    {/* Package Inquiry CTA Form Component */}
+                    <PackageInquiryForm
+                      packageId={pkg.id}
+                      packageTitle={pkg.title}
+                      destinationName={pkg.destination.name}
+                    />
+                  </Card>
                 )}
               </div>
             </aside>

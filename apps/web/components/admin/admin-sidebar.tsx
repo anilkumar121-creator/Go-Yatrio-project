@@ -17,6 +17,7 @@ import {
   ListChecks,
   LogOut,
   X,
+  Globe,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -32,6 +33,7 @@ export const adminNavItems = [
   { name: "Inquiries", href: "/admin/inquiries", icon: MessageSquare },
   { name: "Settings", href: "/admin/settings", icon: Settings },
   { name: "Lookup Tables", href: "/admin/settings/lookups", icon: ListChecks },
+  { name: "SEO Settings", href: "/admin/settings/seo", icon: Globe },
 ];
 
 type AdminSidebarProps = {

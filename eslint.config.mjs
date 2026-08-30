@@ -27,6 +27,11 @@ export default tseslint.config(
     plugins: {
       "@next/next": nextPlugin,
     },
+    settings: {
+      next: {
+        rootDir: ["apps/web/", "."],
+      },
+    },
     rules: {
       ...nextPlugin.configs.recommended.rules,
       ...nextPlugin.configs["core-web-vitals"].rules,

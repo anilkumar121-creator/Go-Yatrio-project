@@ -11,13 +11,17 @@ import { Input } from "@/components/common/input";
 import { PageWrapper } from "@/components/layout/page-wrapper";
 import { CardMedia } from "@/components/cards/card-media";
 
-export const metadata: Metadata = {
-  title: "Cab Rentals & Car Rental Services in India | GoYatrio",
-  description: "Book local cabs, airport transfers, outstation taxis, and multi-day car rentals at the best prices with GoYatrio.",
-  alternates: {
-    canonical: "/cabs",
-  },
-};
+import { resolvePageMetadata } from "@/components/seo/seo";
+
+export async function generateMetadata(): Promise<Metadata> {
+  return resolvePageMetadata({
+    pageType: "cabs",
+    fallbackTitle: "Cab Rentals & Car Rental Services in India | GoYatrio",
+    fallbackDescription:
+      "Book local cabs, airport transfers, outstation taxis, and multi-day car rentals at the best prices with GoYatrio.",
+    path: "/cabs",
+  });
+}
 
 type DestinationOption = {
   id: string;
@@ -63,7 +67,14 @@ const tripTypeOptions = [
   { value: "MULTI_DAY", label: "Multi-Day Cab" },
 ];
 
-async function getCabs(search = "", vehicleType = "", tripType = "", destination = "", sort = "newest", skip = 0): Promise<{ items: CabCard[]; total: number }> {
+async function getCabs(
+  search = "",
+  vehicleType = "",
+  tripType = "",
+  destination = "",
+  sort = "newest",
+  skip = 0,
+): Promise<{ items: CabCard[]; total: number }> {
   try {
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
     const params = new URLSearchParams({ take: "9", skip: String(skip) });
@@ -96,7 +107,14 @@ async function getDestinations(): Promise<DestinationOption[]> {
 }
 
 type Props = {
-  searchParams: Promise<{ search?: string; type?: string; trip?: string; destination?: string; sort?: string; page?: string }>;
+  searchParams: Promise<{
+    search?: string;
+    type?: string;
+    trip?: string;
+    destination?: string;
+    sort?: string;
+    page?: string;
+  }>;
 };
 
 export default async function PublicCabsPage({ searchParams }: Props) {
@@ -142,39 +160,69 @@ export default async function PublicCabsPage({ searchParams }: Props) {
             <div className="tablet:col-span-2">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-                <Input type="text" name="search" defaultValue={search} placeholder="Search cabs, types..." className="pl-9" />
+                <Input
+                  type="text"
+                  name="search"
+                  defaultValue={search}
+                  placeholder="Search cabs, types..."
+                  className="pl-9"
+                />
               </div>
             </div>
 
-            <select name="type" defaultValue={vehicleType} className="rounded-md border border-input bg-background px-3 py-2 text-sm">
+            <select
+              name="type"
+              defaultValue={vehicleType}
+              className="rounded-md border border-input bg-background px-3 py-2 text-sm"
+            >
               <option value="">All Vehicle Types</option>
               {vehicleTypeOptions.map((vt) => (
-                <option key={vt} value={vt}>{vt}</option>
+                <option key={vt} value={vt}>
+                  {vt}
+                </option>
               ))}
             </select>
 
-            <select name="trip" defaultValue={tripType} className="rounded-md border border-input bg-background px-3 py-2 text-sm">
+            <select
+              name="trip"
+              defaultValue={tripType}
+              className="rounded-md border border-input bg-background px-3 py-2 text-sm"
+            >
               <option value="">All Trip Types</option>
               {tripTypeOptions.map((trip) => (
-                <option key={trip.value} value={trip.value}>{trip.label}</option>
+                <option key={trip.value} value={trip.value}>
+                  {trip.label}
+                </option>
               ))}
             </select>
 
-            <select name="destination" defaultValue={destination} className="rounded-md border border-input bg-background px-3 py-2 text-sm">
+            <select
+              name="destination"
+              defaultValue={destination}
+              className="rounded-md border border-input bg-background px-3 py-2 text-sm"
+            >
               <option value="">All Destinations</option>
               {destinations.map((d) => (
-                <option key={d.id} value={d.slug}>{d.name}</option>
+                <option key={d.id} value={d.slug}>
+                  {d.name}
+                </option>
               ))}
             </select>
 
             <div className="tablet:col-span-full flex flex-col tablet:flex-row items-start tablet:items-center gap-3">
-              <select name="sort" defaultValue={sort} className="rounded-md border border-input bg-background px-3 py-2 text-sm">
+              <select
+                name="sort"
+                defaultValue={sort}
+                className="rounded-md border border-input bg-background px-3 py-2 text-sm"
+              >
                 <option value="newest">Newest First</option>
                 <option value="price_asc">Price: Low to High</option>
                 <option value="price_desc">Price: High to Low</option>
                 <option value="capacity_desc">Most Seats</option>
               </select>
-              <Button type="submit" size="sm">Apply Filters</Button>
+              <Button type="submit" size="sm">
+                Apply Filters
+              </Button>
               {search || vehicleType || tripType || destination || sort !== "newest" ? (
                 <Button asChild variant="ghost" size="sm" className="text-muted-foreground">
                   <Link href="/cabs">Clear All</Link>
@@ -199,16 +247,27 @@ export default async function PublicCabsPage({ searchParams }: Props) {
             <>
               <div className="grid grid-cols-1 gap-6 tablet:grid-cols-2 desktop:grid-cols-3">
                 {result.items.map((cab) => (
-                  <Card key={cab.id} className="overflow-hidden border border-border bg-card shadow-sm transition-all hover:shadow-md">
+                  <Card
+                    key={cab.id}
+                    className="overflow-hidden border border-border bg-card shadow-sm transition-all hover:shadow-md"
+                  >
                     <div className="relative aspect-[16/10]">
-                      {cab.featuredMedia?.secureUrl ?? cab.image ? (
-                        <CardMedia src={cab.featuredMedia?.secureUrl ?? cab.image ?? ""} alt={cab.vehicleName} className="h-full w-full" />
+                      {(cab.featuredMedia?.secureUrl ?? cab.image) ? (
+                        <CardMedia
+                          src={cab.featuredMedia?.secureUrl ?? cab.image ?? ""}
+                          alt={cab.vehicleName}
+                          className="h-full w-full"
+                        />
                       ) : (
                         <div className="flex h-full w-full items-center justify-center bg-primary/10 text-primary">
                           <Car className="size-8" />
                         </div>
                       )}
-                      {cab.featured ? <Badge variant="accent" className="absolute left-3 top-3">Featured</Badge> : null}
+                      {cab.featured ? (
+                        <Badge variant="accent" className="absolute left-3 top-3">
+                          Featured
+                        </Badge>
+                      ) : null}
                       <span className="absolute right-3 top-3 rounded-md bg-black/60 px-2.5 py-1 text-xs font-semibold text-white backdrop-blur-sm">
                         {cab.vehicleType}
                       </span>
@@ -225,7 +284,9 @@ export default async function PublicCabsPage({ searchParams }: Props) {
                         </p>
                       </div>
 
-                      <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">{cab.description}</p>
+                      <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
+                        {cab.description}
+                      </p>
 
                       <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
                         <span className="flex items-center gap-1">
@@ -247,14 +308,18 @@ export default async function PublicCabsPage({ searchParams }: Props) {
                       {cab.tripTypes.length > 0 ? (
                         <div className="flex flex-wrap gap-1.5">
                           {cab.tripTypes.slice(0, 3).map((trip) => (
-                            <Badge key={trip} variant="outline" className="text-[11px] font-normal">{trip}</Badge>
+                            <Badge key={trip} variant="outline" className="text-[11px] font-normal">
+                              {trip}
+                            </Badge>
                           ))}
                         </div>
                       ) : null}
 
                       <div className="flex items-center justify-between border-t border-border pt-3">
                         <div>
-                          <span className="block text-[11px] text-muted-foreground">Starting from</span>
+                          <span className="block text-[11px] text-muted-foreground">
+                            Starting from
+                          </span>
                           <Price amount={Number(cab.priceFrom)} size="sm" />
                         </div>
                         <Button asChild size="sm" variant="outline" className="gap-1">
@@ -276,7 +341,13 @@ export default async function PublicCabsPage({ searchParams }: Props) {
                     const qs = new URLSearchParams(baseQuery);
                     qs.set("page", String(pageNum));
                     return (
-                      <Button key={pageNum} asChild size="sm" variant={pageNum === page ? "primary" : "outline"} className="h-9 w-9 p-0 font-mono">
+                      <Button
+                        key={pageNum}
+                        asChild
+                        size="sm"
+                        variant={pageNum === page ? "primary" : "outline"}
+                        className="h-9 w-9 p-0 font-mono"
+                      >
                         <Link href={`/cabs?${qs.toString()}`}>{pageNum}</Link>
                       </Button>
                     );

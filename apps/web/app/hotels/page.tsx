@@ -11,13 +11,17 @@ import { Input } from "@/components/common/input";
 import { PageWrapper } from "@/components/layout/page-wrapper";
 import { CardMedia } from "@/components/cards/card-media";
 
-export const metadata: Metadata = {
-  title: "Handpicked Hotels & Stays in India | GoYatrio",
-  description: "Browse handpicked hotels, resorts, houseboats, and luxury stays across India. Filter by category, star rating and destination.",
-  alternates: {
-    canonical: "/hotels",
-  },
-};
+import { resolvePageMetadata } from "@/components/seo/seo";
+
+export async function generateMetadata(): Promise<Metadata> {
+  return resolvePageMetadata({
+    pageType: "hotels",
+    fallbackTitle: "Handpicked Hotels & Stays in India | GoYatrio",
+    fallbackDescription:
+      "Browse handpicked hotels, resorts, houseboats, and luxury stays across India. Filter by category, star rating and destination.",
+    path: "/hotels",
+  });
+}
 
 type DestinationOption = {
   id: string;
@@ -42,7 +46,14 @@ type HotelCard = {
   roomTypes: { id: string; roomName: string; priceFrom: number }[];
 };
 
-async function getHotels(search = "", category = "", starRating = "", destination = "", sort = "newest", skip = 0): Promise<{ items: HotelCard[]; total: number }> {
+async function getHotels(
+  search = "",
+  category = "",
+  starRating = "",
+  destination = "",
+  sort = "newest",
+  skip = 0,
+): Promise<{ items: HotelCard[]; total: number }> {
   try {
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
     const params = new URLSearchParams({ take: "9", skip: String(skip) });
@@ -75,7 +86,14 @@ async function getDestinations(): Promise<DestinationOption[]> {
 }
 
 type Props = {
-  searchParams: Promise<{ search?: string; category?: string; star?: string; destination?: string; sort?: string; page?: string }>;
+  searchParams: Promise<{
+    search?: string;
+    category?: string;
+    star?: string;
+    destination?: string;
+    sort?: string;
+    page?: string;
+  }>;
 };
 export default async function PublicHotelsPage({ searchParams }: Props) {
   const params = await searchParams;
@@ -132,7 +150,11 @@ export default async function PublicHotelsPage({ searchParams }: Props) {
               </div>
             </div>
 
-            <select name="category" defaultValue={category} className="rounded-md border border-input bg-background px-3 py-2 text-sm">
+            <select
+              name="category"
+              defaultValue={category}
+              className="rounded-md border border-input bg-background px-3 py-2 text-sm"
+            >
               <option value="">All Categories</option>
               <option value="BUDGET">Budget</option>
               <option value="STANDARD">Standard</option>
@@ -140,7 +162,11 @@ export default async function PublicHotelsPage({ searchParams }: Props) {
               <option value="LUXURY">Luxury</option>
             </select>
 
-            <select name="star" defaultValue={starRating} className="rounded-md border border-input bg-background px-3 py-2 text-sm">
+            <select
+              name="star"
+              defaultValue={starRating}
+              className="rounded-md border border-input bg-background px-3 py-2 text-sm"
+            >
               <option value="">Any Star Rating</option>
               <option value="5">5 Star</option>
               <option value="4">4 Star</option>
@@ -149,21 +175,33 @@ export default async function PublicHotelsPage({ searchParams }: Props) {
               <option value="1">1 Star</option>
             </select>
 
-            <select name="destination" defaultValue={destination} className="rounded-md border border-input bg-background px-3 py-2 text-sm">
+            <select
+              name="destination"
+              defaultValue={destination}
+              className="rounded-md border border-input bg-background px-3 py-2 text-sm"
+            >
               <option value="">All Destinations</option>
               {destinations.map((d) => (
-                <option key={d.id} value={d.slug}>{d.name}</option>
+                <option key={d.id} value={d.slug}>
+                  {d.name}
+                </option>
               ))}
             </select>
 
             <div className="tablet:col-span-full flex flex-col tablet:flex-row items-start tablet:items-center gap-3">
-              <select name="sort" defaultValue={sort} className="rounded-md border border-input bg-background px-3 py-2 text-sm">
+              <select
+                name="sort"
+                defaultValue={sort}
+                className="rounded-md border border-input bg-background px-3 py-2 text-sm"
+              >
                 <option value="newest">Newest First</option>
                 <option value="rating_desc">Highest Rated</option>
                 <option value="price_asc">Price: Low to High</option>
                 <option value="price_desc">Price: High to Low</option>
               </select>
-              <Button type="submit" size="sm">Apply Filters</Button>
+              <Button type="submit" size="sm">
+                Apply Filters
+              </Button>
               {search || category || starRating || destination || sort !== "newest" ? (
                 <Button asChild variant="ghost" size="sm" className="text-muted-foreground">
                   <Link href="/hotels">Clear All</Link>
@@ -181,7 +219,8 @@ export default async function PublicHotelsPage({ searchParams }: Props) {
               <MapPin className="mx-auto size-12 text-muted-foreground/50 mb-4" />
               <h3 className="text-xl font-semibold text-foreground">No Hotels Found</h3>
               <p className="text-sm text-muted-foreground mt-2 max-w-md mx-auto">
-                Try adjusting your search or removing some filters to discover more handpicked stays.
+                Try adjusting your search or removing some filters to discover more handpicked
+                stays.
               </p>
             </Card>
           ) : (
@@ -189,10 +228,14 @@ export default async function PublicHotelsPage({ searchParams }: Props) {
               <div className="grid grid-cols-1 gap-6 tablet:grid-cols-2 desktop:grid-cols-3">
                 {result.items.map((hotel) => {
                   const minPrice = hotel.roomTypes[0]?.priceFrom ?? 0;
-                  const imageUrl = hotel.featuredMedia?.secureUrl ?? hotel.images[0]?.imageUrl ?? "";
+                  const imageUrl =
+                    hotel.featuredMedia?.secureUrl ?? hotel.images[0]?.imageUrl ?? "";
 
                   return (
-                    <Card key={hotel.id} className="overflow-hidden border border-border bg-card shadow-sm transition-all hover:shadow-md">
+                    <Card
+                      key={hotel.id}
+                      className="overflow-hidden border border-border bg-card shadow-sm transition-all hover:shadow-md"
+                    >
                       <div className="relative aspect-[16/10]">
                         {imageUrl ? (
                           <CardMedia src={imageUrl} alt={hotel.name} className="h-full w-full" />
@@ -202,7 +245,9 @@ export default async function PublicHotelsPage({ searchParams }: Props) {
                           </div>
                         )}
                         {hotel.featured ? (
-                          <Badge variant="accent" className="absolute left-3 top-3">Featured</Badge>
+                          <Badge variant="accent" className="absolute left-3 top-3">
+                            Featured
+                          </Badge>
                         ) : null}
                         <span className="absolute right-3 top-3 rounded-md bg-black/60 px-2.5 py-1 text-xs font-semibold text-white backdrop-blur-sm">
                           {hotel.hotelCategory}
@@ -233,7 +278,11 @@ export default async function PublicHotelsPage({ searchParams }: Props) {
 
                         <div className="flex flex-wrap gap-1.5">
                           {hotel.amenities.slice(0, 3).map((am) => (
-                            <Badge key={am.id} variant="outline" className="text-[11px] font-normal">
+                            <Badge
+                              key={am.id}
+                              variant="outline"
+                              className="text-[11px] font-normal"
+                            >
                               {am.name}
                             </Badge>
                           ))}
@@ -242,11 +291,15 @@ export default async function PublicHotelsPage({ searchParams }: Props) {
                         <div className="flex items-center justify-between border-t border-border pt-3">
                           {minPrice ? (
                             <div>
-                              <span className="block text-[11px] text-muted-foreground">Starting from / night</span>
+                              <span className="block text-[11px] text-muted-foreground">
+                                Starting from / night
+                              </span>
                               <Price amount={minPrice} size="sm" />
                             </div>
                           ) : (
-                            <span className="text-xs font-medium text-muted-foreground">Custom Rates</span>
+                            <span className="text-xs font-medium text-muted-foreground">
+                              Custom Rates
+                            </span>
                           )}
 
                           <Button asChild size="sm" variant="outline" className="gap-1">

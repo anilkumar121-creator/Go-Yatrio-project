@@ -57,6 +57,8 @@ type HotelDetail = {
   featuredMedia: { secureUrl: string; altText?: string | null } | null;
   galleryMedia: { secureUrl: string }[] | null;
   amenities: HotelAmenity[];
+  metaTitle?: string | null;
+  metaDescription?: string | null;
   roomTypes: HotelRoomType[];
   packages: { id: string; title: string; slug: string; durationDays: number; priceFrom: number }[];
 };
@@ -87,10 +89,15 @@ async function getHotel(slug: string): Promise<HotelDetail | null> {
   }
 }
 
-async function getRelatedHotels(destinationSlug: string, excludeId: string): Promise<RelatedHotel[]> {
+async function getRelatedHotels(
+  destinationSlug: string,
+  excludeId: string,
+): Promise<RelatedHotel[]> {
   try {
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
-    const response = await fetch(`${baseUrl}/api/hotels/destination/${destinationSlug}?take=3`, { cache: "no-store" });
+    const response = await fetch(`${baseUrl}/api/hotels/destination/${destinationSlug}?take=3`, {
+      cache: "no-store",
+    });
     if (!response.ok) return [];
     const payload = await response.json();
     return (payload?.data ?? []).filter((h: RelatedHotel) => h.id !== excludeId).slice(0, 3);
@@ -112,8 +119,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     return { title: "Hotel Not Found | GoYatrio" };
   }
 
-  const title = `${hotel.name} | ${hotel.hotelCategory} Hotel in ${hotel.city} | GoYatrio`;
-  const description = `${hotel.shortDescription} Check room availability, tariffs, amenities, and hotel inquiries at ${hotel.name}`;
+  const title =
+    hotel.metaTitle ?? `${hotel.name} | ${hotel.hotelCategory} Hotel in ${hotel.city} | GoYatrio`;
+  const description =
+    hotel.metaDescription ??
+    `${hotel.shortDescription} Check room availability, tariffs, amenities, and hotel inquiries at ${hotel.name}`;
   const imageUrl = hotel.images[0]?.imageUrl ?? null;
 
   return {
@@ -144,7 +154,12 @@ export default async function PublicHotelDetailPage({ params }: Props) {
   const relatedHotels = await getRelatedHotels(hotel.destination.slug, hotel.id);
   const gallery =
     hotel.galleryMedia && hotel.galleryMedia.length > 0
-      ? hotel.galleryMedia.map((m) => ({ imageUrl: m.secureUrl, id: m.secureUrl, altText: null, sortOrder: 0 }))
+      ? hotel.galleryMedia.map((m) => ({
+          imageUrl: m.secureUrl,
+          id: m.secureUrl,
+          altText: null,
+          sortOrder: 0,
+        }))
       : hotel.images.length > 0
         ? hotel.images
         : [];
@@ -167,9 +182,38 @@ export default async function PublicHotelDetailPage({ params }: Props) {
     url: `${process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"}/hotels/${hotel.slug}`,
   };
 
+  const breadcrumbsData = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "Home",
+        item: `${process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"}`,
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: "Hotels",
+        item: `${process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"}/hotels`,
+      },
+      {
+        "@type": "ListItem",
+        position: 3,
+        name: hotel.name,
+        item: `${process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"}/hotels/${hotel.slug}`,
+      },
+    ],
+  };
+
   return (
     <PageWrapper>
       {/* JSON-LD Structured Data */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbsData) }}
+      />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
@@ -177,18 +221,30 @@ export default async function PublicHotelDetailPage({ params }: Props) {
 
       {/* Hero Banner */}
       <section className="relative overflow-hidden bg-primary">
-        {hotel.featuredMedia?.secureUrl ?? gallery[0]?.imageUrl ? (
+        {(hotel.featuredMedia?.secureUrl ?? gallery[0]?.imageUrl) ? (
           <div className="relative">
-            <CardMedia src={hotel.featuredMedia?.secureUrl ?? gallery[0]?.imageUrl ?? ""} alt={hotel.name} className="w-full h-[22rem] tablet:h-[28rem]" />
+            <CardMedia
+              src={hotel.featuredMedia?.secureUrl ?? gallery[0]?.imageUrl ?? ""}
+              alt={hotel.name}
+              className="w-full h-[22rem] tablet:h-[28rem]"
+            />
             <div className="absolute inset-0 bg-black/50" aria-hidden="true" />
           </div>
         ) : (
-          <div className="absolute inset-0 bg-gradient-to-br from-primary via-blue-800 to-secondary" aria-hidden="true" />
+          <div
+            className="absolute inset-0 bg-gradient-to-br from-primary via-blue-800 to-secondary"
+            aria-hidden="true"
+          />
         )}
 
         <Container className="relative flex min-h-[18rem] flex-col justify-end py-10 tablet:min-h-[22rem]">
           <div className="mb-4">
-            <Button asChild variant="ghost" size="sm" className="text-white hover:bg-white/10 hover:text-white gap-1">
+            <Button
+              asChild
+              variant="ghost"
+              size="sm"
+              className="text-white hover:bg-white/10 hover:text-white gap-1"
+            >
               <Link href="/hotels">
                 <ArrowLeft className="size-4" />
                 Back to Hotels
@@ -255,7 +311,10 @@ export default async function PublicHotelDetailPage({ params }: Props) {
                   <h2 className="text-2xl font-semibold text-foreground mb-4">Hotel Amenities</h2>
                   <div className="grid grid-cols-1 gap-3 tablet:grid-cols-2">
                     {hotel.amenities.map((am) => (
-                      <div key={am.id} className="flex items-center gap-2 rounded-md border border-border bg-muted/20 p-3 text-sm font-medium text-foreground">
+                      <div
+                        key={am.id}
+                        className="flex items-center gap-2 rounded-md border border-border bg-muted/20 p-3 text-sm font-medium text-foreground"
+                      >
                         <CheckCircle2 className="size-4 text-success shrink-0" />
                         {am.name}
                       </div>
@@ -267,14 +326,20 @@ export default async function PublicHotelDetailPage({ params }: Props) {
               {/* Room Types */}
               {hotel.roomTypes.length > 0 ? (
                 <div>
-                  <h2 className="text-2xl font-semibold text-foreground mb-4">Available Room Categories</h2>
+                  <h2 className="text-2xl font-semibold text-foreground mb-4">
+                    Available Room Categories
+                  </h2>
                   <div className="space-y-4">
                     {hotel.roomTypes.map((room) => (
                       <Card key={room.id} className="p-6 border border-border bg-card shadow-sm">
                         <div className="flex flex-wrap items-start justify-between gap-3">
                           <div>
-                            <h3 className="text-lg font-semibold text-foreground">{room.roomName}</h3>
-                            <p className="mt-1 text-sm text-muted-foreground leading-relaxed">{room.roomDescription}</p>
+                            <h3 className="text-lg font-semibold text-foreground">
+                              {room.roomName}
+                            </h3>
+                            <p className="mt-1 text-sm text-muted-foreground leading-relaxed">
+                              {room.roomDescription}
+                            </p>
                           </div>
                           <Price amount={room.priceFrom} per="per night" size="sm" />
                         </div>
@@ -303,19 +368,31 @@ export default async function PublicHotelDetailPage({ params }: Props) {
 
               {/* Hotel Information */}
               <div>
-                <h2 className="text-2xl font-semibold text-foreground mb-4">Hotel Information & Location</h2>
+                <h2 className="text-2xl font-semibold text-foreground mb-4">
+                  Hotel Information & Location
+                </h2>
                 <Card className="p-6 space-y-3 border border-border bg-card">
                   <div className="flex items-start gap-2 text-sm text-muted-foreground">
                     <Building2 className="size-4 text-primary shrink-0 mt-0.5" />
-                    <span><strong className="text-foreground">Address:</strong> {hotel.address}, {hotel.city}{hotel.state ? `, ${hotel.state}` : ""}, {hotel.country}</span>
+                    <span>
+                      <strong className="text-foreground">Address:</strong> {hotel.address},{" "}
+                      {hotel.city}
+                      {hotel.state ? `, ${hotel.state}` : ""}, {hotel.country}
+                    </span>
                   </div>
                   <div className="flex items-start gap-2 text-sm text-muted-foreground">
                     <Star className="size-4 text-amber-500 shrink-0 mt-0.5" />
-                    <span><strong className="text-foreground">Star Rating:</strong> {hotel.starRating} Star {hotel.hotelCategory} Hotel</span>
+                    <span>
+                      <strong className="text-foreground">Star Rating:</strong> {hotel.starRating}{" "}
+                      Star {hotel.hotelCategory} Hotel
+                    </span>
                   </div>
                   <div className="flex items-start gap-2 text-sm text-muted-foreground">
                     <MapPin className="size-4 text-primary shrink-0 mt-0.5" />
-                    <span><strong className="text-foreground">Destination:</strong> {hotel.destination.name}</span>
+                    <span>
+                      <strong className="text-foreground">Destination:</strong>{" "}
+                      {hotel.destination.name}
+                    </span>
                   </div>
                 </Card>
               </div>
@@ -323,15 +400,22 @@ export default async function PublicHotelDetailPage({ params }: Props) {
               {/* Associated Packages */}
               {hotel.packages.length > 0 ? (
                 <div>
-                  <h2 className="text-2xl font-semibold text-foreground mb-4">Featured Holiday Packages</h2>
+                  <h2 className="text-2xl font-semibold text-foreground mb-4">
+                    Featured Holiday Packages
+                  </h2>
                   <div className="grid grid-cols-1 gap-4 tablet:grid-cols-2">
                     {hotel.packages.map((pkg) => (
                       <Card key={pkg.id} className="p-5 border border-border bg-card shadow-sm">
-                        <Link href={`/packages/${pkg.slug}`} className="font-semibold text-foreground hover:text-primary">
+                        <Link
+                          href={`/packages/${pkg.slug}`}
+                          className="font-semibold text-foreground hover:text-primary"
+                        >
                           {pkg.title}
                         </Link>
                         <div className="mt-2 flex items-center justify-between">
-                          <span className="text-xs text-muted-foreground">{pkg.durationDays} Days Tour</span>
+                          <span className="text-xs text-muted-foreground">
+                            {pkg.durationDays} Days Tour
+                          </span>
                           <Price amount={Number(pkg.priceFrom)} size="sm" />
                         </div>
                       </Card>
@@ -347,7 +431,8 @@ export default async function PublicHotelDetailPage({ params }: Props) {
                 <Card className="p-6 border border-border bg-card shadow-md">
                   <h3 className="text-xl font-semibold text-foreground mb-1">Check Availability</h3>
                   <p className="text-xs text-muted-foreground mb-5">
-                    Send an inquiry to {hotel.name} and our team will respond with exclusive rates and offers.
+                    Send an inquiry to {hotel.name} and our team will respond with exclusive rates
+                    and offers.
                   </p>
                   <HotelInquiryForm
                     hotelId={hotel.id}
@@ -362,13 +447,22 @@ export default async function PublicHotelDetailPage({ params }: Props) {
           {/* Related Hotels */}
           {relatedHotels.length > 0 ? (
             <div className="mt-16">
-              <h2 className="text-2xl font-semibold text-foreground mb-6">More Hotels in {hotel.destination.name}</h2>
+              <h2 className="text-2xl font-semibold text-foreground mb-6">
+                More Hotels in {hotel.destination.name}
+              </h2>
               <div className="grid grid-cols-1 gap-6 tablet:grid-cols-3">
                 {relatedHotels.map((rel) => (
-                  <Card key={rel.id} className="overflow-hidden border border-border bg-card shadow-sm transition-all hover:shadow-md">
+                  <Card
+                    key={rel.id}
+                    className="overflow-hidden border border-border bg-card shadow-sm transition-all hover:shadow-md"
+                  >
                     <div className="relative aspect-[16/10]">
                       {rel.images[0] ? (
-                        <CardMedia src={rel.images[0].imageUrl} alt={rel.name} className="h-full w-full" />
+                        <CardMedia
+                          src={rel.images[0].imageUrl}
+                          alt={rel.name}
+                          className="h-full w-full"
+                        />
                       ) : (
                         <div className="flex h-full w-full items-center justify-center bg-primary/10 text-primary">
                           <Building2 className="size-6" />

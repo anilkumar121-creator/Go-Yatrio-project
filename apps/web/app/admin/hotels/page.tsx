@@ -71,6 +71,8 @@ type HotelItem = {
   amenities: { id: string; name: string }[];
   roomTypes: RoomTypeForm[];
   images: HotelImageForm[];
+  metaTitle: string | null;
+  metaDescription: string | null;
   createdAt: string;
 };
 
@@ -90,6 +92,8 @@ type HotelForm = {
   status: "DRAFT" | "ACTIVE" | "INACTIVE";
   amenities: string[];
   images: string;
+  metaTitle: string;
+  metaDescription: string;
   roomTypes: RoomTypeForm[];
 };
 
@@ -109,6 +113,8 @@ const emptyForm: HotelForm = {
   status: "DRAFT",
   amenities: ["Free High-Speed Wi-Fi", "Multi-Cuisine Restaurant", "24/7 Room Service"],
   images: "",
+  metaTitle: "",
+  metaDescription: "",
   roomTypes: [
     {
       roomName: "Deluxe AC Room",
@@ -245,6 +251,8 @@ export default function AdminHotelsPage() {
       status: hotel.status,
       amenities: hotel.amenities.map((a) => a.name),
       images: hotel.images.map((i) => i.imageUrl).join("\n"),
+      metaTitle: hotel.metaTitle ?? "",
+      metaDescription: hotel.metaDescription ?? "",
       roomTypes: hotel.roomTypes.map((r) => ({
         id: r.id,
         roomName: r.roomName,
@@ -335,6 +343,8 @@ export default function AdminHotelsPage() {
         status: form.status,
         amenities: form.amenities,
         images: imageList,
+        metaTitle: form.metaTitle || undefined,
+        metaDescription: form.metaDescription || undefined,
         roomTypes: form.roomTypes,
       };
 
@@ -861,6 +871,37 @@ export default function AdminHotelsPage() {
                     <p className="text-xs text-muted-foreground">
                       Featured hotels appear on top hotel listings and homepage highlights.
                     </p>
+                  </div>
+                </div>
+
+                {/* SEO Configuration */}
+                <div className="space-y-4 tablet:col-span-2 border-t border-border pt-4">
+                  <h3 className="text-sm font-semibold text-foreground">SEO Metadata Overrides</h3>
+                  <div className="grid grid-cols-1 gap-4 tablet:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label htmlFor="hotel-meta-title">
+                        SEO Meta Title (Recommended 50–60 chars)
+                      </Label>
+                      <Input
+                        id="hotel-meta-title"
+                        maxLength={120}
+                        value={form.metaTitle}
+                        onChange={(e) => setForm({ ...form, metaTitle: e.target.value })}
+                        placeholder="SEO Title Override"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="hotel-meta-description">
+                        SEO Meta Description (Recommended 140–160 chars)
+                      </Label>
+                      <Input
+                        id="hotel-meta-description"
+                        maxLength={180}
+                        value={form.metaDescription}
+                        onChange={(e) => setForm({ ...form, metaDescription: e.target.value })}
+                        placeholder="SEO Description Override"
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
