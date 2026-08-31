@@ -1,4 +1,4 @@
-﻿import { Router } from "express";
+import { Router } from "express";
 import {
   changePasswordController,
   getMe,
@@ -8,12 +8,13 @@ import {
   register,
 } from "../controllers/auth.controller.js";
 import { verifyJWT } from "../middleware/auth.js";
+import { authLimiter } from "../middleware/rate-limiter.js";
 
 export const authRouter = Router();
 
-authRouter.post("/register", register);
-authRouter.post("/login", login);
+authRouter.post("/register", authLimiter, register);
+authRouter.post("/login", authLimiter, login);
 authRouter.post("/logout", verifyJWT, logout);
 authRouter.get("/me", verifyJWT, getMe);
 authRouter.post("/refresh", refresh);
-authRouter.post("/change-password", verifyJWT, changePasswordController);
+authRouter.post("/change-password", authLimiter, verifyJWT, changePasswordController);

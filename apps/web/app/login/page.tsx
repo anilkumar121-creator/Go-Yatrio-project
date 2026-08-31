@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState } from "react";
 import Image from "next/image";
@@ -17,7 +17,9 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [validationErrors, setValidationErrors] = useState<{ email?: string; password?: string }>({});
+  const [validationErrors, setValidationErrors] = useState<{ email?: string; password?: string }>(
+    {},
+  );
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -59,11 +61,17 @@ export default function LoginPage() {
 
       if (data.data?.token) {
         localStorage.setItem("goyatrio_token", data.data.token);
+        // Synchronize with cookie for Next.js SSR middleware verification
+        const secureFlag = window.location.protocol === "https:" ? "; Secure" : "";
+        document.cookie = `goyatrio_token=${encodeURIComponent(data.data.token)}; Path=/; SameSite=Lax; Max-Age=86400${secureFlag}`;
       }
 
       window.location.href = data.data?.user?.role === "ADMIN" ? "/admin" : "/";
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Failed to authenticate. Please check your credentials.";
+      const msg =
+        err instanceof Error
+          ? err.message
+          : "Failed to authenticate. Please check your credentials.";
       setErrorMessage(msg);
     } finally {
       setIsLoading(false);
@@ -101,7 +109,10 @@ export default function LoginPage() {
             </div>
 
             {errorMessage ? (
-              <div className="mt-6 flex items-start gap-3 rounded-lg border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive" role="alert">
+              <div
+                className="mt-6 flex items-start gap-3 rounded-lg border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive"
+                role="alert"
+              >
                 <AlertCircle className="size-5 shrink-0 mt-0.5" />
                 <p>{errorMessage}</p>
               </div>
@@ -158,12 +169,7 @@ export default function LoginPage() {
                 ) : null}
               </div>
 
-              <Button
-                type="submit"
-                size="lg"
-                className="w-full mt-2"
-                disabled={isLoading}
-              >
+              <Button type="submit" size="lg" className="w-full mt-2" disabled={isLoading}>
                 {isLoading ? "Signing in..." : "Sign In"}
               </Button>
             </form>

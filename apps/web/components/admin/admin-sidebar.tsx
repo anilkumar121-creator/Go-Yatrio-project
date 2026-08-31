@@ -62,6 +62,8 @@ export function AdminSidebar({ mobileOpen = false, onMobileClose, className }: A
       // Ignore API disconnect
     } finally {
       localStorage.removeItem("goyatrio_token");
+      document.cookie =
+        "goyatrio_token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT; SameSite=Lax";
       router.push("/login");
     }
   };

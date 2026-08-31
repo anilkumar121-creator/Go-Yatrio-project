@@ -21,10 +21,12 @@ import {
   getInquirySuccess,
 } from "../controllers/inquiry.controller.js";
 
+import { inquiryLimiter } from "../middleware/rate-limiter.js";
+
 export const inquiriesRouter = Router();
 
 // Public
-inquiriesRouter.post("/", createInquiry);
+inquiriesRouter.post("/", inquiryLimiter, createInquiry);
 inquiriesRouter.get("/success", getInquirySuccess);
 
 // Admin

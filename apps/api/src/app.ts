@@ -18,22 +18,47 @@ import { adminLookupsRouter, lookupsRouter } from "./routes/lookups.js";
 import { adminPackagesRouter, packagesRouter } from "./routes/packages.js";
 import { adminSeoRouter, seoRouter } from "./routes/seo.js";
 
+import { apiLimiter } from "./middleware/rate-limiter.js";
+
 export function createApp() {
   const app = express();
 
+  // Trust first proxy hop (e.g. Next.js rewrite proxy, Cloudflare, load balancers)
+  // Ensures correct client IP detection for rate limiting and auditing
+  app.set("trust proxy", 1);
+
+  // Security Headers via Helmet
   app.use(helmet());
+
+  // CORS configuration supporting single or comma-separated origins
+  const allowedOrigins = env.API_CORS_ORIGIN.split(",")
+    .map((o) => o.trim())
+    .filter(Boolean);
   app.use(
     cors({
-      origin: env.API_CORS_ORIGIN,
+      origin: (origin, callback) => {
+        // Allow requests with no origin (like mobile apps or curl/server-side fetches)
+        if (!origin || allowedOrigins.includes(origin) || allowedOrigins.includes("*")) {
+          callback(null, true);
+        } else {
+          callback(new Error("Not allowed by CORS policy"));
+        }
+      },
       credentials: true,
     }),
   );
-  app.use(express.json({ limit: "1mb" }));
 
-  // Health APIs
+  // Parse request bodies with safe 1mb limit
+  app.use(express.json({ limit: "1mb" }));
+  app.use(express.urlencoded({ extended: true, limit: "1mb" }));
+
+  // Health APIs (exempt from rate limiting for probes / uptime monitors)
   app.get("/health", health);
   app.get("/api/status", health);
   app.use("/api/health", healthRouter);
+
+  // General rate limiter for all /api endpoints
+  app.use("/api", apiLimiter);
 
   // Core domain API routes
   app.use("/api/auth", authRouter);

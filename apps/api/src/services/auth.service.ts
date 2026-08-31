@@ -123,7 +123,7 @@ export async function registerUser(data: { name: string; email: string; password
 }
 
 export async function loginUser(email: string, password: string) {
-  if (!process.env.DATABASE_URL) {
+  if (env.NODE_ENV !== "production" && !process.env.DATABASE_URL) {
     // Development fallback without active DB
     if (email === "admin.dev@goyatrio.local" && password === "ChangeMe.dev.only.123") {
       const devAdmin = {
@@ -178,7 +178,7 @@ export async function loginAdmin(email: string, password: string) {
 }
 
 export async function refreshSession(refreshTokenInput: string) {
-  if (!process.env.DATABASE_URL) {
+  if (env.NODE_ENV !== "production" && !process.env.DATABASE_URL) {
     if (refreshTokenInput === "dev_refresh_token") {
       const devAdmin = {
         id: "dev_admin_id",

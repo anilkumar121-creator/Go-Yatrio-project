@@ -17,16 +17,31 @@ const envSchema = z
   })
   .superRefine((data, ctx) => {
     if (data.NODE_ENV === "production") {
-      const missing = [
+      if (data.JWT_SECRET === "development_secret_key_goyatrio_2026_min_32_chars") {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message:
+            "A secure, custom JWT_SECRET must be configured in production (cannot use development default).",
+        });
+      }
+
+      if (!data.DATABASE_URL) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "DATABASE_URL is required in production.",
+        });
+      }
+
+      const missingCloudinary = [
         data.CLOUDINARY_CLOUD_NAME ? null : "CLOUDINARY_CLOUD_NAME",
         data.CLOUDINARY_API_KEY ? null : "CLOUDINARY_API_KEY",
         data.CLOUDINARY_API_SECRET ? null : "CLOUDINARY_API_SECRET",
       ].filter(Boolean);
 
-      if (missing.length > 0) {
+      if (missingCloudinary.length > 0) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: `Cloudinary environment variables are required in production: ${missing.join(", ")}`,
+          message: `Cloudinary environment variables are required in production: ${missingCloudinary.join(", ")}`,
         });
       }
     }
@@ -42,7 +57,9 @@ export function requireCloudinaryConfig() {
   const { CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET } = env;
 
   if (!CLOUDINARY_CLOUD_NAME || !CLOUDINARY_API_KEY || !CLOUDINARY_API_SECRET) {
-    throw new Error("Cloudinary configuration is missing. Set CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET.");
+    throw new Error(
+      "Cloudinary configuration is missing. Set CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET.",
+    );
   }
 
   return {

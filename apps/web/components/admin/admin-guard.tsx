@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
@@ -30,6 +30,8 @@ export function AdminGuard({ children }: AdminGuardProps) {
 
         if (!response.ok) {
           localStorage.removeItem("goyatrio_token");
+          document.cookie =
+            "goyatrio_token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT; SameSite=Lax";
           router.replace(`/login?from=${encodeURIComponent(pathname)}`);
           return;
         }
