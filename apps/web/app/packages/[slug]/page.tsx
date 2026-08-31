@@ -248,7 +248,7 @@ export default async function PackageDetailPage({ params }: Props) {
               fill
               priority
               sizes="100vw"
-              className="object-cover"
+              className="object-cover transition-transform duration-700 ease-out"
             />
             <div className="absolute inset-0 bg-black/60" aria-hidden="true" />
           </>

@@ -46,7 +46,10 @@ export function CabCard({
             className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary transition-colors hover:text-primary/80"
           >
             {ctaLabel}
-            <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
+            <ArrowRight
+              className="size-4 transition-transform duration-200 ease-out group-hover:translate-x-1"
+              aria-hidden="true"
+            />
           </Link>
         </div>
       </div>

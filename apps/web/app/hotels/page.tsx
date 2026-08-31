@@ -10,6 +10,7 @@ import { Button } from "@/components/common/button";
 import { Input } from "@/components/common/input";
 import { PageWrapper } from "@/components/layout/page-wrapper";
 import { CardMedia } from "@/components/cards/card-media";
+import { StaggerContainer, StaggerItem } from "@/components/animation/motion";
 
 import { resolvePageMetadata } from "@/components/seo/seo";
 
@@ -227,95 +228,94 @@ export default async function PublicHotelsPage({ searchParams }: Props) {
             </Card>
           ) : (
             <>
-              <div className="grid grid-cols-1 gap-6 tablet:grid-cols-2 desktop:grid-cols-3">
+              <StaggerContainer className="grid grid-cols-1 gap-6 tablet:grid-cols-2 desktop:grid-cols-3">
                 {result.items.map((hotel) => {
                   const minPrice = hotel.roomTypes[0]?.priceFrom ?? 0;
                   const imageUrl =
                     hotel.featuredMedia?.secureUrl ?? hotel.images[0]?.imageUrl ?? "";
 
                   return (
-                    <Card
-                      key={hotel.id}
-                      className="overflow-hidden border border-border bg-card shadow-sm transition-all hover:shadow-md"
-                    >
-                      <div className="relative aspect-[16/10]">
-                        {imageUrl ? (
-                          <CardMedia src={imageUrl} alt={hotel.name} className="h-full w-full" />
-                        ) : (
-                          <div className="flex h-full w-full items-center justify-center bg-primary/10 text-primary">
-                            <MapPin className="size-6" />
-                          </div>
-                        )}
-                        {hotel.featured ? (
-                          <Badge variant="accent" className="absolute left-3 top-3">
-                            Featured
-                          </Badge>
-                        ) : null}
-                        <span className="absolute right-3 top-3 rounded-md bg-black/60 px-2.5 py-1 text-xs font-semibold text-white backdrop-blur-sm">
-                          {hotel.hotelCategory}
-                        </span>
-                      </div>
-
-                      <div className="p-5 space-y-3">
-                        <div>
-                          <div className="flex items-center gap-2 justify-between">
-                            <h2 className="text-lg font-semibold text-foreground leading-snug hover:text-primary">
-                              <Link href={`/hotels/${hotel.slug}`}>{hotel.name}</Link>
-                            </h2>
-                            <div className="flex items-center gap-0.5 text-amber-500 shrink-0">
-                              {Array.from({ length: hotel.starRating }).map((_, idx) => (
-                                <Star key={idx} className="size-3.5 fill-amber-500" />
-                              ))}
-                            </div>
-                          </div>
-                          <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
-                            <MapPin className="size-3.5 text-primary" />
-                            {hotel.city}, {hotel.destination.name}
-                          </p>
-                        </div>
-
-                        <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
-                          {hotel.shortDescription}
-                        </p>
-
-                        <div className="flex flex-wrap gap-1.5">
-                          {hotel.amenities.slice(0, 3).map((am) => (
-                            <Badge
-                              key={am.id}
-                              variant="outline"
-                              className="text-[11px] font-normal"
-                            >
-                              {am.name}
-                            </Badge>
-                          ))}
-                        </div>
-
-                        <div className="flex items-center justify-between border-t border-border pt-3">
-                          {minPrice ? (
-                            <div>
-                              <span className="block text-[11px] text-muted-foreground">
-                                Starting from / night
-                              </span>
-                              <Price amount={minPrice} size="sm" />
-                            </div>
+                    <StaggerItem key={hotel.id}>
+                      <Card className="group overflow-hidden border border-border bg-card shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-md">
+                        <div className="relative aspect-[16/10]">
+                          {imageUrl ? (
+                            <CardMedia src={imageUrl} alt={hotel.name} className="h-full w-full" />
                           ) : (
-                            <span className="text-xs font-medium text-muted-foreground">
-                              Custom Rates
-                            </span>
+                            <div className="flex h-full w-full items-center justify-center bg-primary/10 text-primary">
+                              <MapPin className="size-6" />
+                            </div>
                           )}
-
-                          <Button asChild size="sm" variant="outline" className="gap-1">
-                            <Link href={`/hotels/${hotel.slug}`}>
-                              View Hotel
-                              <ArrowRight className="size-3.5" />
-                            </Link>
-                          </Button>
+                          {hotel.featured ? (
+                            <Badge variant="accent" className="absolute left-3 top-3">
+                              Featured
+                            </Badge>
+                          ) : null}
+                          <span className="absolute right-3 top-3 rounded-md bg-black/60 px-2.5 py-1 text-xs font-semibold text-white backdrop-blur-sm">
+                            {hotel.hotelCategory}
+                          </span>
                         </div>
-                      </div>
-                    </Card>
+
+                        <div className="p-5 space-y-3">
+                          <div>
+                            <div className="flex items-center gap-2 justify-between">
+                              <h2 className="text-lg font-semibold text-foreground leading-snug hover:text-primary transition-colors">
+                                <Link href={`/hotels/${hotel.slug}`}>{hotel.name}</Link>
+                              </h2>
+                              <div className="flex items-center gap-0.5 text-amber-500 shrink-0">
+                                {Array.from({ length: hotel.starRating }).map((_, idx) => (
+                                  <Star key={idx} className="size-3.5 fill-amber-500" />
+                                ))}
+                              </div>
+                            </div>
+                            <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
+                              <MapPin className="size-3.5 text-primary" />
+                              {hotel.city}, {hotel.destination.name}
+                            </p>
+                          </div>
+
+                          <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
+                            {hotel.shortDescription}
+                          </p>
+
+                          <div className="flex flex-wrap gap-1.5">
+                            {hotel.amenities.slice(0, 3).map((am) => (
+                              <Badge
+                                key={am.id}
+                                variant="outline"
+                                className="text-[11px] font-normal"
+                              >
+                                {am.name}
+                              </Badge>
+                            ))}
+                          </div>
+
+                          <div className="flex items-center justify-between border-t border-border pt-3">
+                            {minPrice ? (
+                              <div>
+                                <span className="block text-[11px] text-muted-foreground">
+                                  Starting from / night
+                                </span>
+                                <Price amount={minPrice} size="sm" />
+                              </div>
+                            ) : (
+                              <span className="text-xs font-medium text-muted-foreground">
+                                Custom Rates
+                              </span>
+                            )}
+
+                            <Button asChild size="sm" variant="outline" className="gap-1 group/btn">
+                              <Link href={`/hotels/${hotel.slug}`}>
+                                View Hotel
+                                <ArrowRight className="size-3.5 transition-transform duration-200 group-hover/btn:translate-x-1" />
+                              </Link>
+                            </Button>
+                          </div>
+                        </div>
+                      </Card>
+                    </StaggerItem>
                   );
                 })}
-              </div>
+              </StaggerContainer>
               {/* Pagination */}
               {totalPages > 1 ? (
                 <div className="mt-10 flex flex-wrap items-center justify-center gap-2">

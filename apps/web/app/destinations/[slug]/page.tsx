@@ -200,7 +200,7 @@ export default async function DestinationDetailPage({ params }: Props) {
               fill
               priority
               sizes="100vw"
-              className="object-cover"
+              className="object-cover transition-transform duration-700 ease-out"
             />
             <div className="absolute inset-0 bg-black/55" aria-hidden="true" />
           </>

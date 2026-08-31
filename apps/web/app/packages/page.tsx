@@ -7,6 +7,7 @@ import { Button } from "@/components/common/button";
 import { PackageCard } from "@/components/cards/package-card";
 import { PageWrapper } from "@/components/layout/page-wrapper";
 import { EmptyState } from "@/components/admin/empty-state";
+import { StaggerContainer, StaggerItem } from "@/components/animation/motion";
 
 import { resolvePageMetadata } from "@/components/seo/seo";
 
@@ -81,38 +82,39 @@ export default async function PackagesPage() {
           {packages.length === 0 ? (
             <EmptyState
               title="No tour packages available"
-              description="Check back soon Ã¢â‚¬â€ we are adding exciting new packages daily."
+              description="Check back soon Ã¢â‚¬â€  we are adding exciting new packages daily."
             />
           ) : (
-            <div className="grid grid-cols-1 gap-6 tablet:grid-cols-2 desktop:grid-cols-3">
+            <StaggerContainer className="grid grid-cols-1 gap-6 tablet:grid-cols-2 desktop:grid-cols-3">
               {packages.map((pkg) => (
-                <PackageCard
-                  key={pkg.id}
-                  title={pkg.title}
-                  destination={pkg.destination?.name ?? "India"}
-                  duration={`${pkg.durationDays}D / ${pkg.durationNights}N`}
-                  price={Number(pkg.effectivePrice ?? pkg.priceFrom)}
-                  originalPrice={
-                    Number(pkg.effectivePrice ?? pkg.priceFrom) <
-                    Number(pkg.originalPrice ?? pkg.priceFrom)
-                      ? Number(pkg.originalPrice ?? pkg.priceFrom)
-                      : undefined
-                  }
-                  badge={pkg.priceBadge ?? (pkg.featured ? "Featured" : pkg.packageType)}
-                  availability={pkg.availability ?? "AVAILABLE"}
-                  availableSeats={pkg.availableSeats ?? 0}
-                  image={
-                    (pkg.featuredMedia?.secureUrl ?? pkg.featuredImage)
-                      ? {
-                          src: pkg.featuredMedia?.secureUrl ?? pkg.featuredImage ?? "",
-                          alt: pkg.title,
-                        }
-                      : undefined
-                  }
-                  ctaHref={`/packages/${pkg.slug}`}
-                />
+                <StaggerItem key={pkg.id}>
+                  <PackageCard
+                    title={pkg.title}
+                    destination={pkg.destination?.name ?? "India"}
+                    duration={`${pkg.durationDays}D / ${pkg.durationNights}N`}
+                    price={Number(pkg.effectivePrice ?? pkg.priceFrom)}
+                    originalPrice={
+                      Number(pkg.effectivePrice ?? pkg.priceFrom) <
+                      Number(pkg.originalPrice ?? pkg.priceFrom)
+                        ? Number(pkg.originalPrice ?? pkg.priceFrom)
+                        : undefined
+                    }
+                    badge={pkg.priceBadge ?? (pkg.featured ? "Featured" : pkg.packageType)}
+                    availability={pkg.availability ?? "AVAILABLE"}
+                    availableSeats={pkg.availableSeats ?? 0}
+                    image={
+                      (pkg.featuredMedia?.secureUrl ?? pkg.featuredImage)
+                        ? {
+                            src: pkg.featuredMedia?.secureUrl ?? pkg.featuredImage ?? "",
+                            alt: pkg.title,
+                          }
+                        : undefined
+                    }
+                    ctaHref={`/packages/${pkg.slug}`}
+                  />
+                </StaggerItem>
               ))}
-            </div>
+            </StaggerContainer>
           )}
 
           <div className="mt-12 flex justify-center">

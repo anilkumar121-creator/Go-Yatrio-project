@@ -50,16 +50,17 @@ export function BlogCard({
         </div>
         <h3 className="mt-2 text-lg font-semibold leading-6 text-foreground">{title}</h3>
         {excerpt ? (
-          <p className="mt-2 text-sm leading-6 text-muted-foreground line-clamp-2">
-            {excerpt}
-          </p>
+          <p className="mt-2 text-sm leading-6 text-muted-foreground line-clamp-2">{excerpt}</p>
         ) : null}
         <Link
           href={ctaHref}
           className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-primary transition-colors hover:text-primary/80"
         >
           {ctaLabel}
-          <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
+          <ArrowRight
+            className="size-4 transition-transform duration-200 ease-out group-hover:translate-x-1"
+            aria-hidden="true"
+          />
         </Link>
       </div>
     </Card>

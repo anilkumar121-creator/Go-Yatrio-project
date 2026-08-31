@@ -44,9 +44,7 @@ export function PackageCard({
     <Card className={cn("group overflow-hidden p-0 hover-lift", className)}>
       <div className="relative">
         <CardMedia src={image?.src} alt={image?.alt ?? title} />
-        {badge ? (
-          <Badge className="absolute left-3 top-3 shadow-sm">{badge}</Badge>
-        ) : null}
+        {badge ? <Badge className="absolute left-3 top-3 shadow-sm">{badge}</Badge> : null}
       </div>
       <div className="p-5">
         <h3 className="text-lg font-semibold leading-6 text-foreground">{title}</h3>
@@ -93,7 +91,10 @@ export function PackageCard({
             className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary transition-colors hover:text-primary/80"
           >
             {ctaLabel}
-            <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
+            <ArrowRight
+              className="size-4 transition-transform duration-200 ease-out group-hover:translate-x-1"
+              aria-hidden="true"
+            />
           </Link>
         </div>
       </div>

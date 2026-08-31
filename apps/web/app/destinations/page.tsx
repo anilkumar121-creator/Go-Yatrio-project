@@ -7,6 +7,7 @@ import { Button } from "@/components/common/button";
 import { DestinationCard } from "@/components/cards/destination-card";
 import { PageWrapper } from "@/components/layout/page-wrapper";
 import { EmptyState } from "@/components/admin/empty-state";
+import { StaggerContainer, StaggerItem } from "@/components/animation/motion";
 
 import { resolvePageMetadata } from "@/components/seo/seo";
 
@@ -74,28 +75,31 @@ export default async function DestinationsPage() {
               description="Check back soon â€” we are adding new destinations regularly."
             />
           ) : (
-            <div className="grid grid-cols-1 gap-6 tablet:grid-cols-2 desktop:grid-cols-3">
+            <StaggerContainer className="grid grid-cols-1 gap-6 tablet:grid-cols-2 desktop:grid-cols-3">
               {destinations.map((destination) => (
-                <DestinationCard
-                  key={destination.id}
-                  name={destination.name}
-                  location={destination.state ?? destination.country}
-                  description={destination.shortDescription}
-                  image={
-                    (destination.featuredMedia?.secureUrl ?? destination.featuredImage)
-                      ? {
-                          src:
-                            destination.featuredMedia?.secureUrl ?? destination.featuredImage ?? "",
-                          alt: destination.name,
-                        }
-                      : undefined
-                  }
-                  badge={destination.featured ? "Featured" : undefined}
-                  ctaLabel="View Details"
-                  ctaHref={`/destinations/${destination.slug}`}
-                />
+                <StaggerItem key={destination.id}>
+                  <DestinationCard
+                    name={destination.name}
+                    location={destination.state ?? destination.country}
+                    description={destination.shortDescription}
+                    image={
+                      (destination.featuredMedia?.secureUrl ?? destination.featuredImage)
+                        ? {
+                            src:
+                              destination.featuredMedia?.secureUrl ??
+                              destination.featuredImage ??
+                              "",
+                            alt: destination.name,
+                          }
+                        : undefined
+                    }
+                    badge={destination.featured ? "Featured" : undefined}
+                    ctaLabel="View Details"
+                    ctaHref={`/destinations/${destination.slug}`}
+                  />
+                </StaggerItem>
               ))}
-            </div>
+            </StaggerContainer>
           )}
 
           <div className="mt-12 flex justify-center">

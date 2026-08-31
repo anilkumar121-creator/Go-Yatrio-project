@@ -8,6 +8,7 @@ import { Button } from "@/components/common/button";
 import { Input } from "@/components/common/input";
 import { PageWrapper } from "@/components/layout/page-wrapper";
 import { BlogCard, type BlogCardData } from "@/components/blogs/blog-card";
+import { StaggerContainer, StaggerItem } from "@/components/animation/motion";
 
 import { resolvePageMetadata } from "@/components/seo/seo";
 
@@ -173,11 +174,13 @@ export default async function PublicBlogsPage({ searchParams }: Props) {
             </Card>
           ) : (
             <>
-              <div className="grid grid-cols-1 gap-6 tablet:grid-cols-2 desktop:grid-cols-3">
+              <StaggerContainer className="grid grid-cols-1 gap-6 tablet:grid-cols-2 desktop:grid-cols-3">
                 {result.items.map((blog, idx) => (
-                  <BlogCard key={blog.id} blog={blog} featured={idx === 0 && page === 1} />
+                  <StaggerItem key={blog.id}>
+                    <BlogCard blog={blog} featured={idx === 0 && page === 1} />
+                  </StaggerItem>
                 ))}
-              </div>
+              </StaggerContainer>
 
               {totalPages > 1 ? (
                 <div className="mt-10 flex flex-wrap items-center justify-center gap-2">

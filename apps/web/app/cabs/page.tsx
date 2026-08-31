@@ -10,6 +10,7 @@ import { Button } from "@/components/common/button";
 import { Input } from "@/components/common/input";
 import { PageWrapper } from "@/components/layout/page-wrapper";
 import { CardMedia } from "@/components/cards/card-media";
+import { StaggerContainer, StaggerItem } from "@/components/animation/motion";
 
 import { resolvePageMetadata } from "@/components/seo/seo";
 
@@ -247,94 +248,97 @@ export default async function PublicCabsPage({ searchParams }: Props) {
             </Card>
           ) : (
             <>
-              <div className="grid grid-cols-1 gap-6 tablet:grid-cols-2 desktop:grid-cols-3">
+              <StaggerContainer className="grid grid-cols-1 gap-6 tablet:grid-cols-2 desktop:grid-cols-3">
                 {result.items.map((cab) => (
-                  <Card
-                    key={cab.id}
-                    className="overflow-hidden border border-border bg-card shadow-sm transition-all hover:shadow-md"
-                  >
-                    <div className="relative aspect-[16/10]">
-                      {(cab.featuredMedia?.secureUrl ?? cab.image) ? (
-                        <CardMedia
-                          src={cab.featuredMedia?.secureUrl ?? cab.image ?? ""}
-                          alt={cab.vehicleName}
-                          className="h-full w-full"
-                        />
-                      ) : (
-                        <div className="flex h-full w-full items-center justify-center bg-primary/10 text-primary">
-                          <Car className="size-8" />
-                        </div>
-                      )}
-                      {cab.featured ? (
-                        <Badge variant="accent" className="absolute left-3 top-3">
-                          Featured
-                        </Badge>
-                      ) : null}
-                      <span className="absolute right-3 top-3 rounded-md bg-black/60 px-2.5 py-1 text-xs font-semibold text-white backdrop-blur-sm">
-                        {cab.vehicleType}
-                      </span>
-                    </div>
-
-                    <div className="p-5 space-y-3">
-                      <div>
-                        <h2 className="text-lg font-semibold text-foreground leading-snug hover:text-primary">
-                          <Link href={`/cabs/${cab.slug}`}>{cab.vehicleName}</Link>
-                        </h2>
-                        <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
-                          <MapPin className="size-3.5 text-primary" />
-                          {cab.destination?.name ?? "All Destinations"}
-                        </p>
-                      </div>
-
-                      <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
-                        {cab.description}
-                      </p>
-
-                      <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
-                        <span className="flex items-center gap-1">
-                          <Users className="size-3.5 text-primary" />
-                          {cab.capacity} seats
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Fuel className="size-3.5 text-primary" />
-                          {cab.fuelType}
-                        </span>
-                        {cab.ac ? (
-                          <span className="flex items-center gap-1 text-sky-600">
-                            <Snowflake className="size-3.5" />
-                            AC
-                          </span>
+                  <StaggerItem key={cab.id}>
+                    <Card className="group overflow-hidden border border-border bg-card shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-md">
+                      <div className="relative aspect-[16/10]">
+                        {(cab.featuredMedia?.secureUrl ?? cab.image) ? (
+                          <CardMedia
+                            src={cab.featuredMedia?.secureUrl ?? cab.image ?? ""}
+                            alt={cab.vehicleName}
+                            className="h-full w-full"
+                          />
+                        ) : (
+                          <div className="flex h-full w-full items-center justify-center bg-primary/10 text-primary">
+                            <Car className="size-8" />
+                          </div>
+                        )}
+                        {cab.featured ? (
+                          <Badge variant="accent" className="absolute left-3 top-3">
+                            Featured
+                          </Badge>
                         ) : null}
+                        <span className="absolute right-3 top-3 rounded-md bg-black/60 px-2.5 py-1 text-xs font-semibold text-white backdrop-blur-sm">
+                          {cab.vehicleType}
+                        </span>
                       </div>
 
-                      {cab.tripTypes.length > 0 ? (
-                        <div className="flex flex-wrap gap-1.5">
-                          {cab.tripTypes.slice(0, 3).map((trip) => (
-                            <Badge key={trip} variant="outline" className="text-[11px] font-normal">
-                              {trip}
-                            </Badge>
-                          ))}
-                        </div>
-                      ) : null}
-
-                      <div className="flex items-center justify-between border-t border-border pt-3">
+                      <div className="p-5 space-y-3">
                         <div>
-                          <span className="block text-[11px] text-muted-foreground">
-                            Starting from
-                          </span>
-                          <Price amount={Number(cab.priceFrom)} size="sm" />
+                          <h2 className="text-lg font-semibold text-foreground leading-snug hover:text-primary transition-colors">
+                            <Link href={`/cabs/${cab.slug}`}>{cab.vehicleName}</Link>
+                          </h2>
+                          <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
+                            <MapPin className="size-3.5 text-primary" />
+                            {cab.destination?.name ?? "All Destinations"}
+                          </p>
                         </div>
-                        <Button asChild size="sm" variant="outline" className="gap-1">
-                          <Link href={`/cabs/${cab.slug}`}>
-                            View Cab
-                            <ArrowRight className="size-3.5" />
-                          </Link>
-                        </Button>
+
+                        <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
+                          {cab.description}
+                        </p>
+
+                        <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+                          <span className="flex items-center gap-1">
+                            <Users className="size-3.5 text-primary" />
+                            {cab.capacity} seats
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Fuel className="size-3.5 text-primary" />
+                            {cab.fuelType}
+                          </span>
+                          {cab.ac ? (
+                            <span className="flex items-center gap-1 text-sky-600">
+                              <Snowflake className="size-3.5" />
+                              AC
+                            </span>
+                          ) : null}
+                        </div>
+
+                        {cab.tripTypes.length > 0 ? (
+                          <div className="flex flex-wrap gap-1.5">
+                            {cab.tripTypes.slice(0, 3).map((trip) => (
+                              <Badge
+                                key={trip}
+                                variant="outline"
+                                className="text-[11px] font-normal"
+                              >
+                                {trip}
+                              </Badge>
+                            ))}
+                          </div>
+                        ) : null}
+
+                        <div className="flex items-center justify-between border-t border-border pt-3">
+                          <div>
+                            <span className="block text-[11px] text-muted-foreground">
+                              Starting from
+                            </span>
+                            <Price amount={Number(cab.priceFrom)} size="sm" />
+                          </div>
+                          <Button asChild size="sm" variant="outline" className="gap-1 group/btn">
+                            <Link href={`/cabs/${cab.slug}`}>
+                              View Cab
+                              <ArrowRight className="size-3.5 transition-transform duration-200 group-hover/btn:translate-x-1" />
+                            </Link>
+                          </Button>
+                        </div>
                       </div>
-                    </div>
-                  </Card>
+                    </Card>
+                  </StaggerItem>
                 ))}
-              </div>
+              </StaggerContainer>
 
               {totalPages > 1 ? (
                 <div className="mt-10 flex flex-wrap items-center justify-center gap-2">

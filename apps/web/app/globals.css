@@ -243,23 +243,31 @@ textarea {
 
 /* Hover lift used by cards and interactive tiles */
 .hover-lift {
+  will-change: transform;
+  transform: translateZ(0);
   transition:
     transform var(--duration-base) var(--ease-out),
     box-shadow var(--duration-base) var(--ease-out);
 }
 
 .hover-lift:hover {
-  transform: translateY(-0.25rem);
+  transform: translateY(-0.25rem) translateZ(0);
   box-shadow: var(--shadow-md);
 }
 
 /* Image zoom on hover */
+.image-zoom {
+  overflow: hidden;
+}
+
 .image-zoom img {
+  will-change: transform;
+  transform: translateZ(0);
   transition: transform var(--duration-slow) var(--ease-out);
 }
 
 .image-zoom:hover img {
-  transform: scale(1.04);
+  transform: scale(1.04) translateZ(0);
 }
 
 /* ------------------------------------------------------------------ */
