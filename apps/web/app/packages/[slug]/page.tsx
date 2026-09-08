@@ -8,8 +8,6 @@ import {
   CheckCircle2,
   XCircle,
   ImageIcon,
-  Hotel,
-  Utensils,
   Car,
   ArrowRight,
   Star,
@@ -28,6 +26,8 @@ import { BlogCard } from "@/components/blogs/blog-card";
 import { PackageInquiryForm } from "./package-inquiry-form";
 import { generateTouristTripSchema, generateBreadcrumbSchema, JsonLd } from "@/components/seo/seo";
 
+import { isValidImageUrl } from "@/lib/media";
+
 type Activity = {
   id: string;
   title: string;
@@ -36,27 +36,15 @@ type Activity = {
   timing?: string | null;
 };
 
-type ItineraryDay = {
-  id: string;
-  dayNumber: number;
-  sortOrder: number;
-  title: string;
-  description: string;
-  city?: string | null;
-  hotel?: string | null;
-  meals?: string | null;
-  transfers?: string | null;
-  notes?: string | null;
-  activities?: Activity[];
-};
-
 type Itinerary = {
   id: string;
+  packageId?: string;
+  dayNumber: number;
+  sortOrder?: number;
   title: string;
-  slug: string;
-  description?: string | null;
-  isDefault: boolean;
-  days: ItineraryDay[];
+  description: string;
+  location?: string | null;
+  activities?: Activity[];
 };
 
 type PackageCab = {
@@ -64,26 +52,26 @@ type PackageCab = {
   vehicleName: string;
   slug: string;
   vehicleType: string;
-  description: string;
+  description?: string | null;
   capacity: number;
-  priceFrom: number;
-  image: string | null;
+  priceFrom?: number | string | null;
+  image?: string | null;
   featured: boolean;
-  amenities: { id: string; name: string }[];
+  amenities: string[];
 };
 
 type PackageHotel = {
   id: string;
   name: string;
   slug: string;
-  shortDescription: string;
+  shortDescription?: string | null;
   city: string;
   hotelCategory: string;
   starRating: number;
   featured: boolean;
-  images: { id: string; imageUrl: string }[];
-  amenities: { id: string; name: string }[];
-  roomTypes: { id: string; priceFrom: number }[];
+  images: string[];
+  amenities: string[];
+  roomTypes: { id: string; priceFrom: number; name?: string; roomName?: string }[];
 };
 
 type PackageBlog = {
@@ -180,6 +168,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     pkg.metaDescription ??
     `${pkg.shortDescription} Book ${pkg.title} with GoYatrio. Best price starting from ${pkg.priceFrom} ${pkg.currency}.`;
 
+  const heroImg = pkg.featuredMedia?.secureUrl ?? pkg.featuredImage;
+
   return {
     title,
     description,
@@ -192,7 +182,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       type: "website",
       locale: "en_IN",
       url: `${baseUrl}/packages/${pkg.slug}`,
-      images: pkg.featuredImage ? [{ url: pkg.featuredImage, alt: pkg.title }] : undefined,
+      images: isValidImageUrl(heroImg) ? [{ url: heroImg!, alt: pkg.title }] : undefined,
     },
   };
 }
@@ -205,16 +195,19 @@ export default async function PackageDetailPage({ params }: Props) {
     notFound();
   }
 
-  const gallery =
+  const heroImageCandidate = pkg.featuredMedia?.secureUrl ?? pkg.featuredImage ?? "";
+  const hasValidHeroImage = isValidImageUrl(heroImageCandidate);
+
+  const rawGallery: string[] =
     pkg.galleryMedia && pkg.galleryMedia.length > 0
       ? pkg.galleryMedia.map((m) => m.secureUrl)
-      : pkg.galleryImages.length > 0
+      : pkg.galleryImages && pkg.galleryImages.length > 0
         ? pkg.galleryImages
-        : (pkg.featuredMedia?.secureUrl ?? pkg.featuredImage)
-          ? [pkg.featuredMedia?.secureUrl ?? pkg.featuredImage ?? ""]
+        : hasValidHeroImage
+          ? [heroImageCandidate]
           : [];
 
-  const activeItinerary = pkg.itineraries.find((i) => i.isDefault) ?? pkg.itineraries[0];
+  const gallery = rawGallery.filter(isValidImageUrl);
 
   const breadcrumbSchema = generateBreadcrumbSchema([
     { name: "Home", url: "/" },
@@ -230,7 +223,7 @@ export default async function PackageDetailPage({ params }: Props) {
     currency: pkg.currency,
     durationDays: pkg.durationDays,
     durationNights: pkg.durationNights,
-    featuredImage: pkg.featuredMedia?.secureUrl ?? pkg.featuredImage,
+    featuredImage: hasValidHeroImage ? heroImageCandidate : undefined,
     destinationName: pkg.destination?.name,
   });
 
@@ -240,10 +233,10 @@ export default async function PackageDetailPage({ params }: Props) {
       <JsonLd data={tripSchema} />
       {/* Hero Banner */}
       <section className="relative overflow-hidden bg-primary">
-        {(pkg.featuredMedia?.secureUrl ?? pkg.featuredImage) ? (
+        {hasValidHeroImage ? (
           <>
             <Image
-              src={pkg.featuredMedia?.secureUrl ?? pkg.featuredImage ?? ""}
+              src={heroImageCandidate}
               alt={pkg.title}
               fill
               priority
@@ -363,26 +356,31 @@ export default async function PackageDetailPage({ params }: Props) {
               ) : null}
 
               {/* Day by Day Itinerary Accordion / Timeline */}
-              {activeItinerary && activeItinerary.days.length > 0 ? (
+              {pkg.itineraries && pkg.itineraries.length > 0 ? (
                 <div>
                   <div className="flex items-center justify-between mb-6">
                     <div>
                       <h2 className="text-2xl font-semibold text-foreground">
                         Day-by-Day Itinerary
                       </h2>
-                      <p className="text-xs text-muted-foreground mt-1">{activeItinerary.title}</p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {pkg.durationDays} Days / {pkg.durationNights} Nights Detailed Tour Schedule
+                      </p>
                     </div>
                     <Button asChild variant="outline" size="sm" className="gap-1">
-                      <Link href={`/itineraries/${activeItinerary.slug}`}>
-                        Full Timeline
+                      <Link href="/itineraries">
+                        All Itineraries
                         <ArrowRight className="size-3.5" />
                       </Link>
                     </Button>
                   </div>
 
                   <div className="space-y-4">
-                    {activeItinerary.days.map((day) => (
-                      <Card key={day.id} className="p-6 border border-border bg-card shadow-sm">
+                    {pkg.itineraries.map((day) => (
+                      <Card
+                        key={day.id ?? `day-${day.dayNumber}`}
+                        className="p-6 border border-border bg-card shadow-sm"
+                      >
                         <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
                           <div className="flex items-center gap-3">
                             <span className="rounded-md bg-primary/10 px-2.5 py-1 text-xs font-bold text-primary font-mono">
@@ -390,9 +388,9 @@ export default async function PackageDetailPage({ params }: Props) {
                             </span>
                             <h3 className="text-lg font-semibold text-foreground">{day.title}</h3>
                           </div>
-                          {day.city ? (
+                          {day.location ? (
                             <span className="text-xs text-muted-foreground font-medium bg-muted px-2 py-0.5 rounded">
-                              {day.city}
+                              {day.location}
                             </span>
                           ) : null}
                         </div>
@@ -409,34 +407,15 @@ export default async function PackageDetailPage({ params }: Props) {
                             </span>
                             <div className="flex flex-wrap gap-2">
                               {day.activities.map((act) => (
-                                <Badge key={act.id} variant="secondary" className="text-xs">
+                                <Badge
+                                  key={act.id ?? act.title}
+                                  variant="secondary"
+                                  className="text-xs"
+                                >
                                   {act.title} {act.timing ? `(${act.timing})` : ""}
                                 </Badge>
                               ))}
                             </div>
-                          </div>
-                        ) : null}
-
-                        {day.hotel || day.meals || day.transfers ? (
-                          <div className="mt-4 flex flex-wrap gap-4 pt-3 border-t border-border text-xs text-muted-foreground">
-                            {day.hotel ? (
-                              <span className="flex items-center gap-1">
-                                <Hotel className="size-3.5 text-primary" />
-                                <strong>Stay:</strong> {day.hotel}
-                              </span>
-                            ) : null}
-                            {day.meals ? (
-                              <span className="flex items-center gap-1">
-                                <Utensils className="size-3.5 text-primary" />
-                                <strong>Meals:</strong> {day.meals}
-                              </span>
-                            ) : null}
-                            {day.transfers ? (
-                              <span className="flex items-center gap-1">
-                                <Car className="size-3.5 text-primary" />
-                                <strong>Transfers:</strong> {day.transfers}
-                              </span>
-                            ) : null}
                           </div>
                         ) : null}
                       </Card>
@@ -455,7 +434,8 @@ export default async function PackageDetailPage({ params }: Props) {
                   <div className="grid grid-cols-1 gap-5 tablet:grid-cols-2">
                     {pkg.hotels.map((hotel) => {
                       const minPrice = hotel.roomTypes[0]?.priceFrom ?? 0;
-                      const imageUrl = hotel.images[0]?.imageUrl ?? "";
+                      const rawImg = hotel.images?.[0];
+                      const imageUrl = typeof rawImg === "string" ? rawImg : "";
                       return (
                         <Card
                           key={hotel.id}
@@ -501,15 +481,19 @@ export default async function PackageDetailPage({ params }: Props) {
                               {hotel.shortDescription}
                             </p>
                             <div className="mt-3 flex flex-wrap gap-1.5">
-                              {hotel.amenities.slice(0, 3).map((am) => (
-                                <Badge
-                                  key={am.id}
-                                  variant="outline"
-                                  className="text-[11px] font-normal"
-                                >
-                                  {am.name}
-                                </Badge>
-                              ))}
+                              {hotel.amenities.slice(0, 3).map((am, idx) => {
+                                const name = typeof am === "string" ? am : "";
+                                if (!name) return null;
+                                return (
+                                  <Badge
+                                    key={name || idx}
+                                    variant="outline"
+                                    className="text-[11px] font-normal"
+                                  >
+                                    {name}
+                                  </Badge>
+                                );
+                              })}
                             </div>
                             <div className="mt-4 flex items-center justify-between border-t border-border pt-3">
                               {minPrice ? (
@@ -586,15 +570,19 @@ export default async function PackageDetailPage({ params }: Props) {
                             {cab.description}
                           </p>
                           <div className="mt-3 flex flex-wrap gap-1.5">
-                            {cab.amenities.slice(0, 3).map((am) => (
-                              <Badge
-                                key={am.id}
-                                variant="outline"
-                                className="text-[11px] font-normal"
-                              >
-                                {am.name}
-                              </Badge>
-                            ))}
+                            {cab.amenities.slice(0, 3).map((am, idx) => {
+                              const name = typeof am === "string" ? am : "";
+                              if (!name) return null;
+                              return (
+                                <Badge
+                                  key={name || idx}
+                                  variant="outline"
+                                  className="text-[11px] font-normal"
+                                >
+                                  {name}
+                                </Badge>
+                              );
+                            })}
                           </div>
                           <div className="mt-4 flex items-center justify-between border-t border-border pt-3">
                             {cab.priceFrom ? (

@@ -12,10 +12,20 @@ export function BlogLeadCta({ destinations, title = "Plan Your Trip" }: BlogLead
   const destinationParam = destinations[0] ? `?destination=${destinations[0].slug}` : "";
 
   const actions = [
-    { label: "Enquire Now", href: "/inquiry", icon: MessageSquare, variant: "primary" as const },
-    { label: "Book Hotel", href: `/hotels${destinationParam}`, icon: Hotel, variant: "outline" as const },
+    { label: "Enquire Now", href: "/contact", icon: MessageSquare, variant: "primary" as const },
+    {
+      label: "Book Hotel",
+      href: `/hotels${destinationParam}`,
+      icon: Hotel,
+      variant: "outline" as const,
+    },
     { label: "Book Cab", href: `/cabs${destinationParam}`, icon: Car, variant: "outline" as const },
-    { label: "View Packages", href: `/packages${destinationParam}`, icon: Package, variant: "outline" as const },
+    {
+      label: "View Packages",
+      href: `/packages${destinationParam}`,
+      icon: Package,
+      variant: "outline" as const,
+    },
   ];
 
   return (

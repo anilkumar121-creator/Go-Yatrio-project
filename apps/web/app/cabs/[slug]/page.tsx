@@ -23,6 +23,8 @@ import { PageWrapper } from "@/components/layout/page-wrapper";
 import { CardMedia } from "@/components/cards/card-media";
 import { CabInquiryForm } from "@/components/cabs/cab-inquiry-form";
 
+import { isValidImageUrl } from "@/lib/media";
+
 type CabDetail = {
   id: string;
   vehicleName: string;
@@ -46,7 +48,7 @@ type CabDetail = {
   tripTypes: string[];
   featured: boolean;
   destination?: { id: string; name: string; slug: string };
-  amenities: { id: string; name: string }[];
+  amenities: string[];
   metaTitle?: string | null;
   metaDescription?: string | null;
   packages: { id: string; title: string; slug: string; durationDays: number; priceFrom: number }[];
@@ -88,7 +90,8 @@ async function getRelatedCabs(destinationSlug: string, excludeId: string): Promi
     });
     if (!response.ok) return [];
     const payload = await response.json();
-    return (payload?.data ?? []).filter((c: RelatedCab) => c.id !== excludeId).slice(0, 3);
+    const items = Array.isArray(payload?.data) ? payload.data : (payload?.data?.items ?? []);
+    return items.filter((c: RelatedCab) => c.id !== excludeId).slice(0, 3);
   } catch {
     return [];
   }
@@ -111,7 +114,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const description =
     cab.metaDescription ??
     `${cab.description} Check tariffs, seating, features, and availability for ${cab.vehicleName}.`;
-  const imageUrl = cab.image ?? cab.galleryImages[0] ?? null;
+  const rawImg = cab.image ?? cab.galleryImages[0] ?? null;
+  const imageUrl = isValidImageUrl(rawImg) ? rawImg : null;
 
   return {
     title,
@@ -144,7 +148,7 @@ export default async function PublicCabDetailPage({ params }: Props) {
     ...(cab.galleryMedia ?? []).map((m) => m.secureUrl),
     cab.image,
     ...cab.galleryImages,
-  ].filter((url): url is string => typeof url === "string" && url.length > 0);
+  ].filter(isValidImageUrl);
 
   const structuredData = {
     "@context": "https://schema.org",
@@ -365,15 +369,22 @@ export default async function PublicCabDetailPage({ params }: Props) {
                 <div>
                   <h2 className="text-2xl font-semibold text-foreground mb-4">Vehicle Features</h2>
                   <div className="grid grid-cols-1 gap-3 tablet:grid-cols-2">
-                    {cab.amenities.map((am) => (
-                      <div
-                        key={am.id}
-                        className="flex items-center gap-2 rounded-md border border-border bg-muted/20 p-3 text-sm font-medium text-foreground"
-                      >
-                        <CheckCircle2 className="size-4 text-success shrink-0" />
-                        {am.name}
-                      </div>
-                    ))}
+                    {cab.amenities.map((am, idx) => {
+                      const name =
+                        typeof am === "string"
+                          ? am
+                          : ((am as unknown as { name?: string })?.name ?? "");
+                      if (!name) return null;
+                      return (
+                        <div
+                          key={name || idx}
+                          className="flex items-center gap-2 rounded-md border border-border bg-muted/20 p-3 text-sm font-medium text-foreground"
+                        >
+                          <CheckCircle2 className="size-4 text-success shrink-0" />
+                          {name}
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               ) : null}
@@ -453,7 +464,7 @@ export default async function PublicCabDetailPage({ params }: Props) {
                     <div className="relative aspect-[16/10]">
                       {rel.image ? (
                         <CardMedia
-                          src={rel.image}
+                          src={rel.image ?? undefined}
                           alt={rel.vehicleName}
                           className="h-full w-full"
                         />

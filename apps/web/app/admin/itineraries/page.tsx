@@ -16,7 +16,13 @@ import { Input } from "@/components/common/input";
 import { Textarea } from "@/components/common/textarea";
 import { Label } from "@/components/common/label";
 import { Switch } from "@/components/common/switch";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/common/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/common/select";
 import { Card } from "@/components/common/card";
 
 type Activity = {
@@ -114,7 +120,7 @@ export default function AdminItinerariesPage() {
   const loadPackages = useCallback(async () => {
     try {
       const data = await apiFetch("/api/packages?take=100");
-      setPackages(data ?? []);
+      setPackages(Array.isArray(data) ? data : (data?.data ?? []));
     } catch {
       // Fallback
     }
@@ -129,7 +135,7 @@ export default function AdminItinerariesPage() {
       if (packageFilter !== "all") params.set("packageId", packageFilter);
 
       const data = await apiFetch(`/api/admin/itineraries?${params.toString()}`);
-      setItineraries(data ?? []);
+      setItineraries(Array.isArray(data) ? data : (data?.items ?? data?.data ?? []));
     } catch (err: unknown) {
       setErrorMessage(err instanceof Error ? err.message : "Failed to load itineraries.");
     } finally {
@@ -156,7 +162,8 @@ export default function AdminItinerariesPage() {
         dayNumber: 1,
         sortOrder: 1,
         title: "Day 1 Arrival & Check-in",
-        description: "Arrive at destination, airport/railway station transfer, hotel check-in and leisure time.",
+        description:
+          "Arrive at destination, airport/railway station transfer, hotel check-in and leisure time.",
         city: "",
         hotel: "",
         meals: "Dinner",
@@ -188,7 +195,7 @@ export default function AdminItinerariesPage() {
         transfers: d.transfers ?? "",
         notes: d.notes ?? "",
         activities: d.activities ?? [],
-      }))
+      })),
     );
     setFormError(null);
     setBuilderOpen(true);
@@ -219,16 +226,21 @@ export default function AdminItinerariesPage() {
       setFormError("An itinerary must have at least 1 day.");
       return;
     }
-    const updated = days.filter((_, idx) => idx !== index).map((d, idx) => ({
-      ...d,
-      dayNumber: idx + 1,
-      sortOrder: idx + 1,
-    }));
+    const updated = days
+      .filter((_, idx) => idx !== index)
+      .map((d, idx) => ({
+        ...d,
+        dayNumber: idx + 1,
+        sortOrder: idx + 1,
+      }));
     setDays(updated);
   };
 
   const handleMoveDay = (index: number, direction: "up" | "down") => {
-    if ((direction === "up" && index === 0) || (direction === "down" && index === days.length - 1)) {
+    if (
+      (direction === "up" && index === 0) ||
+      (direction === "down" && index === days.length - 1)
+    ) {
       return;
     }
     const targetIdx = direction === "up" ? index - 1 : index + 1;
@@ -258,7 +270,13 @@ export default function AdminItinerariesPage() {
     const currentActivities = updated[dayIndex].activities ?? [];
     updated[dayIndex].activities = [
       ...currentActivities,
-      { title: "", description: "", location: "", timing: "", sortOrder: currentActivities.length + 1 },
+      {
+        title: "",
+        description: "",
+        location: "",
+        timing: "",
+        sortOrder: currentActivities.length + 1,
+      },
     ];
     setDays(updated);
   };
@@ -267,7 +285,7 @@ export default function AdminItinerariesPage() {
     dayIndex: number,
     activityIndex: number,
     field: keyof Activity,
-    value: string
+    value: string,
   ) => {
     const updated = [...days];
     const acts = [...updated[dayIndex].activities];
@@ -278,7 +296,9 @@ export default function AdminItinerariesPage() {
 
   const handleRemoveActivity = (dayIndex: number, activityIndex: number) => {
     const updated = [...days];
-    updated[dayIndex].activities = updated[dayIndex].activities.filter((_, idx) => idx !== activityIndex);
+    updated[dayIndex].activities = updated[dayIndex].activities.filter(
+      (_, idx) => idx !== activityIndex,
+    );
     setDays(updated);
   };
 
@@ -359,9 +379,10 @@ export default function AdminItinerariesPage() {
     }
   };
 
-  const filteredItineraries = itineraries.filter((i) =>
-    i.title.toLowerCase().includes(search.toLowerCase()) ||
-    (i.package?.title ?? "").toLowerCase().includes(search.toLowerCase())
+  const filteredItineraries = itineraries.filter(
+    (i) =>
+      i.title.toLowerCase().includes(search.toLowerCase()) ||
+      (i.package?.title ?? "").toLowerCase().includes(search.toLowerCase()),
   );
 
   return (
@@ -385,7 +406,11 @@ export default function AdminItinerariesPage() {
         ) : null}
 
         <div className="flex flex-col gap-3 tablet:flex-row tablet:items-center tablet:justify-between">
-          <SearchBar value={search} onChange={setSearch} placeholder="Search itineraries or packages..." />
+          <SearchBar
+            value={search}
+            onChange={setSearch}
+            placeholder="Search itineraries or packages..."
+          />
           <div className="w-full tablet:w-72">
             <Select value={packageFilter} onValueChange={setPackageFilter}>
               <SelectTrigger>
@@ -486,7 +511,8 @@ export default function AdminItinerariesPage() {
                   {editingItinerary ? "Edit Itinerary Schedule" : "Dynamic Itinerary Builder"}
                 </DialogPrimitive.Title>
                 <DialogPrimitive.Description className="text-xs text-muted-foreground">
-                  Configure day-by-day schedules, activities, hotel stays, meals, transfers, and custom notes.
+                  Configure day-by-day schedules, activities, hotel stays, meals, transfers, and
+                  custom notes.
                 </DialogPrimitive.Description>
               </div>
               <DialogPrimitive.Close className="rounded-sm opacity-70 hover:opacity-100">
@@ -543,7 +569,11 @@ export default function AdminItinerariesPage() {
                 </div>
 
                 <div className="flex items-center gap-3 rounded-md border border-border bg-muted/30 p-3 tablet:col-span-2">
-                  <Switch checked={isDefault} onCheckedChange={setIsDefault} aria-label="Default itinerary" />
+                  <Switch
+                    checked={isDefault}
+                    onCheckedChange={setIsDefault}
+                    aria-label="Default itinerary"
+                  />
                   <div>
                     <p className="text-sm font-medium text-foreground">Default Package Itinerary</p>
                     <p className="text-xs text-muted-foreground">
@@ -559,7 +589,13 @@ export default function AdminItinerariesPage() {
                   <Calendar className="size-5 text-primary" />
                   Day-by-Day Timeline ({days.length} Days)
                 </h3>
-                <Button type="button" size="sm" variant="outline" className="gap-1.5" onClick={handleAddDay}>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  className="gap-1.5"
+                  onClick={handleAddDay}
+                >
                   <Plus className="size-4" />
                   Add Day
                 </Button>
@@ -568,7 +604,10 @@ export default function AdminItinerariesPage() {
               {/* Days Timeline Builder */}
               <div className="space-y-6">
                 {days.map((day, dayIdx) => (
-                  <Card key={dayIdx} className="p-5 border border-border relative bg-card shadow-sm">
+                  <Card
+                    key={dayIdx}
+                    className="p-5 border border-border relative bg-card shadow-sm"
+                  >
                     <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border pb-3 mb-4">
                       <div className="flex items-center gap-2">
                         <span className="rounded-md bg-primary px-3 py-1 text-xs font-bold text-white font-mono">
@@ -709,19 +748,25 @@ export default function AdminItinerariesPage() {
                           >
                             <Input
                               value={act.title}
-                              onChange={(e) => handleActivityChange(dayIdx, actIdx, "title", e.target.value)}
+                              onChange={(e) =>
+                                handleActivityChange(dayIdx, actIdx, "title", e.target.value)
+                              }
                               placeholder="Activity Title (e.g. Shikara Ride)"
                               className="h-7 text-xs flex-1"
                             />
                             <Input
                               value={act.timing ?? ""}
-                              onChange={(e) => handleActivityChange(dayIdx, actIdx, "timing", e.target.value)}
+                              onChange={(e) =>
+                                handleActivityChange(dayIdx, actIdx, "timing", e.target.value)
+                              }
                               placeholder="Timing (e.g. Morning / 5 PM)"
                               className="h-7 text-xs w-full tablet:w-36"
                             />
                             <Input
                               value={act.location ?? ""}
-                              onChange={(e) => handleActivityChange(dayIdx, actIdx, "location", e.target.value)}
+                              onChange={(e) =>
+                                handleActivityChange(dayIdx, actIdx, "location", e.target.value)
+                              }
                               placeholder="Location (optional)"
                               className="h-7 text-xs w-full tablet:w-36"
                             />
@@ -744,11 +789,20 @@ export default function AdminItinerariesPage() {
 
               {/* Builder Actions */}
               <div className="flex items-center justify-end gap-3 border-t border-border pt-4">
-                <Button type="button" variant="outline" size="sm" onClick={() => setBuilderOpen(false)}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setBuilderOpen(false)}
+                >
                   Cancel
                 </Button>
                 <Button type="submit" size="sm" disabled={saving}>
-                  {saving ? "Saving Schedule..." : editingItinerary ? "Save Schedule Changes" : "Save Complete Itinerary"}
+                  {saving
+                    ? "Saving Schedule..."
+                    : editingItinerary
+                      ? "Save Schedule Changes"
+                      : "Save Complete Itinerary"}
                 </Button>
               </div>
             </form>

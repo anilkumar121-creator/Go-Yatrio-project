@@ -27,7 +27,7 @@ export const siteConfig = {
     { label: "Destinations", href: "/destinations" },
     { label: "Packages", href: "/packages" },
     { label: "Hotels", href: "/hotels" },
-    { label: "Cab Booking", href: "/cab-booking" },
+    { label: "Cab Booking", href: "/cabs" },
     { label: "Blogs", href: "/blogs" },
     { label: "About", href: "/about" },
     { label: "Contact", href: "/contact" },
@@ -46,7 +46,7 @@ export const siteConfig = {
     ],
     services: [
       { label: "Hotel Booking", href: "/hotels" },
-      { label: "Cab Booking", href: "/cab-booking" },
+      { label: "Cab Booking", href: "/cabs" },
       { label: "Travel Inquiries", href: "/contact" },
     ],
     legal: [

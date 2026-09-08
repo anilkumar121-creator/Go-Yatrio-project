@@ -69,15 +69,109 @@ import { cache } from "react";
 export const revalidate = 300; // 5-minute ISR
 
 const getItinerary = cache(async (slug: string): Promise<ItineraryDetail | null> => {
+  if (!slug || slug === "undefined" || slug === "null") return null;
+
   try {
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+
+    // 1. Try to fetch as itinerary ID
     const response = await fetch(`${baseUrl}/api/itineraries/${slug}`, {
       next: { revalidate: 300, tags: [`itinerary-${slug}`, "itineraries"] },
     });
 
-    if (!response.ok) return null;
-    const payload = await response.json();
-    return payload?.data ?? null;
+    if (response.ok) {
+      const payload = await response.json();
+      const data = payload?.data;
+      if (data) {
+        // If data is a single day itinerary row, format as ItineraryDetail
+        if (!data.days && data.dayNumber) {
+          return {
+            id: data.id,
+            title: data.title,
+            slug: data.package?.slug ?? data.id,
+            description: data.description,
+            isDefault: true,
+            package: data.package,
+            days: [
+              {
+                id: data.id,
+                dayNumber: data.dayNumber,
+                sortOrder: data.sortOrder ?? data.dayNumber,
+                title: data.title,
+                description: data.description,
+                city: data.location ?? null,
+                hotel: null,
+                meals: null,
+                transfers: null,
+                notes: null,
+                activities: data.activities ?? [],
+              },
+            ],
+          };
+        }
+        return data;
+      }
+    }
+
+    // 2. Try to fetch as package slug
+    const pkgResponse = await fetch(`${baseUrl}/api/packages/${slug}`, {
+      next: { revalidate: 300, tags: [`package-${slug}`, "packages"] },
+    });
+
+    if (pkgResponse.ok) {
+      const pkgPayload = await pkgResponse.json();
+      const pkg = pkgPayload?.data;
+      if (pkg) {
+        return {
+          id: pkg.id,
+          title: `${pkg.title} - Day-by-Day Itinerary`,
+          slug: pkg.slug,
+          description: pkg.shortDescription,
+          isDefault: true,
+          package: {
+            id: pkg.id,
+            title: pkg.title,
+            slug: pkg.slug,
+            durationDays: pkg.durationDays,
+            durationNights: pkg.durationNights,
+            priceFrom: pkg.priceFrom,
+            currency: pkg.currency,
+            destination: pkg.destination,
+          },
+          days: (pkg.itineraries ?? []).map(
+            (itin: {
+              id: string;
+              dayNumber: number;
+              sortOrder?: number;
+              title: string;
+              description: string;
+              location?: string | null;
+              activities?: {
+                id: string;
+                title: string;
+                description: string | null;
+                location: string | null;
+                timing: string | null;
+              }[];
+            }) => ({
+              id: itin.id,
+              dayNumber: itin.dayNumber,
+              sortOrder: itin.sortOrder ?? itin.dayNumber,
+              title: itin.title,
+              description: itin.description,
+              city: itin.location ?? null,
+              hotel: null,
+              meals: null,
+              transfers: null,
+              notes: null,
+              activities: itin.activities ?? [],
+            }),
+          ),
+        };
+      }
+    }
+
+    return null;
   } catch {
     return null;
   }
@@ -89,6 +183,10 @@ type Props = {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
+  if (!slug || slug === "undefined") {
+    return { title: "Itinerary Not Found | GoYatrio" };
+  }
+
   const itinerary = await getItinerary(slug);
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
 
@@ -96,16 +194,17 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     return { title: "Itinerary Not Found | GoYatrio" };
   }
 
+  const days = itinerary.days ?? [];
   const title = `${itinerary.title} | Day-by-Day Schedule | GoYatrio`;
   const description =
     itinerary.description ??
-    `Detailed ${itinerary.days.length}-Day itinerary schedule for ${itinerary.package?.title ?? "tour package"}. Includes activities, hotels, and meal plans.`;
+    `Detailed ${days.length}-Day itinerary schedule for ${itinerary.package?.title ?? "tour package"}. Includes activities, hotels, and meal plans.`;
 
   return {
     title,
     description,
     alternates: {
-      canonical: `${baseUrl}/itineraries/${itinerary.slug}`,
+      canonical: `${baseUrl}/itineraries/${itinerary.slug ?? slug}`,
     },
   };
 }
@@ -117,6 +216,8 @@ export default async function PublicItineraryDetailPage({ params }: Props) {
   if (!itinerary) {
     notFound();
   }
+
+  const days = itinerary.days ?? [];
 
   return (
     <PageWrapper>
@@ -138,7 +239,7 @@ export default async function PublicItineraryDetailPage({ params }: Props) {
           </div>
 
           <div className="flex flex-wrap items-center gap-3 mb-3">
-            <Badge variant="accent">{itinerary.days.length} Days Itinerary</Badge>
+            <Badge variant="accent">{days.length} Days Itinerary</Badge>
             {itinerary.package?.destination?.name ? (
               <span className="inline-flex items-center gap-1 text-sm text-white/90 font-medium">
                 <MapPin className="size-4 text-accent" />
@@ -201,7 +302,7 @@ export default async function PublicItineraryDetailPage({ params }: Props) {
             </div>
 
             <div className="space-y-6">
-              {itinerary.days.map((day) => (
+              {days.map((day) => (
                 <Card key={day.id} className="p-6 border border-border bg-card shadow-sm">
                   <div className="flex flex-wrap items-start justify-between gap-3 mb-3">
                     <div className="flex items-center gap-3">

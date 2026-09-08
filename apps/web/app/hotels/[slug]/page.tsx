@@ -11,23 +11,14 @@ import { PageWrapper } from "@/components/layout/page-wrapper";
 import { CardMedia } from "@/components/cards/card-media";
 import { HotelInquiryForm } from "@/components/hotels/hotel-inquiry-form";
 
-type HotelImage = {
-  id: string;
-  imageUrl: string;
-  altText: string | null;
-  sortOrder: number;
-};
-
-type HotelAmenity = {
-  id: string;
-  name: string;
-  icon: string | null;
-};
+import { isValidImageUrl } from "@/lib/media";
 
 type HotelRoomType = {
   id: string;
-  roomName: string;
-  roomDescription: string;
+  name?: string;
+  roomName?: string;
+  description?: string;
+  roomDescription?: string;
   maxGuests: number;
   bedType: string;
   roomSize: string | null;
@@ -53,10 +44,10 @@ type HotelDetail = {
     name: string;
     slug: string;
   };
-  images: HotelImage[];
+  images: string[];
   featuredMedia: { secureUrl: string; altText?: string | null } | null;
   galleryMedia: { secureUrl: string }[] | null;
-  amenities: HotelAmenity[];
+  amenities: string[];
   metaTitle?: string | null;
   metaDescription?: string | null;
   roomTypes: HotelRoomType[];
@@ -71,7 +62,7 @@ type RelatedHotel = {
   city: string;
   hotelCategory: string;
   starRating: number;
-  images: HotelImage[];
+  images: string[];
   featuredMedia: { secureUrl: string; altText?: string | null } | null;
   galleryMedia: { secureUrl: string }[] | null;
   roomTypes: HotelRoomType[];
@@ -106,7 +97,8 @@ async function getRelatedHotels(
     });
     if (!response.ok) return [];
     const payload = await response.json();
-    return (payload?.data ?? []).filter((h: RelatedHotel) => h.id !== excludeId).slice(0, 3);
+    const items = Array.isArray(payload?.data) ? payload.data : (payload?.data?.items ?? []);
+    return items.filter((h: RelatedHotel) => h.id !== excludeId).slice(0, 3);
   } catch {
     return [];
   }
@@ -130,7 +122,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const description =
     hotel.metaDescription ??
     `${hotel.shortDescription} Check room availability, tariffs, amenities, and hotel inquiries at ${hotel.name}`;
-  const imageUrl = hotel.images[0]?.imageUrl ?? null;
+
+  const rawHero =
+    hotel.featuredMedia?.secureUrl ??
+    (typeof hotel.images?.[0] === "string" ? hotel.images[0] : null);
+  const imageUrl = isValidImageUrl(rawHero) ? rawHero : null;
 
   return {
     title,
@@ -158,17 +154,23 @@ export default async function PublicHotelDetailPage({ params }: Props) {
   }
 
   const relatedHotels = await getRelatedHotels(hotel.destination.slug, hotel.id);
-  const gallery =
+
+  const rawGallery: string[] =
     hotel.galleryMedia && hotel.galleryMedia.length > 0
-      ? hotel.galleryMedia.map((m) => ({
-          imageUrl: m.secureUrl,
-          id: m.secureUrl,
-          altText: null,
-          sortOrder: 0,
-        }))
-      : hotel.images.length > 0
-        ? hotel.images
+      ? hotel.galleryMedia.map((m) => m.secureUrl)
+      : Array.isArray(hotel.images)
+        ? hotel.images.map((img: string | { imageUrl?: string }) =>
+            typeof img === "string" ? img : (img.imageUrl ?? ""),
+          )
         : [];
+
+  const gallery = rawGallery.filter(isValidImageUrl).map((url, idx) => ({
+    id: `${url}-${idx}`,
+    imageUrl: url,
+    altText: hotel.name,
+    sortOrder: idx,
+  }));
+
   const starRating = hotel.starRating;
 
   const structuredData = {
@@ -316,15 +318,22 @@ export default async function PublicHotelDetailPage({ params }: Props) {
                 <div>
                   <h2 className="text-2xl font-semibold text-foreground mb-4">Hotel Amenities</h2>
                   <div className="grid grid-cols-1 gap-3 tablet:grid-cols-2">
-                    {hotel.amenities.map((am) => (
-                      <div
-                        key={am.id}
-                        className="flex items-center gap-2 rounded-md border border-border bg-muted/20 p-3 text-sm font-medium text-foreground"
-                      >
-                        <CheckCircle2 className="size-4 text-success shrink-0" />
-                        {am.name}
-                      </div>
-                    ))}
+                    {hotel.amenities.map((am, idx) => {
+                      const name =
+                        typeof am === "string"
+                          ? am
+                          : ((am as unknown as { name?: string })?.name ?? "");
+                      if (!name) return null;
+                      return (
+                        <div
+                          key={name || idx}
+                          className="flex items-center gap-2 rounded-md border border-border bg-muted/20 p-3 text-sm font-medium text-foreground"
+                        >
+                          <CheckCircle2 className="size-4 text-success shrink-0" />
+                          {name}
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               ) : null}
@@ -336,38 +345,46 @@ export default async function PublicHotelDetailPage({ params }: Props) {
                     Available Room Categories
                   </h2>
                   <div className="space-y-4">
-                    {hotel.roomTypes.map((room) => (
-                      <Card key={room.id} className="p-6 border border-border bg-card shadow-sm">
-                        <div className="flex flex-wrap items-start justify-between gap-3">
-                          <div>
-                            <h3 className="text-lg font-semibold text-foreground">
-                              {room.roomName}
-                            </h3>
-                            <p className="mt-1 text-sm text-muted-foreground leading-relaxed">
-                              {room.roomDescription}
-                            </p>
+                    {hotel.roomTypes.map((room) => {
+                      const name = room.name ?? room.roomName ?? "Standard Room";
+                      const description = room.description ?? room.roomDescription ?? "";
+                      return (
+                        <Card key={room.id} className="p-6 border border-border bg-card shadow-sm">
+                          <div className="flex flex-wrap items-start justify-between gap-3">
+                            <div>
+                              <h3 className="text-lg font-semibold text-foreground">{name}</h3>
+                              {description ? (
+                                <p className="mt-1 text-sm text-muted-foreground leading-relaxed">
+                                  {description}
+                                </p>
+                              ) : null}
+                            </div>
+                            <Price amount={room.priceFrom} per="per night" size="sm" />
                           </div>
-                          <Price amount={room.priceFrom} per="per night" size="sm" />
-                        </div>
 
-                        <div className="mt-4 flex flex-wrap gap-4 pt-3 border-t border-border text-xs text-muted-foreground">
-                          <span className="flex items-center gap-1">
-                            <Bed className="size-3.5 text-primary" />
-                            Bed Type: {room.bedType}
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <Users className="size-3.5 text-primary" />
-                            Max Guests: {room.maxGuests}
-                          </span>
-                          {room.roomSize ? (
-                            <span className="flex items-center gap-1">
-                              <Ruler className="size-3.5 text-primary" />
-                              Room Size: {room.roomSize}
-                            </span>
-                          ) : null}
-                        </div>
-                      </Card>
-                    ))}
+                          <div className="mt-4 flex flex-wrap gap-4 pt-3 border-t border-border text-xs text-muted-foreground">
+                            {room.bedType ? (
+                              <span className="flex items-center gap-1">
+                                <Bed className="size-3.5 text-primary" />
+                                Bed Type: {room.bedType}
+                              </span>
+                            ) : null}
+                            {room.maxGuests ? (
+                              <span className="flex items-center gap-1">
+                                <Users className="size-3.5 text-primary" />
+                                Max Guests: {room.maxGuests}
+                              </span>
+                            ) : null}
+                            {room.roomSize ? (
+                              <span className="flex items-center gap-1">
+                                <Ruler className="size-3.5 text-primary" />
+                                Room Size: {room.roomSize}
+                              </span>
+                            ) : null}
+                          </div>
+                        </Card>
+                      );
+                    })}
                   </div>
                 </div>
               ) : null}
@@ -465,7 +482,7 @@ export default async function PublicHotelDetailPage({ params }: Props) {
                     <div className="relative aspect-[16/10]">
                       {rel.images[0] ? (
                         <CardMedia
-                          src={rel.images[0].imageUrl}
+                          src={typeof rel.images[0] === "string" ? rel.images[0] : undefined}
                           alt={rel.name}
                           className="h-full w-full"
                         />

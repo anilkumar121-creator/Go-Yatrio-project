@@ -190,7 +190,7 @@ export default function AdminHotelsPage() {
   const loadDestinations = useCallback(async () => {
     try {
       const data = await apiFetch("/api/admin/destinations?take=100");
-      setDestinations(data ?? []);
+      setDestinations(Array.isArray(data) ? data : (data?.data ?? []));
     } catch {
       // Fallback
     }
@@ -207,7 +207,7 @@ export default function AdminHotelsPage() {
       if (statusFilter !== "all") params.set("status", statusFilter);
 
       const data = await apiFetch(`/api/admin/hotels?${params.toString()}`);
-      setHotels(data ?? []);
+      setHotels(Array.isArray(data) ? data : (data?.data ?? []));
     } catch (err: unknown) {
       setErrorMessage(err instanceof Error ? err.message : "Failed to load hotels.");
     } finally {

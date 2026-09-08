@@ -205,7 +205,7 @@ export default function AdminCabsPage() {
   const loadDestinations = useCallback(async () => {
     try {
       const data = await apiFetch("/api/admin/destinations?take=100");
-      setDestinations(data ?? []);
+      setDestinations(Array.isArray(data) ? data : (data?.data ?? []));
     } catch {
       // Fallback
     }
@@ -222,7 +222,7 @@ export default function AdminCabsPage() {
       if (statusFilter !== "all") params.set("status", statusFilter);
 
       const data = await apiFetch(`/api/admin/cabs?${params.toString()}`);
-      setVehicles(data ?? []);
+      setVehicles(Array.isArray(data) ? data : (data?.data ?? []));
     } catch (err: unknown) {
       setErrorMessage(err instanceof Error ? err.message : "Failed to load cabs.");
     } finally {

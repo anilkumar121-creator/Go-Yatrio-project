@@ -82,7 +82,7 @@ async function getDestinations(): Promise<DestinationOption[]> {
     });
     if (!res.ok) return [];
     const payload = await res.json();
-    return payload?.data ?? [];
+    return Array.isArray(payload?.data) ? payload.data : (payload?.data?.data ?? []);
   } catch {
     return [];
   }

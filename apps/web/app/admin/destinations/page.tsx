@@ -18,7 +18,13 @@ import { Input } from "@/components/common/input";
 import { Textarea } from "@/components/common/textarea";
 import { Label } from "@/components/common/label";
 import { Switch } from "@/components/common/switch";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/common/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/common/select";
 import { MediaLinkPanel } from "@/components/media/media-link-panel";
 
 type Destination = {
@@ -126,8 +132,10 @@ export default function AdminDestinationsPage() {
       if (countryFilter !== "all") params.set("country", countryFilter);
 
       const data = await apiFetch(`/api/admin/destinations?${params.toString()}`);
-      setDestinations(data.data ?? []);
-      setTotal(data.total ?? 0);
+      setDestinations(Array.isArray(data) ? data : (data?.data ?? []));
+      setTotal(
+        typeof data?.total === "number" ? data.total : Array.isArray(data) ? data.length : 0,
+      );
     } catch (err) {
       setErrorMessage(err instanceof Error ? err.message : "Failed to load destinations.");
     } finally {
@@ -173,10 +181,13 @@ export default function AdminDestinationsPage() {
     try {
       const payload = {
         ...form,
+        featuredImage: form.featuredImage.trim() || undefined,
         galleryImages: form.galleryImages
           .split("\n")
           .map((url) => url.trim())
           .filter(Boolean),
+        metaTitle: form.metaTitle.trim() || undefined,
+        metaDescription: form.metaDescription.trim() || undefined,
       };
 
       if (editingDestination) {
@@ -319,7 +330,10 @@ export default function AdminDestinationsPage() {
               data={destinations}
               keyExtractor={(row) => row.id}
               columns={[
-                { header: "Name", cell: (row) => <span className="font-semibold text-foreground">{row.name}</span> },
+                {
+                  header: "Name",
+                  cell: (row) => <span className="font-semibold text-foreground">{row.name}</span>,
+                },
                 { header: "Country", accessorKey: "country" },
                 {
                   header: "Status",
@@ -340,23 +354,49 @@ export default function AdminDestinationsPage() {
                 {
                   header: "Featured",
                   cell: (row) => (
-                    <Switch checked={row.featured} onCheckedChange={() => toggleFeatured(row)} aria-label="Toggle featured" />
+                    <Switch
+                      checked={row.featured}
+                      onCheckedChange={() => toggleFeatured(row)}
+                      aria-label="Toggle featured"
+                    />
                   ),
                 },
-                { header: "Created Date", cell: (row) => <span className="text-muted-foreground">{new Date(row.createdAt).toLocaleDateString()}</span> },
+                {
+                  header: "Created Date",
+                  cell: (row) => (
+                    <span className="text-muted-foreground">
+                      {new Date(row.createdAt).toLocaleDateString()}
+                    </span>
+                  ),
+                },
                 {
                   header: "Actions",
                   cell: (row) => (
                     <div className="flex items-center gap-1">
-                      <Button asChild variant="ghost" size="sm" className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground">
+                      <Button
+                        asChild
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
+                      >
                         <Link href={`/destinations/${row.slug}`} target="_blank">
                           <Eye className="size-4" />
                         </Link>
                       </Button>
-                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground" onClick={() => openEditForm(row)}>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
+                        onClick={() => openEditForm(row)}
+                      >
                         <Edit className="size-4" />
                       </Button>
-                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-error hover:bg-error/10" onClick={() => setDeleteTarget(row)}>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0 text-error hover:bg-error/10"
+                        onClick={() => setDeleteTarget(row)}
+                      >
                         <Trash2 className="size-4" />
                       </Button>
                     </div>
@@ -370,10 +410,20 @@ export default function AdminDestinationsPage() {
                 Page {page} of {totalPages} ({total} destinations)
               </span>
               <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={page <= 1}
+                  onClick={() => setPage((p) => p - 1)}
+                >
                   Previous
                 </Button>
-                <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={page >= totalPages}
+                  onClick={() => setPage((p) => p + 1)}
+                >
                   Next
                 </Button>
               </div>
@@ -400,25 +450,48 @@ export default function AdminDestinationsPage() {
 
             <form onSubmit={handleSubmit} className="mt-4 space-y-4">
               {formError ? (
-                <div className="rounded-lg border border-error/30 bg-error/10 p-3 text-sm">{formError}</div>
+                <div className="rounded-lg border border-error/30 bg-error/10 p-3 text-sm">
+                  {formError}
+                </div>
               ) : null}
 
               <div className="grid grid-cols-1 gap-4 tablet:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor="destination-name">Name *</Label>
-                  <Input id="destination-name" required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="e.g. Goa" />
+                  <Input
+                    id="destination-name"
+                    required
+                    value={form.name}
+                    onChange={(e) => setForm({ ...form, name: e.target.value })}
+                    placeholder="e.g. Goa"
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="destination-state">State / Region</Label>
-                  <Input id="destination-state" value={form.state} onChange={(e) => setForm({ ...form, state: e.target.value })} placeholder="e.g. Goa" />
+                  <Input
+                    id="destination-state"
+                    value={form.state}
+                    onChange={(e) => setForm({ ...form, state: e.target.value })}
+                    placeholder="e.g. Goa"
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="destination-country">Country</Label>
-                  <Input id="destination-country" value={form.country} onChange={(e) => setForm({ ...form, country: e.target.value })} placeholder="India" />
+                  <Input
+                    id="destination-country"
+                    value={form.country}
+                    onChange={(e) => setForm({ ...form, country: e.target.value })}
+                    placeholder="India"
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="destination-status">Status</Label>
-                  <Select value={form.status} onValueChange={(value) => setForm({ ...form, status: value as "DRAFT" | "PUBLISHED" })}>
+                  <Select
+                    value={form.status}
+                    onValueChange={(value) =>
+                      setForm({ ...form, status: value as "DRAFT" | "PUBLISHED" })
+                    }
+                  >
                     <SelectTrigger id="destination-status">
                       <SelectValue placeholder="Select status" />
                     </SelectTrigger>
@@ -430,47 +503,101 @@ export default function AdminDestinationsPage() {
                 </div>
                 <div className="space-y-2 tablet:col-span-2">
                   <Label htmlFor="destination-short">Short Description *</Label>
-                  <Textarea id="destination-short" required maxLength={300} value={form.shortDescription} onChange={(e) => setForm({ ...form, shortDescription: e.target.value })} placeholder="One or two sentence summary shown on cards." />
+                  <Textarea
+                    id="destination-short"
+                    required
+                    maxLength={300}
+                    value={form.shortDescription}
+                    onChange={(e) => setForm({ ...form, shortDescription: e.target.value })}
+                    placeholder="One or two sentence summary shown on cards."
+                  />
                 </div>
                 <div className="space-y-2 tablet:col-span-2">
                   <Label htmlFor="destination-description">Description *</Label>
-                  <Textarea id="destination-description" required maxLength={5000} rows={6} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Full destination overview shown on the detail page." />
+                  <Textarea
+                    id="destination-description"
+                    required
+                    maxLength={5000}
+                    rows={6}
+                    value={form.description}
+                    onChange={(e) => setForm({ ...form, description: e.target.value })}
+                    placeholder="Full destination overview shown on the detail page."
+                  />
                 </div>
                 <div className="space-y-2 tablet:col-span-2">
                   <Label htmlFor="destination-image">Featured Image URL</Label>
-                  <Input id="destination-image" type="url" value={form.featuredImage} onChange={(e) => setForm({ ...form, featuredImage: e.target.value })} placeholder="https://..." />
+                  <Input
+                    id="destination-image"
+                    type="url"
+                    value={form.featuredImage}
+                    onChange={(e) => setForm({ ...form, featuredImage: e.target.value })}
+                    placeholder="https://..."
+                  />
                 </div>
                 <div className="space-y-2 tablet:col-span-2">
                   <Label htmlFor="destination-gallery">Gallery Images (one URL per line)</Label>
-                  <Textarea id="destination-gallery" rows={3} value={form.galleryImages} onChange={(e) => setForm({ ...form, galleryImages: e.target.value })} placeholder={"https://...\nhttps://..."} />
+                  <Textarea
+                    id="destination-gallery"
+                    rows={3}
+                    value={form.galleryImages}
+                    onChange={(e) => setForm({ ...form, galleryImages: e.target.value })}
+                    placeholder={"https://...\nhttps://..."}
+                  />
                 </div>
                 <div className="space-y-2 tablet:col-span-2">
                   <MediaLinkPanel module="DESTINATION" moduleId={editingDestination?.id} />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="destination-meta-title">Meta Title</Label>
-                  <Input id="destination-meta-title" maxLength={120} value={form.metaTitle} onChange={(e) => setForm({ ...form, metaTitle: e.target.value })} placeholder="SEO title" />
+                  <Input
+                    id="destination-meta-title"
+                    maxLength={120}
+                    value={form.metaTitle}
+                    onChange={(e) => setForm({ ...form, metaTitle: e.target.value })}
+                    placeholder="SEO title"
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="destination-meta-description">Meta Description</Label>
-                  <Input id="destination-meta-description" maxLength={180} value={form.metaDescription} onChange={(e) => setForm({ ...form, metaDescription: e.target.value })} placeholder="SEO description" />
+                  <Input
+                    id="destination-meta-description"
+                    maxLength={180}
+                    value={form.metaDescription}
+                    onChange={(e) => setForm({ ...form, metaDescription: e.target.value })}
+                    placeholder="SEO description"
+                  />
                 </div>
               </div>
 
               <div className="flex items-center gap-3 rounded-md border border-border bg-muted/30 p-3">
-                <Switch checked={form.featured} onCheckedChange={(checked) => setForm({ ...form, featured: checked })} aria-label="Featured destination" />
+                <Switch
+                  checked={form.featured}
+                  onCheckedChange={(checked) => setForm({ ...form, featured: checked })}
+                  aria-label="Featured destination"
+                />
                 <div>
                   <p className="text-sm font-medium text-foreground">Featured Destination</p>
-                  <p className="text-xs text-muted-foreground">Featured destinations appear prominently on the public website.</p>
+                  <p className="text-xs text-muted-foreground">
+                    Featured destinations appear prominently on the public website.
+                  </p>
                 </div>
               </div>
 
               <div className="flex items-center justify-end gap-3 pt-2">
-                <Button type="button" variant="outline" size="sm" onClick={() => setFormOpen(false)}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setFormOpen(false)}
+                >
                   Cancel
                 </Button>
                 <Button type="submit" size="sm" disabled={saving}>
-                  {saving ? "Saving..." : editingDestination ? "Save Changes" : "Create Destination"}
+                  {saving
+                    ? "Saving..."
+                    : editingDestination
+                      ? "Save Changes"
+                      : "Create Destination"}
                 </Button>
               </div>
             </form>

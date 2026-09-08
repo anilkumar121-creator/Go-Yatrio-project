@@ -37,7 +37,7 @@ type DestinationHotel = {
   hotelCategory: string;
   starRating: number;
   featured: boolean;
-  images: { id: string; imageUrl: string }[];
+  images: string[];
   roomTypes: { id: string; priceFrom: number }[];
 };
 
@@ -51,7 +51,7 @@ type DestinationCab = {
   priceFrom: number;
   featured: boolean;
   image: string | null;
-  amenities: { id: string; name: string }[];
+  amenities: string[];
 };
 
 type DestinationBlog = {
@@ -413,7 +413,7 @@ export default async function DestinationDetailPage({ params }: Props) {
                   </li>
                 </ul>
                 <Button asChild className="mt-6 w-full">
-                  <Link href="/inquiry">Plan Your Trip</Link>
+                  <Link href="/contact">Plan Your Trip</Link>
                 </Button>
               </Card>
             </aside>
@@ -443,7 +443,8 @@ export default async function DestinationDetailPage({ params }: Props) {
 
 function HotelCard({ hotel }: { hotel: DestinationHotel }) {
   const minPrice = hotel.roomTypes[0]?.priceFrom ?? 0;
-  const imageUrl = hotel.images[0]?.imageUrl ?? "";
+  const rawImg = hotel.images?.[0];
+  const imageUrl = typeof rawImg === "string" ? rawImg : "";
 
   return (
     <Card className="overflow-hidden border border-border bg-card shadow-sm transition-all hover:shadow-md">

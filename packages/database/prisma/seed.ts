@@ -1,6 +1,9 @@
 import {
   PrismaClient,
   DestinationStatus,
+  PackageType,
+  PackageStatus,
+  PackageAvailability,
   VehicleType,
   UserRole,
   HotelCategory,
@@ -137,28 +140,490 @@ async function main() {
     seededDestinations[dest.slug] = record;
   }
 
-  // Seed Amenities
-  const amenitySeeds = [
-    { name: "Free High-Speed Wi-Fi", icon: "Wifi" },
-    { name: "Swimming Pool", icon: "Waves" },
-    { name: "Ayurveda & Wellness Spa", icon: "Sparkles" },
-    { name: "Multi-Cuisine Restaurant", icon: "Utensils" },
-    { name: "Fitness Center / Gym", icon: "Dumbbell" },
-    { name: "24/7 Room Service", icon: "Clock" },
-    { name: "Free Airport Transfer", icon: "Car" },
-    { name: "Beach Access", icon: "Sun" },
-    { name: "Valet Parking", icon: "Parking" },
-    { name: "Conference & Event Hall", icon: "Users" },
+  // Seed Tour Packages
+  const packageSeeds = [
+    {
+      slug: "kerala-backwaters-and-hills",
+      title: "Kerala Backwaters & Hill Stations",
+      shortDescription:
+        "Munnar tea hills, Periyar spice plantations, and private luxury Alleppey houseboat stay.",
+      description:
+        "Experience God's Own Country with our comprehensive 5-day tour package. Journey through misty Munnar tea plantations, wildlife boat safaris in Thekkady, and cruise the tranquil backwaters of Alleppey on an authentic private houseboat.",
+      destinationSlug: "kerala",
+      durationDays: 5,
+      durationNights: 4,
+      priceFrom: 15499,
+      discountedPrice: 13999,
+      packageType: PackageType.DOMESTIC,
+      inclusions: [
+        "4 Nights Accommodation (1N Houseboat + 3N Hotel)",
+        "All Meals on Houseboat",
+        "Daily Breakfast at Hotels",
+        "Private AC Cab for Transfers",
+        "Spice Plantation Tour",
+      ],
+      exclusions: ["Airfare / Train tickets", "Entry fees to monuments", "Personal expenses"],
+      featured: true,
+      status: PackageStatus.PUBLISHED,
+      availability: PackageAvailability.AVAILABLE,
+      availableSeats: 16,
+      metaTitle: "Kerala Backwaters & Hills 4N/5D Tour Package | GoYatrio",
+      metaDescription:
+        "Book Kerala Backwaters & Hills tour with GoYatrio. Experience Munnar tea hills, Periyar spice gardens, and Alleppey houseboats.",
+      itineraries: [
+        {
+          dayNumber: 1,
+          title: "Cochin to Munnar Tea Hills",
+          description:
+            "Arrive in Cochin and drive through scenic waterfalls to Munnar tea gardens.",
+          location: "Munnar",
+          sortOrder: 0,
+        },
+        {
+          dayNumber: 2,
+          title: "Munnar Sightseeing Tour",
+          description:
+            "Visit Eravikulam National Park (Nilgiri Tahr), Mattupetty Dam, and Tea Museum.",
+          location: "Munnar",
+          sortOrder: 1,
+        },
+        {
+          dayNumber: 3,
+          title: "Munnar to Thekkady (Periyar)",
+          description:
+            "Drive to Thekkady. Enjoy boat safari on Periyar Lake and spice plantation walk.",
+          location: "Thekkady",
+          sortOrder: 2,
+        },
+        {
+          dayNumber: 4,
+          title: "Thekkady to Alleppey Houseboat",
+          description: "Board private houseboat in Alleppey. Cruise through serene backwaters.",
+          location: "Alleppey",
+          sortOrder: 3,
+        },
+        {
+          dayNumber: 5,
+          title: "Alleppey to Cochin Departure",
+          description:
+            "After breakfast on houseboat, transfer to Cochin airport or railway station.",
+          location: "Cochin",
+          sortOrder: 4,
+        },
+      ],
+    },
+    {
+      slug: "kashmir-paradise-experience",
+      title: "Kashmir Paradise Experience",
+      shortDescription:
+        "Dal Lake Shikara ride, Gulmarg snow gondola, and pristine Pahalgam valleys.",
+      description:
+        "Discover the breathtaking beauty of Kashmir with our 6-day holiday package. Stay in heritage houseboats on Dal Lake, ride the world's highest gondola in Gulmarg, and walk through pine forests in Pahalgam.",
+      destinationSlug: "kashmir",
+      durationDays: 6,
+      durationNights: 5,
+      priceFrom: 18999,
+      discountedPrice: 16999,
+      packageType: PackageType.DOMESTIC,
+      inclusions: [
+        "5 Nights Accommodation (1N Houseboat + 4N Hotel)",
+        "Daily Breakfast & Dinner",
+        "1-Hour Dal Lake Shikara Ride",
+        "Private AC Cab for Sightseeing",
+        "Gulmarg & Pahalgam Excursions",
+      ],
+      exclusions: ["Gondola tickets phase 2", "Pony rides", "Personal expenses"],
+      featured: true,
+      status: PackageStatus.PUBLISHED,
+      availability: PackageAvailability.AVAILABLE,
+      availableSeats: 12,
+      metaTitle: "Kashmir Paradise 5N/6D Holiday Package | GoYatrio",
+      metaDescription:
+        "Book Kashmir tour package with GoYatrio. Dal Lake shikara rides, Gulmarg cable car, and Pahalgam valley.",
+      itineraries: [
+        {
+          dayNumber: 1,
+          title: "Arrival in Srinagar & Dal Lake Shikara",
+          description:
+            "Arrive in Srinagar, check in to a traditional Dal Lake houseboat, and enjoy a sunset Shikara ride.",
+          location: "Srinagar",
+          sortOrder: 0,
+        },
+        {
+          dayNumber: 2,
+          title: "Srinagar Mughal Gardens Tour",
+          description: "Explore Nishat Bagh, Shalimar Bagh, and Shankaracharya Temple.",
+          location: "Srinagar",
+          sortOrder: 1,
+        },
+        {
+          dayNumber: 3,
+          title: "Srinagar to Gulmarg Excursion",
+          description: "Day trip to Gulmarg, ride the famous Gondola cable car to Apharwat peak.",
+          location: "Gulmarg",
+          sortOrder: 2,
+        },
+        {
+          dayNumber: 4,
+          title: "Srinagar to Pahalgam Valley of Shepherds",
+          description: "Drive to Pahalgam via saffron fields and Lidder River.",
+          location: "Pahalgam",
+          sortOrder: 3,
+        },
+        {
+          dayNumber: 5,
+          title: "Pahalgam Betaab Valley & Aru Valley",
+          description: "Explore Betaab Valley, Aru Valley, and Chandanwari.",
+          location: "Pahalgam",
+          sortOrder: 4,
+        },
+        {
+          dayNumber: 6,
+          title: "Departure from Srinagar",
+          description: "Transfer to Srinagar airport for departure with sweet memories.",
+          location: "Srinagar",
+          sortOrder: 5,
+        },
+      ],
+    },
+    {
+      slug: "grand-rajasthan-heritage-tour",
+      title: "Grand Rajasthan Heritage Tour",
+      shortDescription:
+        "Royal palaces of Jaipur, Mehrangarh fort of Jodhpur, and romantic Lake Pichola in Udaipur.",
+      description:
+        "Immerse in royal heritage across Jaipur, Jodhpur, and Udaipur. Stay in heritage properties, explore ancient hill forts, and cruise romantic lakes.",
+      destinationSlug: "rajasthan",
+      durationDays: 7,
+      durationNights: 6,
+      priceFrom: 22500,
+      discountedPrice: 19999,
+      packageType: PackageType.LUXURY,
+      inclusions: [
+        "6 Nights Heritage Hotel Accommodation",
+        "Daily Breakfast & Dinner",
+        "Amber Fort Elephant Ride",
+        "Lake Pichola Boat Cruise",
+        "Private AC Sedan",
+      ],
+      exclusions: ["Monument entry fees", "Camera permits", "Personal expenses"],
+      featured: true,
+      status: PackageStatus.PUBLISHED,
+      availability: PackageAvailability.AVAILABLE,
+      availableSeats: 10,
+      metaTitle: "Grand Rajasthan Heritage Tour 6N/7D | GoYatrio",
+      metaDescription:
+        "Explore Rajasthan's royal forts and palaces. Covers Jaipur, Jodhpur, and Udaipur with heritage stays.",
+      itineraries: [
+        {
+          dayNumber: 1,
+          title: "Arrival in Jaipur Pink City",
+          description:
+            "Arrive in Jaipur, check into heritage hotel, visit Birla Temple in the evening.",
+          location: "Jaipur",
+          sortOrder: 0,
+        },
+        {
+          dayNumber: 2,
+          title: "Jaipur Forts & Palaces",
+          description: "Visit Amber Fort, City Palace, Hawa Mahal, and Jantar Mantar.",
+          location: "Jaipur",
+          sortOrder: 1,
+        },
+        {
+          dayNumber: 3,
+          title: "Jaipur to Jodhpur via Pushkar",
+          description: "Drive to Blue City Jodhpur with stop at holy Brahma Temple in Pushkar.",
+          location: "Pushkar",
+          sortOrder: 2,
+        },
+        {
+          dayNumber: 4,
+          title: "Jodhpur Mehrangarh Fort & Drive to Udaipur",
+          description: "Visit Mehrangarh Fort and Jaswant Thada, drive to City of Lakes Udaipur.",
+          location: "Jodhpur",
+          sortOrder: 3,
+        },
+        {
+          dayNumber: 5,
+          title: "Udaipur City Palace & Lake Pichola Cruise",
+          description:
+            "Visit City Palace, Saheliyon Ki Bari, and enjoy sunset boat ride on Lake Pichola.",
+          location: "Udaipur",
+          sortOrder: 4,
+        },
+        {
+          dayNumber: 6,
+          title: "Excursion to Chittorgarh Fort",
+          description: "Day trip to historic Chittorgarh Fort, India's largest fort complex.",
+          location: "Chittorgarh",
+          sortOrder: 5,
+        },
+        {
+          dayNumber: 7,
+          title: "Departure from Udaipur",
+          description: "Transfer to Udaipur airport for your return journey.",
+          location: "Udaipur",
+          sortOrder: 6,
+        },
+      ],
+    },
+    {
+      slug: "goa-beach-bliss",
+      title: "Goa Beach Bliss & Coastal Tour",
+      shortDescription:
+        "Sun-drenched golden beaches, water sports, heritage churches, and sunset cruises.",
+      description:
+        "Unwind on the pristine beaches of North and South Goa. Enjoy watersports at Calangute, historic walks in Old Goa, and a relaxing Mandovi river sunset cruise.",
+      destinationSlug: "goa",
+      durationDays: 4,
+      durationNights: 3,
+      priceFrom: 9999,
+      discountedPrice: 8499,
+      packageType: PackageType.DOMESTIC,
+      inclusions: [
+        "3 Nights Beach Resort Accommodation",
+        "Daily Breakfast",
+        "South Goa Sightseeing Tour",
+        "Mandovi River Cruise Ticket",
+        "Airport Transfers",
+      ],
+      exclusions: ["Watersports charges", "Lunch & Dinner", "Personal expenses"],
+      featured: true,
+      status: PackageStatus.PUBLISHED,
+      availability: PackageAvailability.AVAILABLE,
+      availableSeats: 20,
+      metaTitle: "Goa Beach Bliss 3N/4D Holiday Package | GoYatrio",
+      metaDescription:
+        "Book Goa holiday tour with GoYatrio. North and South Goa beaches, cruise, and resort stays.",
+      itineraries: [
+        {
+          dayNumber: 1,
+          title: "Arrival in Goa & Beach Leisure",
+          description: "Arrive in Goa, check in to resort, relax at Candolim/Calangute beach.",
+          location: "North Goa",
+          sortOrder: 0,
+        },
+        {
+          dayNumber: 2,
+          title: "North Goa Beaches & Water Sports",
+          description: "Explore Fort Aguada, Baga Beach, Anjuna flea market, and water sports.",
+          location: "North Goa",
+          sortOrder: 1,
+        },
+        {
+          dayNumber: 3,
+          title: "South Goa Heritage & Mandovi Cruise",
+          description:
+            "Visit Basilica of Bom Jesus, Se Cathedral, Mangueshi Temple, and sunset cruise.",
+          location: "South Goa",
+          sortOrder: 2,
+        },
+        {
+          dayNumber: 4,
+          title: "Departure from Goa",
+          description: "Breakfast and transfer to Goa airport/railway station.",
+          location: "Goa Airport",
+          sortOrder: 3,
+        },
+      ],
+    },
+    {
+      slug: "andaman-island-escape",
+      title: "Andaman Island Paradise Escape",
+      shortDescription:
+        "Radhanagar Beach on Havelock Island, coral snorkeling at Elephant Beach, and Cellular Jail history.",
+      description:
+        "Experience crystal turquoise waters and tropical coral reefs on Havelock and Neil Islands with luxury ferry transfers and guided tours.",
+      destinationSlug: "andaman",
+      durationDays: 5,
+      durationNights: 4,
+      priceFrom: 24999,
+      discountedPrice: 21999,
+      packageType: PackageType.DOMESTIC,
+      inclusions: [
+        "4 Nights Hotel/Resort Stay",
+        "Daily Breakfast & Dinner",
+        "Private AC Cab Transfers",
+        "Inter-Island Private Ferry Tickets",
+        "Snorkeling Session at Elephant Beach",
+      ],
+      exclusions: ["Airfare to Port Blair", "Scuba diving / Sea walk charges", "Personal expenses"],
+      featured: true,
+      status: PackageStatus.PUBLISHED,
+      availability: PackageAvailability.AVAILABLE,
+      availableSeats: 14,
+      metaTitle: "Andaman Island Escape 4N/5D Tour Package | GoYatrio",
+      metaDescription:
+        "Explore Andaman with GoYatrio. Port Blair, Havelock Radhanagar beach, and snorkeling at Elephant Beach.",
+      itineraries: [
+        {
+          dayNumber: 1,
+          title: "Arrival in Port Blair & Cellular Jail",
+          description:
+            "Arrive in Port Blair, visit Cellular Jail and witness the iconic Light and Sound show.",
+          location: "Port Blair",
+          sortOrder: 0,
+        },
+        {
+          dayNumber: 2,
+          title: "Port Blair to Havelock & Radhanagar Beach",
+          description:
+            "Board private ferry to Havelock Island, visit Asia's best Radhanagar Beach.",
+          location: "Havelock",
+          sortOrder: 1,
+        },
+        {
+          dayNumber: 3,
+          title: "Elephant Beach Snorkeling Excursion",
+          description:
+            "Speedboat to Elephant Beach for complimentary snorkeling and coral reef viewing.",
+          location: "Elephant Beach",
+          sortOrder: 2,
+        },
+        {
+          dayNumber: 4,
+          title: "Havelock to Neil Island & Return to Port Blair",
+          description: "Visit Bharatpur & Laxmanpur beaches on Neil Island, return to Port Blair.",
+          location: "Neil Island",
+          sortOrder: 3,
+        },
+        {
+          dayNumber: 5,
+          title: "Departure from Port Blair",
+          description: "Transfer to Port Blair airport for onward flight.",
+          location: "Port Blair",
+          sortOrder: 4,
+        },
+      ],
+    },
+    {
+      slug: "ladakh-adventure-circuit",
+      title: "Leh Ladakh High Altitude Adventure Circuit",
+      shortDescription:
+        "Pangong Tso Lake, Nubra Valley sand dunes with double-humped camels, and Khardung La Pass.",
+      description:
+        "An exhilarating Himalayan expedition across Ladakh's iconic mountain passes, monasteries, blue lakes, and cold desert valleys.",
+      destinationSlug: "leh-ladakh",
+      durationDays: 6,
+      durationNights: 5,
+      priceFrom: 21999,
+      discountedPrice: 19499,
+      packageType: PackageType.ADVENTURE,
+      inclusions: [
+        "5 Nights Accommodation (Hotels + Luxury Camps)",
+        "Daily Breakfast & Dinner",
+        "Oxygen Cylinder in Cab",
+        "Inner Line Permits",
+        "Private SUV Transportation",
+      ],
+      exclusions: ["Camel ride charges", "Monument fees", "Personal expenses"],
+      featured: true,
+      status: PackageStatus.PUBLISHED,
+      availability: PackageAvailability.AVAILABLE,
+      availableSeats: 10,
+      metaTitle: "Leh Ladakh Adventure Circuit 5N/6D Package | GoYatrio",
+      metaDescription:
+        "Experience Leh Ladakh adventure with GoYatrio. Nubra valley, Pangong Lake, and Khardung La pass.",
+      itineraries: [
+        {
+          dayNumber: 1,
+          title: "Arrival in Leh & Acclimatization",
+          description:
+            "Arrive at Leh Kushok Bakula Airport, complete rest day for altitude acclimatization.",
+          location: "Leh",
+          sortOrder: 0,
+        },
+        {
+          dayNumber: 2,
+          title: "Leh Local Monasteries & Shanti Stupa",
+          description:
+            "Visit Hall of Fame, Magnetic Hill, Gurudwara Pathar Sahib, and Shanti Stupa.",
+          location: "Leh",
+          sortOrder: 1,
+        },
+        {
+          dayNumber: 3,
+          title: "Leh to Nubra Valley via Khardung La (17,582 ft)",
+          description:
+            "Drive across highest motorable pass to Nubra Valley, enjoy double-humped camel ride at Hunder Dunes.",
+          location: "Nubra Valley",
+          sortOrder: 2,
+        },
+        {
+          dayNumber: 4,
+          title: "Nubra Valley to Pangong Tso Lake",
+          description:
+            "Drive along Shyok River to the world-famous blue Pangong Lake, overnight glamping in luxury tents.",
+          location: "Pangong Tso",
+          sortOrder: 3,
+        },
+        {
+          dayNumber: 5,
+          title: "Pangong Lake to Leh via Chang La Pass",
+          description: "Witness sunrise over Pangong Lake, drive back to Leh via Chang La pass.",
+          location: "Leh",
+          sortOrder: 4,
+        },
+        {
+          dayNumber: 6,
+          title: "Departure from Leh",
+          description: "Transfer to Leh airport with unforgettable memories of the Himalayas.",
+          location: "Leh",
+          sortOrder: 5,
+        },
+      ],
+    },
   ];
 
-  const seededAmenities: Record<string, { id: string; name: string }> = {};
-  for (const am of amenitySeeds) {
-    const record = await prisma.hotelAmenity.upsert({
-      where: { name: am.name },
-      update: { icon: am.icon, active: true },
-      create: { name: am.name, icon: am.icon, active: true },
+  for (const pkgSeed of packageSeeds) {
+    const dest = seededDestinations[pkgSeed.destinationSlug];
+    if (!dest) continue;
+    const { itineraries, destinationSlug, ...pkgData } = pkgSeed;
+    void destinationSlug;
+
+    const tourPackage = await prisma.tourPackage.upsert({
+      where: { slug: pkgSeed.slug },
+      update: {
+        ...pkgData,
+        destinationId: dest.id,
+        currency: "INR",
+        galleryImages: [],
+        isActive: true,
+      },
+      create: {
+        ...pkgData,
+        destinationId: dest.id,
+        currency: "INR",
+        galleryImages: [],
+        isActive: true,
+      },
     });
-    seededAmenities[am.name] = record;
+
+    for (const itin of itineraries) {
+      await prisma.itinerary.upsert({
+        where: {
+          packageId_dayNumber: {
+            packageId: tourPackage.id,
+            dayNumber: itin.dayNumber,
+          },
+        },
+        update: {
+          title: itin.title,
+          description: itin.description,
+          location: itin.location,
+          sortOrder: itin.sortOrder,
+        },
+        create: {
+          packageId: tourPackage.id,
+          dayNumber: itin.dayNumber,
+          title: itin.title,
+          description: itin.description,
+          location: itin.location,
+          sortOrder: itin.sortOrder,
+        },
+      });
+    }
   }
 
   // Seed 20 Hotels
@@ -815,7 +1280,14 @@ async function main() {
     const dest = seededDestinations[hSeed.destinationSlug];
     if (!dest) continue;
 
-    const { amenities, roomTypes, ...hData } = hSeed;
+    const { amenities, roomTypes, destinationSlug, ...hData } = hSeed;
+    void destinationSlug;
+
+    const sampleImages = [
+      "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1571896349842-33c89424de2d?auto=format&fit=crop&w=1200&q=80",
+    ];
 
     const createdHotel = await prisma.hotel.upsert({
       where: { slug: hSeed.slug },
@@ -832,70 +1304,37 @@ async function main() {
         starRating: hData.starRating,
         featured: hData.featured,
         status: hData.status,
+        amenities: amenities ?? [],
+        images: sampleImages,
       },
       create: {
         ...hData,
         destinationId: dest.id,
-        amenities: {
-          connect: amenities
-            .filter((aName) => seededAmenities[aName])
-            .map((aName) => ({ id: seededAmenities[aName].id })),
-        },
+        amenities: amenities ?? [],
+        images: sampleImages,
       },
     });
 
     // Create Room Types
     for (const rt of roomTypes) {
-      const existingRoom = await prisma.hotelRoomType.findFirst({
-        where: { hotelId: createdHotel.id, roomName: rt.roomName },
+      const existingRoom = await prisma.roomType.findFirst({
+        where: { hotelId: createdHotel.id, name: rt.roomName },
       });
 
       if (!existingRoom) {
-        await prisma.hotelRoomType.create({
+        await prisma.roomType.create({
           data: {
             hotelId: createdHotel.id,
-            roomName: rt.roomName,
-            roomDescription: rt.roomDescription,
+            name: rt.roomName,
+            description: rt.roomDescription,
             maxGuests: rt.maxGuests,
             bedType: rt.bedType,
             roomSize: rt.roomSize,
             priceFrom: rt.priceFrom,
-            active: true,
+            isActive: true,
           },
         });
       }
-    }
-
-    // Create Sample Hotel Images
-    const existingImage = await prisma.hotelImage.findFirst({
-      where: { hotelId: createdHotel.id },
-    });
-    if (!existingImage) {
-      await prisma.hotelImage.createMany({
-        data: [
-          {
-            hotelId: createdHotel.id,
-            imageUrl:
-              "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1200&q=80",
-            altText: `${createdHotel.name} Exterior View`,
-            sortOrder: 1,
-          },
-          {
-            hotelId: createdHotel.id,
-            imageUrl:
-              "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=1200&q=80",
-            altText: `${createdHotel.name} Luxury Room`,
-            sortOrder: 2,
-          },
-          {
-            hotelId: createdHotel.id,
-            imageUrl:
-              "https://images.unsplash.com/photo-1571896349842-33c89424de2d?auto=format&fit=crop&w=1200&q=80",
-            altText: `${createdHotel.name} Pool and Lounge`,
-            sortOrder: 3,
-          },
-        ],
-      });
     }
   }
 
@@ -918,27 +1357,6 @@ async function main() {
   }
 
   // === Phase 11: Cab Booking System Seeding ===
-  const cabAmenitySeeds = [
-    { name: "Air Conditioning", icon: "Snowflake" },
-    { name: "Music System / Bluetooth", icon: "Music" },
-    { name: "USB Charging Points", icon: "Plug" },
-    { name: "Pushback Recliner Seats", icon: "Armchair" },
-    { name: "Reading Lights", icon: "Lightbulb" },
-    { name: "Large Luggage Space", icon: "Backpack" },
-    { name: "Sunroof", icon: "Sun" },
-    { name: "GPS Navigation", icon: "MapPin" },
-    { name: "Clean & Sanitized Interior", icon: "SprayCan" },
-  ];
-
-  const seededCabAmenities: Record<string, { id: string; name: string }> = {};
-  for (const am of cabAmenitySeeds) {
-    const rec = await prisma.cabAmenity.upsert({
-      where: { name: am.name },
-      update: { icon: am.icon, active: true },
-      create: { name: am.name, icon: am.icon, active: true },
-    });
-    seededCabAmenities[am.name] = rec;
-  }
 
   const cabSeeds = [
     {
@@ -1203,7 +1621,8 @@ async function main() {
 
   for (const cabSeed of cabSeeds) {
     const dest = cabSeed.destinationSlug ? seededDestinations[cabSeed.destinationSlug] : undefined;
-    const { amenities, ...cabData } = cabSeed;
+    const { destinationSlug, ...cabData } = cabSeed;
+    void destinationSlug;
 
     await prisma.vehicle.upsert({
       where: { slug: cabSeed.slug },
@@ -1211,21 +1630,11 @@ async function main() {
         ...cabData,
         isActive: true,
         destinationId: dest?.id ?? null,
-        amenities: {
-          connect: amenities
-            .filter((aName) => seededCabAmenities[aName])
-            .map((aName) => ({ id: seededCabAmenities[aName].id })),
-        },
       },
       create: {
         ...cabData,
         isActive: true,
         destinationId: dest?.id ?? null,
-        amenities: {
-          connect: amenities
-            .filter((aName) => seededCabAmenities[aName])
-            .map((aName) => ({ id: seededCabAmenities[aName].id })),
-        },
       },
     });
   }

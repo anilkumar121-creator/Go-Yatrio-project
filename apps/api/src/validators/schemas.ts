@@ -46,15 +46,19 @@ export const destinationCreateSchema = z.object({
   state: optionalStringField(80),
   country: stringField(80).default("India"),
   featuredImage: optionalStringField(500),
-  galleryimages: z
-    .array(
-      z.object({
-        imageUrl: z.string().url(),
-        altText: z.string().optional(),
-        sortOrder: z.coerce.number().int().optional(),
-      }),
-    )
-    .max(20)
+  galleryImages: z
+    .union([
+      z.array(z.string().trim().max(500)),
+      z
+        .array(
+          z.object({
+            imageUrl: z.string(),
+            altText: z.string().optional(),
+            sortOrder: z.coerce.number().int().optional(),
+          }),
+        )
+        .transform((items) => items.map((i) => i.imageUrl)),
+    ])
     .optional(),
   featured: z.boolean().optional(),
   status: z.enum(DestinationStatus).optional(),
@@ -111,15 +115,19 @@ export const packageCreateSchema = z.object({
   inclusions: z.array(z.string().trim().min(1).max(300)).max(50).optional(),
   exclusions: z.array(z.string().trim().min(1).max(300)).max(50).optional(),
   featuredImage: optionalStringField(500),
-  galleryimages: z
-    .array(
-      z.object({
-        imageUrl: z.string().url(),
-        altText: z.string().optional(),
-        sortOrder: z.coerce.number().int().optional(),
-      }),
-    )
-    .max(20)
+  galleryImages: z
+    .union([
+      z.array(z.string().trim().max(500)),
+      z
+        .array(
+          z.object({
+            imageUrl: z.string(),
+            altText: z.string().optional(),
+            sortOrder: z.coerce.number().int().optional(),
+          }),
+        )
+        .transform((items) => items.map((i) => i.imageUrl)),
+    ])
     .optional(),
   featured: z.boolean().optional(),
   status: z.enum(PackageStatus).optional(),

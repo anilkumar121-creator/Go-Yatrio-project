@@ -1,7 +1,7 @@
 import Image from "next/image";
 import { ImageIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { getOptimizedImageUrl } from "@/lib/media";
+import { getOptimizedImageUrl, isValidImageUrl } from "@/lib/media";
 
 type CardMediaProps = {
   src?: string;
@@ -26,7 +26,8 @@ export function CardMedia({
   aspect = "landscape",
   priority = false,
 }: CardMediaProps) {
-  const optimizedSrc = src ? getOptimizedImageUrl(src, 800) : "";
+  const isSafe = isValidImageUrl(src);
+  const optimizedSrc = isSafe ? getOptimizedImageUrl(src, 800) : "";
 
   return (
     <div

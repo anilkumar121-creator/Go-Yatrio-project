@@ -210,7 +210,7 @@ export default function AdminPackagesPage() {
   const loadDestinations = useCallback(async () => {
     try {
       const data = await apiFetch("/api/admin/destinations?take=100");
-      setDestinations(data.data ?? []);
+      setDestinations(Array.isArray(data) ? data : (data?.data ?? []));
     } catch {
       // Fallback
     }
@@ -231,8 +231,10 @@ export default function AdminPackagesPage() {
       if (statusFilter !== "all") params.set("status", statusFilter);
 
       const data = await apiFetch(`/api/admin/packages?${params.toString()}`);
-      setPackages(data.data ?? []);
-      setTotal(data.total ?? 0);
+      setPackages(Array.isArray(data) ? data : (data?.data ?? []));
+      setTotal(
+        typeof data?.total === "number" ? data.total : Array.isArray(data) ? data.length : 0,
+      );
     } catch (err) {
       setErrorMessage(err instanceof Error ? err.message : "Failed to load packages.");
     } finally {
@@ -360,15 +362,15 @@ export default function AdminPackagesPage() {
           .split("\n")
           .map((s) => s.trim())
           .filter(Boolean),
-        featuredImage: form.featuredImage,
+        featuredImage: form.featuredImage.trim() || undefined,
         galleryImages: form.galleryImages
           .split("\n")
           .map((url) => url.trim())
           .filter(Boolean),
         featured: form.featured,
         status: form.status,
-        metaTitle: form.metaTitle,
-        metaDescription: form.metaDescription,
+        metaTitle: form.metaTitle.trim() || undefined,
+        metaDescription: form.metaDescription.trim() || undefined,
       };
 
       if (editingPackage) {

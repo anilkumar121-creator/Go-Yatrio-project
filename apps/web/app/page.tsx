@@ -350,7 +350,7 @@ export default async function HomePage() {
         title="Discover India With GoYatrio"
         subtitle="Handcrafted tours, hotel bookings, cab services, and unforgettable travel experiences."
         primaryCta={{ label: "Explore Packages", href: "/packages" }}
-        secondaryCta={{ label: "Plan Your Trip", href: "/inquiry" }}
+        secondaryCta={{ label: "Plan Your Trip", href: "/contact" }}
       />
 
       {/* SECTION 2 — QUICK SERVICES */}

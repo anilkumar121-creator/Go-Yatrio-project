@@ -18,6 +18,28 @@ export type MediaResolvable =
     }
   | Record<string, unknown>;
 
+/**
+ * Validates whether a given string is a valid web image URL or relative path.
+ * Rejects local filesystem paths (e.g. D:\..., C:\..., \\...), empty strings, or malformed values.
+ */
+export function isValidImageUrl(url: string | null | undefined): url is string {
+  if (!url || typeof url !== "string") return false;
+  const trimmed = url.trim();
+  if (!trimmed) return false;
+
+  // Reject Windows / DOS drive paths (e.g., "D:\...", "C:/...") or UNC paths ("\\...")
+  if (/^[a-zA-Z]:[\\/]/.test(trimmed) || trimmed.startsWith("\\\\")) {
+    return false;
+  }
+
+  // Accept valid web URLs (http://, https://) or relative web paths starting with /
+  if (trimmed.startsWith("http://") || trimmed.startsWith("https://") || trimmed.startsWith("/")) {
+    return true;
+  }
+
+  return false;
+}
+
 export function featuredUrl(item: MediaResolvable): string | null {
   const record = item as {
     featuredMedia?: ResolvedMedia | null;
@@ -26,13 +48,14 @@ export function featuredUrl(item: MediaResolvable): string | null {
     images?: { imageUrl?: string }[] | null;
   };
 
-  return (
+  const candidate =
     record.featuredMedia?.secureUrl ??
     record.featuredImage ??
     record.image ??
     record.images?.[0]?.imageUrl ??
-    null
-  );
+    null;
+
+  return isValidImageUrl(candidate) ? candidate : null;
 }
 
 export function galleryUrls(item: MediaResolvable): string[] {
@@ -42,11 +65,11 @@ export function galleryUrls(item: MediaResolvable): string[] {
     images?: { imageUrl?: string }[] | null;
   };
 
-  const mediaUrls = (record.galleryMedia ?? []).map((m) => m.secureUrl).filter(Boolean);
+  const mediaUrls = (record.galleryMedia ?? []).map((m) => m.secureUrl).filter(isValidImageUrl);
   const legacyUrls = [
     ...(record.galleryImages ?? []),
     ...(record.images?.map((img) => img.imageUrl) ?? []),
-  ].filter(Boolean) as string[];
+  ].filter(isValidImageUrl) as string[];
 
   if (mediaUrls.length > 0) return mediaUrls;
   return legacyUrls;
@@ -61,7 +84,7 @@ export function getOptimizedImageUrl(
   width?: number,
   height?: number,
 ): string {
-  if (!url) return "";
+  if (!url || !isValidImageUrl(url)) return "";
 
   // Only transform Cloudinary URLs
   if (!url.includes("res.cloudinary.com") || !url.includes("/upload/")) {

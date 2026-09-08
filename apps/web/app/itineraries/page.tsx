@@ -24,10 +24,12 @@ export async function generateMetadata(): Promise<Metadata> {
 
 type ItineraryListItem = {
   id: string;
+  packageId: string;
+  dayNumber: number;
   title: string;
-  slug: string;
-  description: string | null;
-  isDefault: boolean;
+  description: string;
+  location?: string | null;
+  sortOrder?: number;
   package?: {
     id: string;
     title: string;
@@ -40,15 +42,7 @@ type ItineraryListItem = {
       name: string;
     };
   };
-  days: {
-    id: string;
-    dayNumber: number;
-    title: string;
-    city: string | null;
-    hotel: string | null;
-    meals: string | null;
-    activities: { title: string }[];
-  }[];
+  activities?: { id: string; title: string; timing?: string | null }[];
 };
 
 export const revalidate = 300; // 5-minute ISR
@@ -61,7 +55,7 @@ async function getItineraries(): Promise<ItineraryListItem[]> {
     });
     if (!res.ok) return [];
     const payload = await res.json();
-    return payload?.data ?? [];
+    return Array.isArray(payload?.data) ? payload.data : (payload?.data?.data ?? []);
   } catch {
     return [];
   }
@@ -98,84 +92,84 @@ export default async function PublicItinerariesPage() {
             </Card>
           ) : (
             <StaggerContainer className="grid grid-cols-1 gap-6 tablet:grid-cols-2 desktop:grid-cols-3">
-              {itineraries.map((itin) => (
-                <StaggerItem key={itin.id}>
-                  <Card className="flex h-full flex-col justify-between overflow-hidden border border-border p-6 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-md">
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between gap-2">
-                        <Badge variant="accent" className="font-mono text-xs">
-                          {itin.days.length} Days Timeline
-                        </Badge>
-                        {itin.package?.destination?.name ? (
-                          <span className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground">
-                            <MapPin className="size-3.5 text-primary" />
-                            {itin.package.destination.name}
-                          </span>
-                        ) : null}
-                      </div>
+              {itineraries.map((itin) => {
+                const targetHref = itin.package?.slug
+                  ? `/packages/${itin.package.slug}`
+                  : `/itineraries/${itin.id}`;
 
-                      <div>
-                        <h2 className="text-xl font-semibold text-foreground leading-snug hover:text-primary transition-colors">
-                          <Link href={`/itineraries/${itin.slug}`}>{itin.title}</Link>
-                        </h2>
-                        {itin.package?.title ? (
-                          <p className="text-xs font-medium text-primary mt-1">
-                            Package: {itin.package.title}
+                return (
+                  <StaggerItem key={itin.id}>
+                    <Card className="flex h-full flex-col justify-between overflow-hidden border border-border p-6 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-md">
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between gap-2">
+                          <Badge variant="accent" className="font-mono text-xs">
+                            Day {itin.dayNumber} Schedule
+                          </Badge>
+                          {itin.package?.destination?.name ? (
+                            <span className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground">
+                              <MapPin className="size-3.5 text-primary" />
+                              {itin.package.destination.name}
+                            </span>
+                          ) : null}
+                        </div>
+
+                        <div>
+                          <h2 className="text-xl font-semibold text-foreground leading-snug hover:text-primary transition-colors">
+                            <Link href={targetHref}>{itin.title}</Link>
+                          </h2>
+                          {itin.package?.title ? (
+                            <p className="text-xs font-medium text-primary mt-1">
+                              Package: {itin.package.title}
+                            </p>
+                          ) : null}
+                        </div>
+
+                        {itin.description ? (
+                          <p className="text-sm leading-relaxed text-muted-foreground line-clamp-2">
+                            {itin.description}
                           </p>
                         ) : null}
+
+                        {/* Activities Highlights */}
+                        {itin.activities && itin.activities.length > 0 ? (
+                          <div className="space-y-2 border-t border-border pt-4">
+                            <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                              Key Activities:
+                            </span>
+                            <ul className="space-y-1.5 text-xs text-foreground">
+                              {itin.activities.slice(0, 3).map((act) => (
+                                <li key={act.id} className="flex items-center gap-2">
+                                  <span className="text-primary font-bold">•</span>
+                                  <span className="truncate">{act.title}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        ) : null}
                       </div>
 
-                      {itin.description ? (
-                        <p className="text-sm leading-relaxed text-muted-foreground line-clamp-2">
-                          {itin.description}
-                        </p>
-                      ) : null}
-
-                      {/* Timeline Highlights */}
-                      <div className="space-y-2 border-t border-border pt-4">
-                        <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                          Sample Day Schedule:
-                        </span>
-                        <ul className="space-y-1.5 text-xs text-foreground">
-                          {itin.days.slice(0, 3).map((day) => (
-                            <li key={day.id} className="flex items-start gap-2">
-                              <span className="font-bold text-primary shrink-0">
-                                Day {day.dayNumber}:
-                              </span>
-                              <span className="truncate">{day.title}</span>
-                            </li>
-                          ))}
-                          {itin.days.length > 3 ? (
-                            <li className="text-xs font-medium text-muted-foreground italic">
-                              + {itin.days.length - 3} more days planned
-                            </li>
-                          ) : null}
-                        </ul>
+                      <div className="mt-6 flex items-center justify-between border-t border-border pt-4">
+                        {itin.package?.priceFrom ? (
+                          <div>
+                            <span className="block text-xs text-muted-foreground">
+                              Package From
+                            </span>
+                            <Price amount={Number(itin.package.priceFrom)} size="sm" />
+                          </div>
+                        ) : (
+                          <div />
+                        )}
+                        <Button asChild size="sm" variant="outline" className="group">
+                          <Link href={targetHref} className="inline-flex items-center gap-1.5">
+                            View Details
+                            <ArrowRight className="size-3.5 transition-transform duration-200 group-hover:translate-x-1" />
+                          </Link>
+                        </Button>
                       </div>
-                    </div>
-
-                    <div className="mt-6 flex items-center justify-between border-t border-border pt-4">
-                      {itin.package?.priceFrom ? (
-                        <div>
-                          <span className="block text-xs text-muted-foreground">Starting from</span>
-                          <Price amount={Number(itin.package.priceFrom)} size="sm" />
-                        </div>
-                      ) : (
-                        <div />
-                      )}
-                      <Button asChild size="sm" variant="outline" className="group">
-                        <Link
-                          href={`/itineraries/${itin.slug}`}
-                          className="inline-flex items-center gap-1.5"
-                        >
-                          View Timeline
-                          <ArrowRight className="size-3.5 transition-transform duration-200 group-hover:translate-x-1" />
-                        </Link>
-                      </Button>
-                    </div>
-                  </Card>
-                </StaggerItem>
-              ))}
+                    </Card>
+                  </StaggerItem>
+                );
+              })}
             </StaggerContainer>
           )}
         </Container>
