@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Car, Users, Fuel, Snowflake, MapPin, Search, ArrowRight } from "lucide-react";
+import { Car, Users, Fuel, Snowflake, MapPin, Search, ArrowRight, Briefcase } from "lucide-react";
 import { Container } from "@/components/common/container";
 import { SectionTitle } from "@/components/common/section-title";
 import { Card } from "@/components/common/card";
@@ -28,6 +28,9 @@ type DestinationOption = {
   id: string;
   name: string;
   slug: string;
+  country?: string;
+  featuredImage?: string | null;
+  featuredMedia?: { secureUrl: string; altText?: string | null } | null;
 };
 
 type CabCard = {
@@ -37,6 +40,7 @@ type CabCard = {
   vehicleType: string;
   description: string;
   capacity: number;
+  luggageCapacity?: number;
   ac: boolean;
   fuelType: string;
   priceFrom: number;
@@ -47,26 +51,27 @@ type CabCard = {
   destination?: DestinationOption;
 };
 
-const vehicleTypeOptions = [
-  "HATCHBACK",
-  "SEDAN",
-  "SUV",
-  "LUXURY_SUV",
-  "TEMPO_TRAVELLER",
-  "MINI_BUS",
-  "BUS",
-  "LUXURY",
-];
+type LookupItem = {
+  id: string;
+  value: string;
+  label: string;
+  description: string | null;
+  sortOrder: number;
+};
 
-const tripTypeOptions = [
-  { value: "LOCAL", label: "Local Cab" },
-  { value: "AIRPORT_TRANSFER", label: "Airport Transfer" },
-  { value: "RAILWAY_TRANSFER", label: "Railway Transfer" },
-  { value: "OUTSTATION", label: "Outstation Cab" },
-  { value: "ONE_WAY", label: "One Way Cab" },
-  { value: "ROUND_TRIP", label: "Round Trip Cab" },
-  { value: "MULTI_DAY", label: "Multi-Day Cab" },
-];
+async function getLookupItems(groupKey: string): Promise<LookupItem[]> {
+  try {
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+    const res = await fetch(`${baseUrl}/api/lookups/${groupKey}`, {
+      next: { revalidate: 600, tags: ["lookups"] },
+    });
+    if (!res.ok) return [];
+    const payload = await res.json();
+    return payload?.data?.items ?? [];
+  } catch {
+    return [];
+  }
+}
 
 async function getCabs(
   search = "",
@@ -75,10 +80,11 @@ async function getCabs(
   destination = "",
   sort = "newest",
   skip = 0,
+  take = 9,
 ): Promise<{ items: CabCard[]; total: number }> {
   try {
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
-    const params = new URLSearchParams({ take: "9", skip: String(skip) });
+    const params = new URLSearchParams({ take: String(take), skip: String(skip) });
 
     if (search) params.set("search", search);
     if (vehicleType) params.set("vehicleType", vehicleType);
@@ -117,6 +123,7 @@ type Props = {
     destination?: string;
     sort?: string;
     page?: string;
+    dest_filter?: string;
   }>;
 };
 
@@ -130,10 +137,14 @@ export default async function PublicCabsPage({ searchParams }: Props) {
   const sort = params.sort ?? "newest";
   const page = Number(params.page) || 1;
   const skip = (page - 1) * 9;
+  const destFilter = params.dest_filter ?? "all";
 
-  const [result, destinations] = await Promise.all([
-    getCabs(search, vehicleType, tripType, destination, sort, skip),
+  const [result, allDestinations, showcaseCabsRes, vehicleTypes, tripTypes] = await Promise.all([
+    getCabs(search, vehicleType, tripType, destination, sort, skip, 9),
     getDestinations(),
+    getCabs("", "", "", "", "newest", 0, 50),
+    getLookupItems("VEHICLE_TYPE"),
+    getLookupItems("CAB_TRIP_TYPE"),
   ]);
 
   const totalPages = Math.ceil(result.total / 9);
@@ -143,7 +154,16 @@ export default async function PublicCabsPage({ searchParams }: Props) {
   if (vehicleType) baseQuery.set("type", vehicleType);
   if (tripType) baseQuery.set("trip", tripType);
   if (destination) baseQuery.set("destination", destination);
-  if (sort) baseQuery.set("sort", sort);
+  if (sort && sort !== "newest") baseQuery.set("sort", sort);
+
+  const uniqueShowcaseCabs = Array.from(
+    new Map(showcaseCabsRes.items.map((cab) => [cab.vehicleName, cab])).values(),
+  );
+
+  const displayDestinations = allDestinations.filter((d) => {
+    if (destFilter === "domestic") return d.country === "India" || !d.country;
+    return true;
+  });
 
   return (
     <PageWrapper>
@@ -151,7 +171,7 @@ export default async function PublicCabsPage({ searchParams }: Props) {
         <Container>
           <SectionTitle
             title="Cab Rentals & Car Hire"
-            description="From hatchbacks to luxury SUVs and tempo travellers ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â find the perfect cab for local, outstation, airport, and multi-day trips."
+            description="From hatchbacks to luxury SUVs and tempo travellers — find the perfect cab for local, outstation, airport, and multi-day trips."
             align="left"
           />
         </Container>
@@ -179,9 +199,9 @@ export default async function PublicCabsPage({ searchParams }: Props) {
               className="rounded-md border border-input bg-background px-3 py-2 text-sm"
             >
               <option value="">All Vehicle Types</option>
-              {vehicleTypeOptions.map((vt) => (
-                <option key={vt} value={vt}>
-                  {vt}
+              {vehicleTypes.map((vt) => (
+                <option key={vt.value} value={vt.value}>
+                  {vt.label}
                 </option>
               ))}
             </select>
@@ -192,7 +212,7 @@ export default async function PublicCabsPage({ searchParams }: Props) {
               className="rounded-md border border-input bg-background px-3 py-2 text-sm"
             >
               <option value="">All Trip Types</option>
-              {tripTypeOptions.map((trip) => (
+              {tripTypes.map((trip) => (
                 <option key={trip.value} value={trip.value}>
                   {trip.label}
                 </option>
@@ -205,7 +225,7 @@ export default async function PublicCabsPage({ searchParams }: Props) {
               className="rounded-md border border-input bg-background px-3 py-2 text-sm"
             >
               <option value="">All Destinations</option>
-              {destinations.map((d) => (
+              {allDestinations.map((d) => (
                 <option key={d.id} value={d.slug}>
                   {d.name}
                 </option>
@@ -236,8 +256,138 @@ export default async function PublicCabsPage({ searchParams }: Props) {
         </Container>
       </section>
 
-      <section className="py-12 tablet:py-16">
+      {uniqueShowcaseCabs.length > 0 && (
+        <section className="py-12 border-b border-border bg-background">
+          <Container>
+            <SectionTitle
+              title="Choose Your Comfort"
+              description="Explore our wide range of vehicle models, from economical hatchbacks to luxury tempo travellers."
+              align="center"
+            />
+            <div className="mt-8 flex gap-6 overflow-x-auto snap-x snap-mandatory pb-6 scrollbar-hide">
+              {uniqueShowcaseCabs.map((cab) => (
+                <Link
+                  key={cab.id}
+                  href={`/cabs?type=${cab.vehicleType}`}
+                  className="group relative flex min-w-[280px] tablet:min-w-[320px] max-w-[320px] snap-center flex-col overflow-hidden rounded-xl border border-border bg-card transition-all hover:shadow-md"
+                >
+                  <div className="relative aspect-[16/10] overflow-hidden bg-muted">
+                    {cab.featuredMedia?.secureUrl || cab.image ? (
+                      <CardMedia
+                        src={cab.featuredMedia?.secureUrl ?? cab.image ?? ""}
+                        alt={cab.vehicleName}
+                        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center text-muted-foreground bg-primary/10">
+                        <Car className="size-10" />
+                      </div>
+                    )}
+                    <div className="absolute top-3 right-3 bg-black/60 backdrop-blur-sm px-2.5 py-1 rounded-md text-xs font-semibold text-white">
+                      {cab.vehicleType.replace(/_/g, " ")}
+                    </div>
+                  </div>
+                  <div className="p-5">
+                    <h3 className="text-lg font-bold text-foreground group-hover:text-primary transition-colors line-clamp-1">
+                      {cab.vehicleName}
+                    </h3>
+                    <div className="mt-3 flex items-center gap-4 text-sm text-muted-foreground">
+                      <span className="flex items-center gap-1.5">
+                        <Users className="size-4 text-primary" />
+                        {cab.capacity} Seats
+                      </span>
+                      <span className="flex items-center gap-1.5">
+                        <Briefcase className="size-4 text-primary" />
+                        {cab.luggageCapacity ?? 2} Bags
+                      </span>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </Container>
+        </section>
+      )}
+
+      {allDestinations.length > 0 && (
+        <section className="py-12 border-b border-border bg-background">
+          <Container>
+            <div className="mb-8 flex flex-col items-center justify-between gap-6 tablet:flex-row">
+              <SectionTitle
+                title="Explore Destinations"
+                description="Book a cab for these popular destinations."
+                align="left"
+              />
+
+              <div className="flex items-center gap-2 rounded-full border border-border p-1 bg-muted/30 overflow-x-auto max-w-full scrollbar-hide shrink-0">
+                <Link
+                  href="/cabs?dest_filter=all"
+                  scroll={false}
+                  className={`whitespace-nowrap rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${destFilter === "all" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground hover:bg-muted"}`}
+                >
+                  All
+                </Link>
+                <Link
+                  href="/cabs?dest_filter=domestic"
+                  scroll={false}
+                  className={`whitespace-nowrap rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${destFilter === "domestic" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground hover:bg-muted"}`}
+                >
+                  Domestic
+                </Link>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 tablet:gap-4 tablet:grid-cols-3 desktop:grid-cols-4 lg:grid-cols-6">
+              {displayDestinations.slice(0, 12).map((dest) => (
+                <Link
+                  key={dest.id}
+                  href={`/cabs?destination=${dest.slug}`}
+                  className="group relative flex aspect-[4/5] w-full flex-col overflow-hidden rounded-2xl bg-muted"
+                >
+                  {dest.featuredMedia?.secureUrl || dest.featuredImage ? (
+                    <CardMedia
+                      src={dest.featuredMedia?.secureUrl ?? dest.featuredImage ?? ""}
+                      alt={dest.name}
+                      className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+                    />
+                  ) : (
+                    <div className="absolute inset-0 flex items-center justify-center bg-primary/10">
+                      <MapPin className="size-8 text-primary/40" />
+                    </div>
+                  )}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent transition-opacity group-hover:from-black/90" />
+                  <div className="relative mt-auto p-4 text-center">
+                    <h3 className="text-sm font-bold text-white tablet:text-base line-clamp-2">
+                      {dest.name}
+                    </h3>
+                  </div>
+                </Link>
+              ))}
+              {displayDestinations.length === 0 && (
+                <div className="col-span-full py-8 text-center text-sm text-muted-foreground">
+                  No destinations found for this category.
+                </div>
+              )}
+            </div>
+          </Container>
+        </section>
+      )}
+
+      <section className="py-12 tablet:py-16 bg-primary/5">
         <Container>
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
+            <SectionTitle
+              title="Our Cab Fleet"
+              description="Choose from our wide range of well-maintained vehicles for your next journey."
+              align="left"
+            />
+            {search || vehicleType || tripType || destination || sort !== "newest" ? (
+              <Button asChild variant="outline" className="shrink-0">
+                <Link href="/cabs">View All Fleet</Link>
+              </Button>
+            ) : null}
+          </div>
+
           {result.items.length === 0 ? (
             <Card className="p-12 text-center">
               <Car className="mx-auto size-12 text-muted-foreground/50 mb-4" />
@@ -251,13 +401,13 @@ export default async function PublicCabsPage({ searchParams }: Props) {
               <StaggerContainer className="grid grid-cols-1 gap-6 tablet:grid-cols-2 desktop:grid-cols-3">
                 {result.items.map((cab) => (
                   <StaggerItem key={cab.id}>
-                    <Card className="group overflow-hidden border border-border bg-card shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-md">
-                      <div className="relative aspect-[16/10]">
-                        {(cab.featuredMedia?.secureUrl ?? cab.image) ? (
+                    <Card className="group flex h-full flex-col overflow-hidden border border-border bg-card shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-md">
+                      <div className="relative aspect-[16/10] overflow-hidden">
+                        {cab.featuredMedia?.secureUrl || cab.image ? (
                           <CardMedia
                             src={cab.featuredMedia?.secureUrl ?? cab.image ?? ""}
                             alt={cab.vehicleName}
-                            className="h-full w-full"
+                            className="h-full w-full transition-transform duration-500 group-hover:scale-105"
                           />
                         ) : (
                           <div className="flex h-full w-full items-center justify-center bg-primary/10 text-primary">
@@ -265,71 +415,63 @@ export default async function PublicCabsPage({ searchParams }: Props) {
                           </div>
                         )}
                         {cab.featured ? (
-                          <Badge variant="accent" className="absolute left-3 top-3">
+                          <Badge variant="accent" className="absolute left-3 top-3 shadow-sm">
                             Featured
                           </Badge>
                         ) : null}
                         <span className="absolute right-3 top-3 rounded-md bg-black/60 px-2.5 py-1 text-xs font-semibold text-white backdrop-blur-sm">
-                          {cab.vehicleType}
+                          {cab.vehicleType.replace(/_/g, " ")}
                         </span>
                       </div>
 
-                      <div className="p-5 space-y-3">
-                        <div>
-                          <h2 className="text-lg font-semibold text-foreground leading-snug hover:text-primary transition-colors">
+                      <div className="flex flex-col flex-1 p-5">
+                        <div className="mb-4">
+                          <h2 className="text-lg font-bold text-foreground leading-snug hover:text-primary transition-colors line-clamp-1">
                             <Link href={`/cabs/${cab.slug}`}>{cab.vehicleName}</Link>
                           </h2>
-                          <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
+                          <p className="mt-1.5 flex items-center gap-1.5 text-xs text-muted-foreground">
                             <MapPin className="size-3.5 text-primary" />
-                            {cab.destination?.name ?? "All Destinations"}
+                            <span className="line-clamp-1">
+                              {cab.destination?.name ?? "Available in All Destinations"}
+                            </span>
                           </p>
                         </div>
 
-                        <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
-                          {cab.description}
-                        </p>
-
-                        <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
-                          <span className="flex items-center gap-1">
+                        <div className="grid grid-cols-2 gap-3 mb-4 text-xs font-medium text-muted-foreground">
+                          <span className="flex items-center gap-1.5">
                             <Users className="size-3.5 text-primary" />
-                            {cab.capacity} seats
+                            {cab.capacity} Seats
                           </span>
-                          <span className="flex items-center gap-1">
+                          <span className="flex items-center gap-1.5">
+                            <Briefcase className="size-3.5 text-primary" />
+                            {cab.luggageCapacity ?? 2} Luggage
+                          </span>
+                          <span className="flex items-center gap-1.5">
                             <Fuel className="size-3.5 text-primary" />
                             {cab.fuelType}
                           </span>
                           {cab.ac ? (
-                            <span className="flex items-center gap-1 text-sky-600">
+                            <span className="flex items-center gap-1.5 text-sky-600">
                               <Snowflake className="size-3.5" />
-                              AC
+                              AC Available
                             </span>
                           ) : null}
                         </div>
 
-                        {cab.tripTypes.length > 0 ? (
-                          <div className="flex flex-wrap gap-1.5">
-                            {cab.tripTypes.slice(0, 3).map((trip) => (
-                              <Badge
-                                key={trip}
-                                variant="outline"
-                                className="text-[11px] font-normal"
-                              >
-                                {trip}
-                              </Badge>
-                            ))}
-                          </div>
-                        ) : null}
-
-                        <div className="flex items-center justify-between border-t border-border pt-3">
-                          <div>
-                            <span className="block text-[11px] text-muted-foreground">
+                        <div className="mt-auto pt-4 border-t border-border flex items-center justify-between">
+                          <div className="flex flex-col">
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
                               Starting from
                             </span>
-                            <Price amount={Number(cab.priceFrom)} size="sm" />
+                            <Price
+                              amount={Number(cab.priceFrom)}
+                              size="md"
+                              className="text-primary font-bold"
+                            />
                           </div>
-                          <Button asChild size="sm" variant="outline" className="gap-1 group/btn">
+                          <Button asChild size="sm" className="gap-1.5 font-semibold group/btn">
                             <Link href={`/cabs/${cab.slug}`}>
-                              View Cab
+                              Book Taxi
                               <ArrowRight className="size-3.5 transition-transform duration-200 group-hover/btn:translate-x-1" />
                             </Link>
                           </Button>

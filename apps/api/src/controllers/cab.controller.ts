@@ -1,11 +1,12 @@
-import type { Request, Response } from "express";
-import { CabStatus, CabTripType, VehicleType } from "../db.js";
+import type { Request, Response, NextFunction } from "express";
+import { CabStatus, CabTripType, VehicleType, prisma } from "../db.js";
 import { cabService } from "../services/cab.service.js";
 import {
   cabCreateSchema,
   cabInquiryCreateSchema,
   cabStatusSchema,
   cabUpdateSchema,
+  fareCalculateRequestSchema,
 } from "../validators/schemas.js";
 
 function getParam(param: string | string[] | undefined): string {
@@ -109,6 +110,53 @@ export async function submitCabInquiry(req: Request, res: Response) {
     message: "Cab inquiry submitted successfully. Our team will contact you shortly.",
     data: inquiry,
   });
+}
+
+export async function calculateFare(req: Request, res: Response, next: NextFunction) {
+  try {
+    const { origin, destination, distanceKm, categoryId, tripTypeId } =
+      fareCalculateRequestSchema.parse(req.body);
+
+    // Try finding exact RoutePricing match
+    const exactRoute = await prisma.routePricing.findFirst({
+      where: {
+        origin: { equals: origin, mode: "insensitive" },
+        destination: { equals: destination, mode: "insensitive" },
+        categoryId,
+        isActive: true,
+      },
+    });
+
+    let fare = 0;
+    if (exactRoute) {
+      fare = Number(exactRoute.basePrice);
+    } else {
+      // Find a typical vehicle of this category
+      const vehicle = await prisma.vehicle.findFirst({
+        where: { categoryId, isActive: true },
+      });
+      if (vehicle && distanceKm) {
+        fare = Number(vehicle.baseFare) + Number(distanceKm) * Number(vehicle.extraKmCharge);
+      } else {
+        return res
+          .status(404)
+          .json({ success: false, error: "Route pricing not configured for this selection" });
+      }
+    }
+
+    res.json({
+      success: true,
+      data: {
+        fare,
+        origin,
+        destination,
+        categoryId,
+        tripTypeId,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
 }
 
 export async function adminListCabs(req: Request, res: Response) {

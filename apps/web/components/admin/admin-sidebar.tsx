@@ -28,10 +28,13 @@ export const adminNavItems = [
   { name: "Itineraries", href: "/admin/itineraries", icon: Calendar },
   { name: "Hotels", href: "/admin/hotels", icon: Hotel },
   { name: "Cabs", href: "/admin/cabs", icon: Car },
+  { name: "Cab Bookings", href: "/admin/cab-bookings", icon: Calendar },
+  { name: "Route Pricing", href: "/admin/route-pricing", icon: MapPin },
   { name: "Blogs", href: "/admin/blogs", icon: FileText },
   { name: "Media", href: "/admin/media", icon: ImageIcon },
   { name: "Inquiries", href: "/admin/inquiries", icon: MessageSquare },
   { name: "Settings", href: "/admin/settings", icon: Settings },
+  { name: "Payment Configs", href: "/admin/payment-configs", icon: Settings },
   { name: "Lookup Tables", href: "/admin/settings/lookups", icon: ListChecks },
   { name: "SEO Settings", href: "/admin/settings/seo", icon: Globe },
 ];

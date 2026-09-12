@@ -1,22 +1,29 @@
 "use client";
 
 import { useState } from "react";
-import { CalendarDays, Mail, MessageSquare, Phone, User, Users, CheckCircle2, MapPin } from "lucide-react";
+import {
+  CalendarDays,
+  Mail,
+  MessageSquare,
+  Phone,
+  User,
+  Users,
+  CheckCircle2,
+  MapPin,
+} from "lucide-react";
 import { Button } from "@/components/common/button";
 import { Input } from "@/components/common/input";
 import { Textarea } from "@/components/common/textarea";
 import { Label } from "@/components/common/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/common/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/common/select";
 
-const tripTypeOptions = [
-  { value: "LOCAL", label: "Local Cab" },
-  { value: "AIRPORT_TRANSFER", label: "Airport Transfer" },
-  { value: "RAILWAY_TRANSFER", label: "Railway Transfer" },
-  { value: "OUTSTATION", label: "Outstation Cab" },
-  { value: "ONE_WAY", label: "One Way Cab" },
-  { value: "ROUND_TRIP", label: "Round Trip Cab" },
-  { value: "MULTI_DAY", label: "Multi-Day Cab" },
-];
+import { useLookups } from "@/lib/use-lookups";
 
 type CabInquiryFormProps = {
   cabId: string;
@@ -25,8 +32,11 @@ type CabInquiryFormProps = {
 };
 
 export function CabInquiryForm({ cabId, cabName, destinationName }: CabInquiryFormProps) {
+  const { options } = useLookups(["CAB_TRIP_TYPE"]);
+  const tripTypeOptions = options.CAB_TRIP_TYPE || [];
+
   const [formData, setFormData] = useState({
-    tripType: "LOCAL",
+    tripType: "",
     customerName: "",
     email: "",
     phone: "",
@@ -80,7 +90,8 @@ export function CabInquiryForm({ cabId, cabName, destinationName }: CabInquiryFo
         <CheckCircle2 className="mx-auto size-10 text-success" />
         <h4 className="mt-3 text-lg font-semibold text-foreground">Inquiry Sent Successfully!</h4>
         <p className="mt-1 text-sm text-muted-foreground">
-          Thank you, {formData.customerName}. Our cab expert will contact you shortly regarding {cabName}.
+          Thank you, {formData.customerName}. Our cab expert will contact you shortly regarding{" "}
+          {cabName}.
         </p>
       </div>
     );
@@ -96,21 +107,30 @@ export function CabInquiryForm({ cabId, cabName, destinationName }: CabInquiryFo
 
       <div className="grid grid-cols-1 gap-3">
         <div className="space-y-1.5">
-          <Label htmlFor="cab-inquiry-type" className="text-xs">Trip Type *</Label>
-          <Select value={formData.tripType} onValueChange={(value) => handleChange("tripType", value)}>
+          <Label htmlFor="cab-inquiry-type" className="text-xs">
+            Trip Type *
+          </Label>
+          <Select
+            value={formData.tripType}
+            onValueChange={(value) => handleChange("tripType", value)}
+          >
             <SelectTrigger id="cab-inquiry-type" className="h-10">
               <SelectValue placeholder="Select Trip Type" />
             </SelectTrigger>
             <SelectContent>
-              {tripTypeOptions.map((trip) => (
-                <SelectItem key={trip.value} value={trip.value}>{trip.label}</SelectItem>
+              {tripTypeOptions.map((trip: { value: string; label: string }) => (
+                <SelectItem key={trip.value} value={trip.value}>
+                  {trip.label}
+                </SelectItem>
               ))}
             </SelectContent>
           </Select>
         </div>
 
         <div className="space-y-1.5">
-          <Label htmlFor="cab-inquiry-name" className="text-xs">Full Name *</Label>
+          <Label htmlFor="cab-inquiry-name" className="text-xs">
+            Full Name *
+          </Label>
           <div className="relative">
             <User className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
             <Input
@@ -126,7 +146,9 @@ export function CabInquiryForm({ cabId, cabName, destinationName }: CabInquiryFo
 
         <div className="grid grid-cols-1 tablet:grid-cols-2 gap-3">
           <div className="space-y-1.5">
-            <Label htmlFor="cab-inquiry-email" className="text-xs">Email *</Label>
+            <Label htmlFor="cab-inquiry-email" className="text-xs">
+              Email *
+            </Label>
             <div className="relative">
               <Mail className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
               <Input
@@ -142,7 +164,9 @@ export function CabInquiryForm({ cabId, cabName, destinationName }: CabInquiryFo
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="cab-inquiry-phone" className="text-xs">Phone *</Label>
+            <Label htmlFor="cab-inquiry-phone" className="text-xs">
+              Phone *
+            </Label>
             <div className="relative">
               <Phone className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
               <Input
@@ -159,7 +183,9 @@ export function CabInquiryForm({ cabId, cabName, destinationName }: CabInquiryFo
 
         <div className="grid grid-cols-1 tablet:grid-cols-2 gap-3">
           <div className="space-y-1.5">
-            <Label htmlFor="cab-inquiry-pickup" className="text-xs">Pickup Location</Label>
+            <Label htmlFor="cab-inquiry-pickup" className="text-xs">
+              Pickup Location
+            </Label>
             <div className="relative">
               <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
               <Input
@@ -173,7 +199,9 @@ export function CabInquiryForm({ cabId, cabName, destinationName }: CabInquiryFo
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="cab-inquiry-drop" className="text-xs">Drop Location</Label>
+            <Label htmlFor="cab-inquiry-drop" className="text-xs">
+              Drop Location
+            </Label>
             <div className="relative">
               <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
               <Input
@@ -189,7 +217,9 @@ export function CabInquiryForm({ cabId, cabName, destinationName }: CabInquiryFo
 
         <div className="grid grid-cols-1 tablet:grid-cols-2 gap-3">
           <div className="space-y-1.5">
-            <Label htmlFor="cab-inquiry-date" className="text-xs">Travel Date</Label>
+            <Label htmlFor="cab-inquiry-date" className="text-xs">
+              Travel Date
+            </Label>
             <div className="relative">
               <CalendarDays className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
               <Input
@@ -203,7 +233,9 @@ export function CabInquiryForm({ cabId, cabName, destinationName }: CabInquiryFo
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="cab-inquiry-return" className="text-xs">Return Date (Round Trip / Multi-Day)</Label>
+            <Label htmlFor="cab-inquiry-return" className="text-xs">
+              Return Date (Round Trip / Multi-Day)
+            </Label>
             <div className="relative">
               <CalendarDays className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
               <Input
@@ -218,7 +250,9 @@ export function CabInquiryForm({ cabId, cabName, destinationName }: CabInquiryFo
         </div>
 
         <div className="space-y-1.5">
-          <Label htmlFor="cab-inquiry-guests" className="text-xs">Number of Passengers</Label>
+          <Label htmlFor="cab-inquiry-guests" className="text-xs">
+            Number of Passengers
+          </Label>
           <div className="relative">
             <Users className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
             <Input
@@ -234,7 +268,9 @@ export function CabInquiryForm({ cabId, cabName, destinationName }: CabInquiryFo
         </div>
 
         <div className="space-y-1.5">
-          <Label htmlFor="cab-inquiry-message" className="text-xs">Message / Special Requests</Label>
+          <Label htmlFor="cab-inquiry-message" className="text-xs">
+            Message / Special Requests
+          </Label>
           <div className="relative">
             <MessageSquare className="absolute left-3 top-3 size-4 text-muted-foreground" />
             <Textarea
@@ -253,7 +289,8 @@ export function CabInquiryForm({ cabId, cabName, destinationName }: CabInquiryFo
         {isSubmitting ? "Submitting Inquiry..." : "Send Cab Inquiry"}
       </Button>
       <p className="text-center text-[11px] text-muted-foreground">
-        {destinationName ? `Serving ${destinationName} and nearby routes. ` : ""}Our team responds within 30 minutes.
+        {destinationName ? `Serving ${destinationName} and nearby routes. ` : ""}Our team responds
+        within 30 minutes.
       </p>
     </form>
   );

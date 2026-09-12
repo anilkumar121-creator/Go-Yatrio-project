@@ -2294,6 +2294,143 @@ async function main() {
   }
 
   console.log(`Phase 15 Seed complete. Lookup groups and items seeded.`);
+
+  // === Phase 21: Cab Booking Foundation Seeding ===
+  const phase21Lookups = [
+    {
+      key: "CAB_TRIP_TYPE",
+      name: "Cab Trip Types",
+      items: [
+        { label: "Local", value: "LOCAL" },
+        { label: "Airport Transfer", value: "AIRPORT_TRANSFER" },
+        { label: "Railway Transfer", value: "RAILWAY_TRANSFER" },
+        { label: "Outstation", value: "OUTSTATION" },
+        { label: "One Way", value: "ONE_WAY" },
+        { label: "Round Trip", value: "ROUND_TRIP" },
+        { label: "Multi Day", value: "MULTI_DAY" },
+      ],
+    },
+    {
+      key: "DESTINATION_CATEGORY",
+      name: "Destination Categories",
+      items: [
+        { label: "Domestic", value: "DOMESTIC" },
+        { label: "Weekend", value: "WEEKEND" },
+        { label: "Honeymoon", value: "HONEYMOON" },
+      ],
+    },
+  ];
+
+  for (const groupSeed of phase21Lookups) {
+    const group = await prisma.lookupGroup.upsert({
+      where: { key: groupSeed.key },
+      update: { name: groupSeed.name },
+      create: { key: groupSeed.key, name: groupSeed.name },
+    });
+
+    for (let i = 0; i < groupSeed.items.length; i++) {
+      const item = groupSeed.items[i];
+      await prisma.lookupItem.upsert({
+        where: { groupId_value: { groupId: group.id, value: item.value } },
+        update: { label: item.label, sortOrder: i },
+        create: {
+          groupId: group.id,
+          label: item.label,
+          value: item.value,
+          sortOrder: i,
+          isActive: true,
+        },
+      });
+    }
+  }
+
+  // Seed Payment Configs
+  const paymentConfigs = [
+    { label: "20% Advance", advancePercent: 20.0, isDefault: true, isActive: true },
+    { label: "50% Advance", advancePercent: 50.0, isDefault: false, isActive: true },
+    { label: "100% Full Payment", advancePercent: 100.0, isDefault: false, isActive: true },
+  ];
+
+  for (const config of paymentConfigs) {
+    const exists = await prisma.paymentConfiguration.findFirst({ where: { label: config.label } });
+    if (!exists) {
+      await prisma.paymentConfiguration.create({
+        data: config,
+      });
+    }
+  }
+
+  // Migrate Vehicles to LookupItems
+  const allVehicles = await prisma.vehicle.findMany({
+    include: { category: true, tripTypeItems: true },
+  });
+  const vtGroup = await prisma.lookupGroup.findUnique({
+    where: { key: "VEHICLE_TYPE" },
+    include: { items: true },
+  });
+  const ttGroup = await prisma.lookupGroup.findUnique({
+    where: { key: "CAB_TRIP_TYPE" },
+    include: { items: true },
+  });
+
+  if (vtGroup && ttGroup) {
+    for (const v of allVehicles) {
+      const vCatItem = vtGroup.items.find((i) => i.value === v.vehicleType);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const ttItems = ttGroup.items.filter((i) => v.tripTypes.includes(i.value as any));
+
+      await prisma.vehicle.update({
+        where: { id: v.id },
+        data: {
+          categoryId: vCatItem ? vCatItem.id : undefined,
+          tripTypeItems: {
+            connect: ttItems.map((tti) => ({ id: tti.id })),
+          },
+        },
+      });
+    }
+  }
+
+  // Seed some dummy RoutePricing
+  if (vtGroup) {
+    const hatchback = vtGroup.items.find((i) => i.value === "HATCHBACK");
+    const sedan = vtGroup.items.find((i) => i.value === "SEDAN");
+    if (hatchback && sedan) {
+      const routes = [
+        {
+          origin: "Delhi",
+          destination: "Agra",
+          distanceKm: 233,
+          categoryId: hatchback.id,
+          basePrice: 2500,
+        },
+        {
+          origin: "Delhi",
+          destination: "Agra",
+          distanceKm: 233,
+          categoryId: sedan.id,
+          basePrice: 3000,
+        },
+        {
+          origin: "Mumbai",
+          destination: "Pune",
+          distanceKm: 150,
+          categoryId: hatchback.id,
+          basePrice: 1800,
+        },
+      ];
+      for (const r of routes) {
+        const existingRoute = await prisma.routePricing.findFirst({
+          where: { origin: r.origin, destination: r.destination, categoryId: r.categoryId },
+        });
+        if (!existingRoute) {
+          await prisma.routePricing.create({ data: r });
+        }
+      }
+    }
+  }
+
+  console.log(`Phase 21 Seed complete. Cab Booking Foundation records seeded.`);
 }
 
 main()

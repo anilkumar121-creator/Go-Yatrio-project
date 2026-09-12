@@ -265,6 +265,7 @@ export const cabCreateSchema = z.object({
   vehicleName: stringField(140),
   slug: slugSchema.optional(),
   vehicleType: z.enum(VehicleType),
+  categoryId: optionalStringField(120),
   description: stringField(1000),
   capacity: z.coerce.number().int().positive().max(50),
   luggageCapacity: z.coerce.number().int().min(0).max(20),
@@ -288,6 +289,7 @@ export const cabCreateSchema = z.object({
     .max(20)
     .optional(),
   tripTypes: z.array(z.enum(CabTripType)).min(1),
+  tripTypeIds: z.array(z.string().min(1)).optional(),
   featured: z.boolean().optional(),
   status: z.enum(CabStatus).optional(),
   destinationId: optionalStringField(120),
@@ -316,6 +318,64 @@ export const cabInquiryCreateSchema = z.object({
 });
 
 export const cabInquiryUpdateSchema = cabInquiryCreateSchema.partial();
+
+// Phase 21: Cab Booking Foundation Schemas
+export const routePricingCreateSchema = z.object({
+  origin: stringField(120),
+  destination: stringField(120),
+  distanceKm: z.coerce.number().positive(),
+  categoryId: z.string().min(1),
+  basePrice: moneySchema,
+  isActive: z.boolean().optional(),
+});
+
+export const routePricingUpdateSchema = routePricingCreateSchema.partial();
+
+export const paymentConfigurationCreateSchema = z.object({
+  label: stringField(120),
+  advancePercent: z.coerce.number().min(0).max(100),
+  isDefault: z.boolean().optional(),
+  isActive: z.boolean().optional(),
+});
+
+export const paymentConfigurationUpdateSchema = paymentConfigurationCreateSchema.partial();
+
+export const fareCalculateRequestSchema = z.object({
+  origin: stringField(120),
+  destination: stringField(120),
+  distanceKm: z.coerce.number().positive().optional(),
+  categoryId: z.string().min(1),
+  tripTypeId: z.string().min(1),
+  passengers: z.coerce.number().int().positive(),
+});
+
+export const cabBookingCreateSchema = z.object({
+  userId: optionalStringField(120),
+  vehicleId: z.string().min(1),
+  routePricingId: optionalStringField(120),
+  pickupLocation: stringField(200),
+  dropLocation: stringField(200),
+  distanceKm: z.coerce.number().positive().optional(),
+  pickupDate: z.coerce.date(),
+  pickupTime: optionalStringField(20),
+  passengers: z.coerce.number().int().positive(),
+  luggageCount: z.coerce.number().int().min(0).optional(),
+  tripType: stringField(120),
+  vehicleCategory: stringField(120),
+  calculatedFare: moneySchema,
+  advanceAmount: moneySchema,
+  remainingAmount: moneySchema,
+  customerName: stringField(120),
+  customerEmail: z.string().email().max(255),
+  customerPhone: stringField(30),
+  notes: optionalStringField(2000),
+});
+
+export const cabBookingUpdateSchema = cabBookingCreateSchema.partial();
+
+export const cabBookingStatusSchema = z.object({
+  status: z.enum(["PENDING", "CONFIRMED", "COMPLETED", "CANCELLED"]),
+});
 
 // Travel inquiry (legacy)
 export const travelInquiryCreateSchema = z.object({

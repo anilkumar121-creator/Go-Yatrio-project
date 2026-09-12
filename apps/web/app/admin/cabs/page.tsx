@@ -113,27 +113,6 @@ const emptyForm: VehicleForm = {
   metaDescription: "",
 };
 
-const vehicleTypeOptions = [
-  "HATCHBACK",
-  "SEDAN",
-  "SUV",
-  "LUXURY_SUV",
-  "TEMPO_TRAVELLER",
-  "MINI_BUS",
-  "BUS",
-  "LUXURY",
-];
-
-const tripTypeOptions = [
-  { value: "LOCAL", label: "Local Cab" },
-  { value: "AIRPORT_TRANSFER", label: "Airport Transfer" },
-  { value: "RAILWAY_TRANSFER", label: "Railway Transfer" },
-  { value: "OUTSTATION", label: "Outstation Cab" },
-  { value: "ONE_WAY", label: "One Way Cab" },
-  { value: "ROUND_TRIP", label: "Round Trip Cab" },
-  { value: "MULTI_DAY", label: "Multi-Day Cab" },
-];
-
 const defaultAmenityOptions = [
   "Air Conditioning",
   "Music System / Bluetooth",
@@ -188,7 +167,7 @@ export default function AdminCabsPage() {
   const [deleteTarget, setDeleteTarget] = useState<VehicleItem | null>(null);
   const [deleting, setDeleting] = useState(false);
 
-  const { options: cabLookupOptions } = useLookups(["VEHICLE_TYPE", "FUEL_TYPE"], {
+  const { options: cabLookupOptions } = useLookups(["VEHICLE_TYPE", "FUEL_TYPE", "CAB_TRIP_TYPE"], {
     VEHICLE_TYPE: [
       "HATCHBACK",
       "SEDAN",
@@ -200,6 +179,15 @@ export default function AdminCabsPage() {
       "LUXURY",
     ],
     FUEL_TYPE: ["PETROL", "DIESEL", "CNG", "ELECTRIC"],
+    CAB_TRIP_TYPE: [
+      "LOCAL",
+      "AIRPORT_TRANSFER",
+      "RAILWAY_TRANSFER",
+      "OUTSTATION",
+      "ONE_WAY",
+      "ROUND_TRIP",
+      "MULTI_DAY",
+    ],
   });
 
   const loadDestinations = useCallback(async () => {
@@ -432,9 +420,9 @@ export default function AdminCabsPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Types</SelectItem>
-                {vehicleTypeOptions.map((vt) => (
-                  <SelectItem key={vt} value={vt}>
-                    {vt}
+                {(cabLookupOptions.VEHICLE_TYPE ?? []).map((vt) => (
+                  <SelectItem key={vt.value} value={vt.value}>
+                    {vt.label}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -845,7 +833,7 @@ export default function AdminCabsPage() {
                 <div className="space-y-2 tablet:col-span-2 border-t border-border pt-4">
                   <Label className="font-semibold">Available Trip Types</Label>
                   <div className="grid grid-cols-2 gap-2 tablet:grid-cols-3">
-                    {tripTypeOptions.map((trip) => (
+                    {(cabLookupOptions.CAB_TRIP_TYPE ?? []).map((trip) => (
                       <label
                         key={trip.value}
                         className="flex items-center gap-2 text-xs text-foreground cursor-pointer"

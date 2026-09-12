@@ -15,6 +15,7 @@ import {
   updateCab,
   updateCabFeatured,
   updateCabStatus,
+  calculateFare,
 } from "../controllers/cab.controller.js";
 
 import { publicCacheControl } from "../middleware/cache-control.js";
@@ -24,6 +25,7 @@ export const cabsRouter = Router();
 // Public Cab Routes
 cabsRouter.get("/", publicCacheControl(300, 600), listCabs);
 cabsRouter.get("/search", publicCacheControl(180, 360), searchCabs);
+cabsRouter.post("/calculate-fare", calculateFare);
 cabsRouter.get("/featured", publicCacheControl(300, 600), getFeaturedCabs);
 cabsRouter.get("/destination/:slug", publicCacheControl(300, 600), getCabsByDestination);
 cabsRouter.get("/:slug", publicCacheControl(300, 600), getCabBySlug);

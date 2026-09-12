@@ -91,6 +91,20 @@ enum CabInquiryStatus {
   CLOSED
 }
 
+enum PaymentStatus {
+  PENDING
+  SUCCESS
+  FAILED
+  REFUNDED
+}
+
+enum CabBookingStatus {
+  PENDING
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+}
+
 enum BlogStatus {
   DRAFT
   PUBLISHED
@@ -206,6 +220,7 @@ model User {
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
   refreshTokens RefreshToken[]
+  cabBookings   CabBooking[]
 
   @@map("users")
 }
@@ -242,6 +257,7 @@ model Destination {
   isActive         Boolean           @default(true)
   createdAt        DateTime          @default(now())
   updatedAt        DateTime          @updatedAt
+  categories       LookupItem[]      @relation("DestinationCategories")
   packages         TourPackage[]
   hotels           Hotel[]
   vehicles         Vehicle[]
@@ -426,11 +442,15 @@ model Vehicle {
   amenities       String[]
   metaTitle       String?
   metaDescription String?
+  categoryId      String?
+  category        LookupItem?   @relation("VehicleCategory", fields: [categoryId], references: [id], onDelete: SetNull)
+  tripTypeItems   LookupItem[]  @relation("VehicleTripTypes")
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
   destination     Destination?  @relation(fields: [destinationId], references: [id], onDelete: SetNull, onUpdate: Cascade)
   packages        TourPackage[]
   inquiries       CabInquiry[]
+  cabBookings     CabBooking[]
 
   @@index([vehicleType, status, isActive])
   @@index([status, isActive, priceFrom])
@@ -644,6 +664,11 @@ model LookupItem {
   updatedAt   DateTime    @updatedAt
   group       LookupGroup @relation(fields: [groupId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
+  vehiclesAsCategory Vehicle[] @relation("VehicleCategory")
+  vehiclesAsTripType Vehicle[] @relation("VehicleTripTypes")
+  routePricings      RoutePricing[]
+  destinations       Destination[] @relation("DestinationCategories")
+
   @@unique([groupId, value])
   @@index([groupId, isActive])
   @@map("lookup_items")
@@ -766,4 +791,97 @@ model InquiryAssignment {
   @@index([inquiryId])
   @@index([assignedTo])
   @@map("inquiry_assignments")
+}
+
+// Phase 21: Cab Booking Foundation
+model PaymentConfiguration {
+  id              String   @id @default(cuid())
+  label           String
+  advancePercent  Decimal  @db.Decimal(5, 2)
+  isDefault       Boolean  @default(false)
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("payment_configurations")
+}
+
+model Payment {
+  id                   String        @id @default(cuid())
+  bookingId            String        @unique
+  paymentReference     String?       @unique
+  amount               Decimal       @db.Decimal(12, 2)
+  currency             String        @default("INR")
+  status               PaymentStatus @default(PENDING)
+  paymentMethod        String?
+  gatewayName          String?
+  gatewayTransactionId String?
+  paidAt               DateTime?
+  failureReason        String?
+  metadata             Json?
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt
+
+  booking              CabBooking    @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@map("payments")
+}
+
+model CabBooking {
+  id               String           @id @default(cuid())
+  bookingReference String           @unique
+  userId           String?
+  vehicleId        String
+  routePricingId   String?
+
+  pickupLocation   String
+  dropLocation     String
+  pickupDate       DateTime
+  pickupTime       String?
+  passengers       Int
+  luggageCount     Int?
+
+  tripType         String           // Snapshot from LookupItem value
+  vehicleCategory  String           // Snapshot from LookupItem value
+
+  calculatedFare   Decimal          @db.Decimal(12, 2)
+  advanceAmount    Decimal          @db.Decimal(12, 2)
+  remainingAmount  Decimal          @db.Decimal(12, 2)
+
+  status           CabBookingStatus @default(PENDING)
+
+  customerName     String
+  customerEmail    String
+  customerPhone    String
+
+  pricingSnapshot  Json
+  notes            String?
+
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  user             User?            @relation(fields: [userId], references: [id], onDelete: SetNull)
+  vehicle          Vehicle          @relation(fields: [vehicleId], references: [id], onDelete: Restrict)
+  routePricing     RoutePricing?    @relation(fields: [routePricingId], references: [id], onDelete: SetNull)
+  payment          Payment?
+
+  @@map("cab_bookings")
+}
+
+model RoutePricing {
+  id              String       @id @default(cuid())
+  origin          String
+  destination     String
+  distanceKm      Decimal      @db.Decimal(10, 2)
+  categoryId      String
+  basePrice       Decimal      @db.Decimal(10, 2)
+  isActive        Boolean      @default(true)
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  category        LookupItem   @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  bookings        CabBooking[]
+
+  @@index([origin, destination, categoryId])
+  @@map("route_pricings")
 }
