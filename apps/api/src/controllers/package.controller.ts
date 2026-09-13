@@ -20,8 +20,13 @@ export const listPackages: RequestHandler = asyncHandler(async (request, respons
   const packageType = (request.query.packageType as string | undefined) ?? undefined;
   const destinationId = (request.query.destinationId as string | undefined) ?? undefined;
   const featuredOnly = request.query.featured === "true";
-  const availability = (request.query.availability as "AVAILABLE" | "LIMITED_SEATS" | "SOLD_OUT" | "UPCOMING" | undefined) ?? undefined;
-  const sort = (request.query.sort as "price_asc" | "price_desc" | "duration_asc" | "duration_desc" | "newest" | undefined) ?? "newest";
+  const availability =
+    (request.query.availability as
+      "AVAILABLE" | "LIMITED_SEATS" | "SOLD_OUT" | "UPCOMING" | undefined) ?? undefined;
+  const sort =
+    (request.query.sort as
+      "price_asc" | "price_desc" | "duration_asc" | "duration_desc" | "newest" | undefined) ??
+    "newest";
 
   const [data, total] = await Promise.all([
     packageService.listPublished({
@@ -56,6 +61,17 @@ export const getPackageBySlug: RequestHandler = asyncHandler(async (request, res
   sendSuccess(response, data);
 });
 
+export const getPackageAvailableCabs: RequestHandler = asyncHandler(async (request, response) => {
+  const slug = request.params.slug as string | undefined;
+
+  if (!slug) {
+    throw new AppError("Package slug is required.", 400, "SLUG_REQUIRED");
+  }
+
+  const cabs = await packageService.getAvailableCabs(slug);
+  sendSuccess(response, cabs);
+});
+
 export const adminListPackages: RequestHandler = asyncHandler(async (request, response) => {
   const query = optionalPaginationSchema.parse(request.query);
   const search = (request.query.search as string | undefined) ?? undefined;
@@ -64,7 +80,14 @@ export const adminListPackages: RequestHandler = asyncHandler(async (request, re
   const status = (request.query.status as string | undefined) ?? undefined;
 
   const [data, total] = await Promise.all([
-    packageService.list({ take: query.take, skip: query.skip, search, packageType, destinationId, status }),
+    packageService.list({
+      take: query.take,
+      skip: query.skip,
+      search,
+      packageType,
+      destinationId,
+      status,
+    }),
     packageService.count({ search, packageType, destinationId, status }),
   ]);
 
@@ -111,7 +134,11 @@ export const updatePackageFeatured: RequestHandler = asyncHandler(async (request
 export const updatePackageAvailability: RequestHandler = asyncHandler(async (request, response) => {
   const { id } = idParamSchema.parse(request.params);
   const payload = packageAvailabilitySchema.parse(request.body);
-  const data = await packageService.updateAvailability(id, payload.availability, payload.availableSeats);
+  const data = await packageService.updateAvailability(
+    id,
+    payload.availability,
+    payload.availableSeats,
+  );
 
   sendSuccess(response, data);
 });
@@ -124,20 +151,24 @@ export const addPackageSeasonalPrice: RequestHandler = asyncHandler(async (reque
   sendSuccess(response, data, 201);
 });
 
-export const updatePackageSeasonalPrice: RequestHandler = asyncHandler(async (request, response) => {
-  const { id } = idParamSchema.parse(request.params);
-  const payload = packageSeasonalPriceSchema.parse(request.body);
-  const data = await packageService.updateSeasonalPrice(id, payload);
+export const updatePackageSeasonalPrice: RequestHandler = asyncHandler(
+  async (request, response) => {
+    const { id } = idParamSchema.parse(request.params);
+    const payload = packageSeasonalPriceSchema.parse(request.body);
+    const data = await packageService.updateSeasonalPrice(id, payload);
 
-  sendSuccess(response, data);
-});
+    sendSuccess(response, data);
+  },
+);
 
-export const deletePackageSeasonalPrice: RequestHandler = asyncHandler(async (request, response) => {
-  const { id } = idParamSchema.parse(request.params);
-  await packageService.removeSeasonalPrice(id);
+export const deletePackageSeasonalPrice: RequestHandler = asyncHandler(
+  async (request, response) => {
+    const { id } = idParamSchema.parse(request.params);
+    await packageService.removeSeasonalPrice(id);
 
-  sendMessage(response, "Seasonal price removed.");
-});
+    sendMessage(response, "Seasonal price removed.");
+  },
+);
 
 export const addPackageOffer: RequestHandler = asyncHandler(async (request, response) => {
   const { id } = idParamSchema.parse(request.params);

@@ -176,6 +176,22 @@ export const dayCreateSchema = z.object({
 
 export const dayUpdateSchema = dayCreateSchema.partial();
 
+export const stateCreateSchema = z.object({
+  name: stringField(100),
+  code: optionalStringField(20),
+  isActive: z.boolean().optional(),
+});
+
+export const stateUpdateSchema = stateCreateSchema.partial();
+
+export const cityCreateSchema = z.object({
+  stateId: stringField(100),
+  name: stringField(100),
+  isActive: z.boolean().optional(),
+});
+
+export const cityUpdateSchema = cityCreateSchema.partial();
+
 export const itineraryCreateSchema = z.object({
   packageId: z.string().min(1),
   dayNumber: z.coerce.number().int().positive().max(365),
@@ -293,6 +309,7 @@ export const cabCreateSchema = z.object({
   featured: z.boolean().optional(),
   status: z.enum(CabStatus).optional(),
   destinationId: optionalStringField(120),
+  serviceCityIds: z.array(z.string().min(1)).optional(),
   metaTitle: optionalStringField(120),
   metaDescription: optionalStringField(180),
   amenities: z.array(z.string().trim().min(1).max(80)).max(30).optional(),
@@ -323,8 +340,11 @@ export const cabInquiryUpdateSchema = cabInquiryCreateSchema.partial();
 export const routePricingCreateSchema = z.object({
   origin: stringField(120),
   destination: stringField(120),
+  originCityId: optionalStringField(120),
+  destinationCityId: optionalStringField(120),
   distanceKm: z.coerce.number().positive(),
   categoryId: z.string().min(1),
+  tripTypeId: z.string().min(1),
   basePrice: moneySchema,
   isActive: z.boolean().optional(),
 });

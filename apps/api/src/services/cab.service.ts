@@ -25,6 +25,7 @@ type CabCreateInput = {
   amenities?: string[];
   metaTitle?: string;
   metaDescription?: string;
+  serviceCityIds?: string[];
 };
 
 type CabUpdateInput = Partial<CabCreateInput>;
@@ -133,6 +134,9 @@ export const cabService = {
         orderBy,
         include: {
           destination: { select: { id: true, name: true, slug: true, state: true, country: true } },
+          serviceLocations: {
+            select: { cityId: true, isBase: true, city: { select: { name: true } } },
+          },
         },
       }),
     ]);
@@ -182,6 +186,7 @@ export const cabService = {
           where: { status: "PUBLISHED", isActive: true },
           select: { id: true, title: true, slug: true, durationDays: true, priceFrom: true },
         },
+        serviceLocations: { include: { city: { include: { state: true } } } },
       },
     });
 
@@ -197,6 +202,7 @@ export const cabService = {
       include: {
         destination: true,
         inquiries: { orderBy: { createdAt: "desc" }, take: 20 },
+        serviceLocations: { include: { city: { include: { state: true } } } },
       },
     });
 
@@ -235,9 +241,17 @@ export const cabService = {
         amenities: data.amenities ?? [],
         metaTitle: data.metaTitle,
         metaDescription: data.metaDescription,
+        ...(data.serviceCityIds
+          ? {
+              serviceLocations: {
+                create: data.serviceCityIds.map((cityId: string) => ({ cityId })),
+              },
+            }
+          : {}),
       },
       include: {
         destination: true,
+        serviceLocations: true,
       },
     });
   },
@@ -274,9 +288,18 @@ export const cabService = {
         amenities: data.amenities,
         metaTitle: data.metaTitle,
         metaDescription: data.metaDescription,
+        ...(data.serviceCityIds
+          ? {
+              serviceLocations: {
+                deleteMany: {},
+                create: data.serviceCityIds.map((cityId: string) => ({ cityId })),
+              },
+            }
+          : {}),
       },
       include: {
         destination: true,
+        serviceLocations: true,
       },
     });
   },

@@ -640,4 +640,38 @@ export const packageService = {
   removeOffer(id: string) {
     return prisma.packageOffer.delete({ where: { id } });
   },
+
+  async getAvailableCabs(slug: string) {
+    const pkg = await prisma.tourPackage.findFirst({
+      where: { OR: [{ id: slug }, { slug }] },
+      include: {
+        itineraries: { select: { cityId: true } },
+      },
+    });
+
+    if (!pkg) return [];
+
+    const cityIds = Array.from(
+      new Set(pkg.itineraries.map((i) => i.cityId).filter(Boolean)),
+    ) as string[];
+
+    if (cityIds.length === 0) return [];
+
+    const vehicles = await prisma.vehicle.findMany({
+      where: {
+        isActive: true,
+        status: "ACTIVE",
+        serviceLocations: {
+          some: { cityId: { in: cityIds } },
+        },
+      },
+      include: {
+        serviceLocations: { include: { city: { include: { state: true } } } },
+      },
+    });
+
+    // Need to attach media to vehicles
+    const attachMediaToItems = (await import("../utils/media-resolver.js")).attachMediaToItems;
+    return attachMediaToItems("CAB", vehicles);
+  },
 };

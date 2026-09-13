@@ -123,6 +123,7 @@ export async function calculateFare(req: Request, res: Response, next: NextFunct
         origin: { equals: origin, mode: "insensitive" },
         destination: { equals: destination, mode: "insensitive" },
         categoryId,
+        tripTypeId,
         isActive: true,
       },
     });

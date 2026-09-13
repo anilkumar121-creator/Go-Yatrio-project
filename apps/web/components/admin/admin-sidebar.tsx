@@ -24,6 +24,7 @@ import { cn } from "@/lib/utils";
 export const adminNavItems = [
   { name: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
   { name: "Destinations", href: "/admin/destinations", icon: MapPin },
+  { name: "Geography", href: "/admin/geography", icon: MapPin },
   { name: "Packages", href: "/admin/packages", icon: Compass },
   { name: "Itineraries", href: "/admin/itineraries", icon: Calendar },
   { name: "Hotels", href: "/admin/hotels", icon: Hotel },

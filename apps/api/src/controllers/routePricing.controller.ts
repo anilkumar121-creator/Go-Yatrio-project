@@ -5,7 +5,12 @@ import { routePricingCreateSchema, routePricingUpdateSchema } from "../validator
 export async function adminListRoutePricings(req: Request, res: Response, next: NextFunction) {
   try {
     const items = await prisma.routePricing.findMany({
-      include: { category: true },
+      include: {
+        category: true,
+        tripType: true,
+        originCity: { select: { name: true, state: { select: { name: true } } } },
+        destinationCity: { select: { name: true, state: { select: { name: true } } } },
+      },
       orderBy: { createdAt: "desc" },
     });
     res.json({ success: true, data: items });

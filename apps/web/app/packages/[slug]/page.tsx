@@ -149,6 +149,20 @@ const getPackage = cache(async (slug: string): Promise<PackageDetail | null> => 
   }
 });
 
+const getAvailableCabs = cache(async (slug: string): Promise<unknown[]> => {
+  try {
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+    const response = await fetch(`${baseUrl}/api/packages/${slug}/available-cabs`, {
+      next: { revalidate: 300, tags: [`package-cabs-${slug}`, "cabs"] },
+    });
+    if (!response.ok) return [];
+    const payload = await response.json();
+    return payload?.data ?? [];
+  } catch {
+    return [];
+  }
+});
+
 type Props = {
   params: Promise<{ slug: string }>;
 };
@@ -194,6 +208,27 @@ export default async function PackageDetailPage({ params }: Props) {
   if (!pkg) {
     notFound();
   }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const availableCabs = (await getAvailableCabs(slug)) as any[];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const cabsByCity = availableCabs.reduce(
+    (acc, cab: any) => {
+      (cab.serviceLocations as Record<string, unknown>[])?.forEach((sl) => {
+        const city = (sl.city as Record<string, string>)?.name;
+        if (city) {
+          if (!acc[city]) acc[city] = [];
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          if (!acc[city].find((c: any) => c.id === cab.id)) {
+            acc[city].push(cab);
+          }
+        }
+      });
+      return acc;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    },
+    {} as Record<string, any[]>,
+  );
 
   const heroImageCandidate = pkg.featuredMedia?.secureUrl ?? pkg.featuredImage ?? "";
   const hasValidHeroImage = isValidImageUrl(heroImageCandidate);
@@ -519,89 +554,100 @@ export default async function PackageDetailPage({ params }: Props) {
                 </div>
               ) : null}
 
-              {/* Package Cabs */}
-              {pkg.vehicles.length > 0 ? (
+              {/* Available Cabs */}
+              {Object.keys(cabsByCity).length > 0 ? (
                 <div>
                   <h2 className="text-2xl font-semibold text-foreground mb-5 flex items-center gap-2">
                     <Car className="size-6 text-primary" />
-                    Cab Options in This Package
+                    Available Cabs for This Package
                   </h2>
-                  <div className="grid grid-cols-1 gap-5 tablet:grid-cols-2">
-                    {pkg.vehicles.map((cab) => (
-                      <Card
-                        key={cab.id}
-                        className="overflow-hidden border border-border bg-card shadow-sm transition-all hover:shadow-md"
-                      >
-                        <div className="relative aspect-[16/9]">
-                          {cab.image ? (
-                            <CardMedia
-                              src={cab.image}
-                              alt={cab.vehicleName}
-                              className="h-full w-full"
-                            />
-                          ) : (
-                            <div className="flex h-full w-full items-center justify-center bg-primary/10 text-primary">
-                              <Car className="size-6" />
-                            </div>
-                          )}
-                          {cab.featured ? (
-                            <Badge variant="accent" className="absolute left-3 top-3">
-                              Featured
-                            </Badge>
-                          ) : null}
-                        </div>
-                        <div className="p-5">
-                          <div className="flex items-center justify-between gap-2">
-                            <Link
-                              href={`/cabs/${cab.slug}`}
-                              className="text-lg font-semibold text-foreground hover:text-primary"
+                  <div className="space-y-8">
+                    {Object.entries(cabsByCity).map(([city, cabs]) => (
+                      <div key={city}>
+                        <h3 className="text-lg font-medium text-foreground mb-4 border-b border-border pb-2">
+                          From {city}
+                        </h3>
+                        <div className="grid grid-cols-1 gap-5 tablet:grid-cols-2">
+                          {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                          {(cabs as unknown[]).map((cab: any) => (
+                            <Card
+                              key={cab.id}
+                              className="overflow-hidden border border-border bg-card shadow-sm transition-all hover:shadow-md"
                             >
-                              {cab.vehicleName}
-                            </Link>
-                            <Badge variant="secondary" className="text-xs">
-                              {cab.vehicleType}
-                            </Badge>
-                          </div>
-                          <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
-                            <Users className="size-3.5 text-primary" />
-                            {cab.capacity} Seats
-                          </p>
-                          <p className="mt-2 text-sm text-muted-foreground line-clamp-2">
-                            {cab.description}
-                          </p>
-                          <div className="mt-3 flex flex-wrap gap-1.5">
-                            {cab.amenities.slice(0, 3).map((am, idx) => {
-                              const name = typeof am === "string" ? am : "";
-                              if (!name) return null;
-                              return (
-                                <Badge
-                                  key={name || idx}
-                                  variant="outline"
-                                  className="text-[11px] font-normal"
-                                >
-                                  {name}
-                                </Badge>
-                              );
-                            })}
-                          </div>
-                          <div className="mt-4 flex items-center justify-between border-t border-border pt-3">
-                            {cab.priceFrom ? (
-                              <div>
-                                <span className="block text-[11px] text-muted-foreground">
-                                  Starting from
-                                </span>
-                                <Price amount={Number(cab.priceFrom)} size="sm" />
+                              <div className="relative aspect-[16/9]">
+                                {cab.image || cab.featuredMedia?.secureUrl ? (
+                                  <CardMedia
+                                    src={cab.image || cab.featuredMedia?.secureUrl}
+                                    alt={cab.vehicleName}
+                                    className="h-full w-full"
+                                  />
+                                ) : (
+                                  <div className="flex h-full w-full items-center justify-center bg-primary/10 text-primary">
+                                    <Car className="size-6" />
+                                  </div>
+                                )}
+                                {cab.featured ? (
+                                  <Badge variant="accent" className="absolute left-3 top-3">
+                                    Featured
+                                  </Badge>
+                                ) : null}
                               </div>
-                            ) : null}
-                            <Button asChild size="sm" variant="outline" className="gap-1">
-                              <Link href={`/cabs/${cab.slug}`}>
-                                View Cab
-                                <ArrowRight className="size-3.5" />
-                              </Link>
-                            </Button>
-                          </div>
+                              <div className="p-5">
+                                <div className="flex items-center justify-between gap-2">
+                                  <Link
+                                    href={`/cabs/${cab.slug}`}
+                                    className="text-lg font-semibold text-foreground hover:text-primary"
+                                  >
+                                    {cab.vehicleName}
+                                  </Link>
+                                  <Badge variant="secondary" className="text-xs">
+                                    {cab.vehicleType}
+                                  </Badge>
+                                </div>
+                                <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
+                                  <Users className="size-3.5 text-primary" />
+                                  {cab.capacity} Seats
+                                </p>
+                                <p className="mt-2 text-sm text-muted-foreground line-clamp-2">
+                                  {cab.description}
+                                </p>
+                                <div className="mt-3 flex flex-wrap gap-1.5">
+                                  {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                                  {cab.amenities?.slice(0, 3).map((am: any, idx: number) => {
+                                    const name = typeof am === "string" ? am : am.name;
+                                    if (!name) return null;
+                                    return (
+                                      <Badge
+                                        key={name || idx}
+                                        variant="outline"
+                                        className="text-[11px] font-normal"
+                                      >
+                                        {name}
+                                      </Badge>
+                                    );
+                                  })}
+                                </div>
+                                <div className="mt-4 flex items-center justify-between border-t border-border pt-3">
+                                  {cab.priceFrom ? (
+                                    <div>
+                                      <span className="block text-[11px] text-muted-foreground">
+                                        Starting from
+                                      </span>
+                                      <Price amount={Number(cab.priceFrom)} size="sm" />
+                                    </div>
+                                  ) : null}
+                                  <Button asChild size="sm" variant="outline" className="gap-1">
+                                    <Link href={`/cabs/${cab.slug}`}>
+                                      View Cab
+                                      <ArrowRight className="size-3.5" />
+                                    </Link>
+                                  </Button>
+                                </div>
+                              </div>
+                            </Card>
+                          ))}
                         </div>
-                      </Card>
+                      </div>
                     ))}
                   </div>
                 </div>

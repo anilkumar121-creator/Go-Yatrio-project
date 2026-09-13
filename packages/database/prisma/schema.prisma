@@ -318,10 +318,12 @@ model Itinerary {
   title       String
   description String
   location    String?
+  cityId      String?
   sortOrder   Int         @default(0)
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
   package     TourPackage @relation(fields: [packageId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  city        City?       @relation(fields: [cityId], references: [id], onDelete: SetNull)
   activities  Activity[]
 
   @@unique([packageId, dayNumber])
@@ -451,6 +453,7 @@ model Vehicle {
   packages        TourPackage[]
   inquiries       CabInquiry[]
   cabBookings     CabBooking[]
+  serviceLocations VehicleServiceLocation[]
 
   @@index([vehicleType, status, isActive])
   @@index([status, isActive, priceFrom])
@@ -666,7 +669,8 @@ model LookupItem {
 
   vehiclesAsCategory Vehicle[] @relation("VehicleCategory")
   vehiclesAsTripType Vehicle[] @relation("VehicleTripTypes")
-  routePricings      RoutePricing[]
+  routePricingsAsCategory RoutePricing[] @relation("RouteCategory")
+  routePricingsAsTripType RoutePricing[] @relation("RouteTripType")
   destinations       Destination[] @relation("DestinationCategories")
 
   @@unique([groupId, value])
@@ -836,6 +840,8 @@ model CabBooking {
 
   pickupLocation   String
   dropLocation     String
+  pickupCityId     String?
+  dropCityId       String?
   pickupDate       DateTime
   pickupTime       String?
   passengers       Int
@@ -864,6 +870,8 @@ model CabBooking {
   vehicle          Vehicle          @relation(fields: [vehicleId], references: [id], onDelete: Restrict)
   routePricing     RoutePricing?    @relation(fields: [routePricingId], references: [id], onDelete: SetNull)
   payment          Payment?
+  pickupCity       City?            @relation("CabBookingPickupCity", fields: [pickupCityId], references: [id], onDelete: SetNull)
+  dropCity         City?            @relation("CabBookingDropCity", fields: [dropCityId], references: [id], onDelete: SetNull)
 
   @@map("cab_bookings")
 }
@@ -872,16 +880,68 @@ model RoutePricing {
   id              String       @id @default(cuid())
   origin          String
   destination     String
+  originCityId    String?
+  destinationCityId String?
   distanceKm      Decimal      @db.Decimal(10, 2)
   categoryId      String
+  tripTypeId      String?
   basePrice       Decimal      @db.Decimal(10, 2)
   isActive        Boolean      @default(true)
   createdAt       DateTime     @default(now())
   updatedAt       DateTime     @updatedAt
 
-  category        LookupItem   @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  category        LookupItem   @relation("RouteCategory", fields: [categoryId], references: [id], onDelete: Restrict)
+  tripType        LookupItem?  @relation("RouteTripType", fields: [tripTypeId], references: [id], onDelete: Restrict)
   bookings        CabBooking[]
+  originCity      City?        @relation("RouteOriginCity", fields: [originCityId], references: [id], onDelete: SetNull)
+  destinationCity City?        @relation("RouteDestCity", fields: [destinationCityId], references: [id], onDelete: SetNull)
 
   @@index([origin, destination, categoryId])
   @@map("route_pricings")
+}
+
+model State {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  code      String?  @unique
+  isActive  Boolean  @default(true)
+  cities    City[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@map("states")
+}
+
+model City {
+  id                 String   @id @default(cuid())
+  stateId            String
+  name               String
+  isActive           Boolean  @default(true)
+  state              State    @relation(fields: [stateId], references: [id], onDelete: Restrict)
+
+  serviceLocations   VehicleServiceLocation[]
+  itineraryDays      Itinerary[]
+  routeOrigins       RoutePricing[] @relation("RouteOriginCity")
+  routeDestinations  RoutePricing[] @relation("RouteDestCity")
+  cabBookingsPickup  CabBooking[]   @relation("CabBookingPickupCity")
+  cabBookingsDrop    CabBooking[]   @relation("CabBookingDropCity")
+
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  @@unique([stateId, name])
+  @@index([stateId])
+  @@map("cities")
+}
+
+model VehicleServiceLocation {
+  id        String   @id @default(cuid())
+  vehicleId String
+  cityId    String
+  isBase    Boolean  @default(false)
+  isActive  Boolean  @default(true)
+
+  vehicle   Vehicle  @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  city      City     @relation(fields: [cityId], references: [id], onDelete: Cascade)
+
+  @@unique([vehicleId, cityId])
+  @@map("vehicle_service_locations")
 }

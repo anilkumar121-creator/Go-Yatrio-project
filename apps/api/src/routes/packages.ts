@@ -9,6 +9,7 @@ import {
   deletePackageOffer,
   deletePackageSeasonalPrice,
   getPackageBySlug,
+  getPackageAvailableCabs,
   listPackages,
   updatePackage,
   updatePackageAvailability,
@@ -25,6 +26,7 @@ export const packagesRouter = Router();
 // Public routes
 packagesRouter.get("/", publicCacheControl(300, 600), listPackages);
 packagesRouter.get("/:slug", publicCacheControl(300, 600), getPackageBySlug);
+packagesRouter.get("/:slug/available-cabs", publicCacheControl(300, 600), getPackageAvailableCabs);
 
 // Admin-only routes
 export const adminPackagesRouter = Router();

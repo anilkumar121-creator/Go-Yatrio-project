@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS "itineraries_new" (
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
-    CONSTRAINT "itineraries_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "itineraries_new_pkey" PRIMARY KEY ("id")
 );
 
 -- Unique index on slug

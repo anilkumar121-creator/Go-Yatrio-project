@@ -2430,6 +2430,34 @@ async function main() {
     }
   }
 
+  // Seed Phase 22 Geography
+  const states = [
+    { name: "Gujarat", code: "GJ" },
+    { name: "Rajasthan", code: "RJ" },
+    { name: "Maharashtra", code: "MH" },
+  ];
+
+  for (const state of states) {
+    await prisma.state.upsert({
+      where: { name: state.name },
+      update: { code: state.code, isActive: true },
+      create: { name: state.name, code: state.code, isActive: true },
+    });
+  }
+
+  const gujarat = await prisma.state.findUnique({ where: { name: "Gujarat" } });
+  if (gujarat) {
+    const cities = ["Ahmedabad", "Rajkot", "Dwarka", "Surat", "Vadodara"];
+    for (const cityName of cities) {
+      await prisma.city.upsert({
+        where: { stateId_name: { stateId: gujarat.id, name: cityName } },
+        update: { isActive: true },
+        create: { stateId: gujarat.id, name: cityName, isActive: true },
+      });
+    }
+  }
+
+  console.log(`Phase 22 Geography Seed complete. States and Cities seeded.`);
   console.log(`Phase 21 Seed complete. Cab Booking Foundation records seeded.`);
 }
 

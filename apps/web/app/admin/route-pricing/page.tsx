@@ -10,8 +10,12 @@ type RoutePricing = {
   origin: string;
   destination: string;
   categoryId: string;
+  tripTypeId: string;
+  tripType?: { label: string };
   basePrice: string;
   isActive: boolean;
+  originCity?: { name: string; state?: { name: string } };
+  destinationCity?: { name: string; state?: { name: string } };
 };
 
 export default function RoutePricingAdminPage() {
@@ -46,8 +50,21 @@ export default function RoutePricingAdminPage() {
           <div className="bg-card border border-border rounded-lg shadow-sm">
             <DataTable
               columns={[
-                { header: "Origin", cell: (row) => row.origin },
-                { header: "Destination", cell: (row) => row.destination },
+                {
+                  header: "Origin",
+                  cell: (row) =>
+                    row.originCity
+                      ? `${row.originCity.name} (${row.originCity.state?.name})`
+                      : row.origin,
+                },
+                {
+                  header: "Destination",
+                  cell: (row) =>
+                    row.destinationCity
+                      ? `${row.destinationCity.name} (${row.destinationCity.state?.name})`
+                      : row.destination,
+                },
+                { header: "Trip Type", cell: (row) => row.tripType?.label ?? "N/A" },
                 { header: "Base Price", cell: (row) => `₹${row.basePrice}` },
                 { header: "Active", cell: (row) => (row.isActive ? "Yes" : "No") },
               ]}

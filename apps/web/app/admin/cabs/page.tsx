@@ -57,6 +57,7 @@ type VehicleItem = {
   isActive: boolean;
   destinationId: string | null;
   destination?: { name: string };
+  serviceLocations?: { cityId: string; city?: { name: string; state?: { name: string } } }[];
   amenities: { id: string; name: string }[];
   metaTitle: string | null;
   metaDescription: string | null;
@@ -83,6 +84,7 @@ type VehicleForm = {
   featured: boolean;
   status: string;
   destinationId: string;
+  serviceCityIds: string[];
   amenities: string[];
   metaTitle: string;
   metaDescription: string;
@@ -108,6 +110,7 @@ const emptyForm: VehicleForm = {
   featured: false,
   status: "DRAFT",
   destinationId: "",
+  serviceCityIds: [],
   amenities: ["Air Conditioning", "Music System / Bluetooth", "USB Charging Points"],
   metaTitle: "",
   metaDescription: "",
@@ -151,6 +154,9 @@ async function apiFetch(path: string, options: RequestInit = {}) {
 export default function AdminCabsPage() {
   const [vehicles, setVehicles] = useState<VehicleItem[]>([]);
   const [destinations, setDestinations] = useState<DestinationOption[]>([]);
+  const [cities, setCities] = useState<{ id: string; name: string; state?: { name: string } }[]>(
+    [],
+  );
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -199,6 +205,15 @@ export default function AdminCabsPage() {
     }
   }, []);
 
+  const loadCities = useCallback(async () => {
+    try {
+      const data = await apiFetch("/api/locations/cities?activeOnly=true");
+      setCities(Array.isArray(data) ? data : (data?.data ?? []));
+    } catch {
+      // Fallback
+    }
+  }, []);
+
   const loadVehicles = useCallback(async () => {
     setIsLoading(true);
     setErrorMessage(null);
@@ -220,7 +235,8 @@ export default function AdminCabsPage() {
 
   useEffect(() => {
     loadDestinations();
-  }, [loadDestinations]);
+    loadCities();
+  }, [loadDestinations, loadCities]);
 
   useEffect(() => {
     loadVehicles();
@@ -255,6 +271,7 @@ export default function AdminCabsPage() {
       featured: cab.featured,
       status: cab.status,
       destinationId: cab.destinationId ?? "",
+      serviceCityIds: cab.serviceLocations?.map((loc) => loc.cityId) ?? [],
       amenities: cab.amenities.map((a) => a.name),
       metaTitle: cab.metaTitle ?? "",
       metaDescription: cab.metaDescription ?? "",
@@ -318,6 +335,7 @@ export default function AdminCabsPage() {
         featured: form.featured,
         status: form.status,
         destinationId: form.destinationId || undefined,
+        serviceCityIds: form.serviceCityIds,
         amenities: form.amenities,
         metaTitle: form.metaTitle || undefined,
         metaDescription: form.metaDescription || undefined,
@@ -644,6 +662,42 @@ export default function AdminCabsPage() {
                       ))}
                     </SelectContent>
                   </Select>
+                </div>
+
+                <div className="space-y-2 col-span-1 tablet:col-span-2">
+                  <Label>Service Cities (Locations)</Label>
+                  <div className="grid grid-cols-2 gap-2 rounded-md border border-input p-3 max-h-40 overflow-y-auto">
+                    {cities.map((city) => (
+                      <label key={city.id} className="flex items-center space-x-2 text-sm">
+                        <input
+                          type="checkbox"
+                          className="rounded border-input text-primary focus:ring-primary"
+                          checked={form.serviceCityIds.includes(city.id)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setForm({
+                                ...form,
+                                serviceCityIds: [...form.serviceCityIds, city.id],
+                              });
+                            } else {
+                              setForm({
+                                ...form,
+                                serviceCityIds: form.serviceCityIds.filter((id) => id !== city.id),
+                              });
+                            }
+                          }}
+                        />
+                        <span className="text-muted-foreground">
+                          {city.name} {city.state ? `(${city.state.name})` : ""}
+                        </span>
+                      </label>
+                    ))}
+                    {cities.length === 0 && (
+                      <span className="text-xs text-muted-foreground italic col-span-2">
+                        No active cities found. Add them in Admin &gt; Geography.
+                      </span>
+                    )}
+                  </div>
                 </div>
 
                 <div className="space-y-2">
