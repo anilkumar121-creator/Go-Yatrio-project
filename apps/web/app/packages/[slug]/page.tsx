@@ -209,26 +209,22 @@ export default async function PackageDetailPage({ params }: Props) {
     notFound();
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const availableCabs = (await getAvailableCabs(slug)) as any[];
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const cabsByCity = availableCabs.reduce(
-    (acc, cab: any) => {
-      (cab.serviceLocations as Record<string, unknown>[])?.forEach((sl) => {
-        const city = (sl.city as Record<string, string>)?.name;
-        if (city) {
-          if (!acc[city]) acc[city] = [];
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          if (!acc[city].find((c: any) => c.id === cab.id)) {
-            acc[city].push(cab);
-          }
+  type CabData = { id: string; [key: string]: unknown };
+  const availableCabs = (await getAvailableCabs(slug)) as CabData[];
+  const cabsByCity = availableCabs.reduce((acc: Record<string, CabData[]>, cab) => {
+    const locations = cab.serviceLocations as { city?: { name?: string } }[] | undefined;
+    locations?.forEach((sl) => {
+      const city = sl.city?.name;
+      if (city) {
+        if (!acc[city]) acc[city] = [];
+        const exists = acc[city].find((c) => c.id === cab.id);
+        if (!exists) {
+          acc[city].push(cab);
         }
-      });
-      return acc;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    },
-    {} as Record<string, any[]>,
-  );
+      }
+    });
+    return acc;
+  }, {});
 
   const heroImageCandidate = pkg.featuredMedia?.secureUrl ?? pkg.featuredImage ?? "";
   const hasValidHeroImage = isValidImageUrl(heroImageCandidate);

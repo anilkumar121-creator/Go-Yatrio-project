@@ -360,14 +360,33 @@ export const paymentConfigurationCreateSchema = z.object({
 
 export const paymentConfigurationUpdateSchema = paymentConfigurationCreateSchema.partial();
 
-export const fareCalculateRequestSchema = z.object({
-  origin: stringField(120),
-  destination: stringField(120),
-  distanceKm: z.coerce.number().positive().optional(),
-  categoryId: z.string().min(1),
-  tripTypeId: z.string().min(1),
-  passengers: z.coerce.number().int().positive(),
-});
+export const fareCalculateRequestSchema = z
+  .object({
+    origin: optionalStringField(120),
+    destination: optionalStringField(120),
+    originCityId: optionalStringField(120),
+    destinationCityId: optionalStringField(120),
+    distanceKm: z.coerce.number().positive().optional(),
+    categoryId: z.string().min(1),
+    tripTypeId: z.string().min(1),
+    passengers: z.coerce.number().int().positive(),
+  })
+  .refine(
+    (data) => {
+      const hasCityIds = !!(data.originCityId && data.destinationCityId);
+      const hasLegacyStrings = !!(data.origin && data.destination);
+      const hasPartialCityIds = !!data.originCityId !== !!data.destinationCityId;
+      const hasPartialLegacyStrings = !!data.origin !== !!data.destination;
+
+      if (hasPartialCityIds || hasPartialLegacyStrings) return false;
+      return hasCityIds || hasLegacyStrings;
+    },
+    {
+      message:
+        "Must provide either (originCityId and destinationCityId) OR (origin and destination) pairs.",
+      path: ["originCityId"],
+    },
+  );
 
 export const cabBookingCreateSchema = z.object({
   userId: optionalStringField(120),

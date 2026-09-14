@@ -57,3 +57,26 @@ export async function adminDeleteRoutePricing(req: Request, res: Response, next:
     next(error);
   }
 }
+
+export async function publicListRoutePricings(req: Request, res: Response, next: NextFunction) {
+  try {
+    const take = Number(req.query.take) || 8;
+    const items = await prisma.routePricing.findMany({
+      where: {
+        isActive: true,
+        originCityId: { not: null },
+        destinationCityId: { not: null },
+      },
+      include: {
+        category: true,
+        originCity: { select: { name: true } },
+        destinationCity: { select: { name: true } },
+      },
+      orderBy: { createdAt: "desc" },
+      take,
+    });
+    res.json({ success: true, data: items });
+  } catch (error) {
+    next(error);
+  }
+}

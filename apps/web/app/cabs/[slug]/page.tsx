@@ -47,7 +47,7 @@ type CabDetail = {
   galleryMedia: { secureUrl: string }[] | null;
   tripTypes: string[];
   featured: boolean;
-  destination?: { id: string; name: string; slug: string };
+  serviceLocations?: { city: { id: string; name: string } }[];
   amenities: string[];
   metaTitle?: string | null;
   metaDescription?: string | null;
@@ -82,10 +82,10 @@ const getCab = cache(async (slug: string): Promise<CabDetail | null> => {
   }
 });
 
-async function getRelatedCabs(destinationSlug: string, excludeId: string): Promise<RelatedCab[]> {
+async function getRelatedCabs(cityId: string, excludeId: string): Promise<RelatedCab[]> {
   try {
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
-    const response = await fetch(`${baseUrl}/api/cabs/destination/${destinationSlug}?take=3`, {
+    const response = await fetch(`${baseUrl}/api/cabs?cityId=${cityId}&take=4`, {
       next: { revalidate: 300, tags: ["cabs"] },
     });
     if (!response.ok) return [];
@@ -97,8 +97,28 @@ async function getRelatedCabs(destinationSlug: string, excludeId: string): Promi
   }
 }
 
+type CityOption = {
+  id: string;
+  name: string;
+};
+
+async function getCities(): Promise<CityOption[]> {
+  try {
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+    const res = await fetch(`${baseUrl}/api/locations/cities?take=50`, {
+      next: { revalidate: 600, tags: ["cities"] },
+    });
+    if (!res.ok) return [];
+    const payload = await res.json();
+    return Array.isArray(payload?.data) ? payload.data : (payload?.data?.data ?? []);
+  } catch {
+    return [];
+  }
+}
+
 type Props = {
   params: Promise<{ slug: string }>;
+  searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
 };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -134,15 +154,36 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-export default async function PublicCabDetailPage({ params }: Props) {
+export default async function PublicCabDetailPage({ params, searchParams }: Props) {
   const { slug } = await params;
   const cab = await getCab(slug);
+
+  const search = await searchParams;
+  const travelDate = typeof search?.travelDate === "string" ? search.travelDate : undefined;
+  const tripType = typeof search?.trip === "string" ? search.trip : undefined;
+  const originCityId = typeof search?.originCityId === "string" ? search.originCityId : undefined;
+  const destinationCityId =
+    typeof search?.destinationCityId === "string" ? search.destinationCityId : undefined;
+
+  let defaultPickup = "";
+  let defaultDrop = "";
+
+  if (originCityId || destinationCityId) {
+    const cities = await getCities();
+    if (originCityId) {
+      defaultPickup = cities.find((c) => c.id === originCityId)?.name ?? originCityId;
+    }
+    if (destinationCityId) {
+      defaultDrop = cities.find((c) => c.id === destinationCityId)?.name ?? destinationCityId;
+    }
+  }
 
   if (!cab) {
     notFound();
   }
 
-  const relatedCabs = cab.destination ? await getRelatedCabs(cab.destination.slug, cab.id) : [];
+  const primaryCity = cab.serviceLocations?.[0]?.city;
+  const relatedCabs = primaryCity ? await getRelatedCabs(primaryCity.id, cab.id) : [];
   const gallery = [
     cab.featuredMedia?.secureUrl,
     ...(cab.galleryMedia ?? []).map((m) => m.secureUrl),
@@ -235,10 +276,10 @@ export default async function PublicCabDetailPage({ params }: Props) {
 
           <div className="flex flex-wrap items-center gap-3 mb-2">
             <Badge variant="accent">{cab.vehicleType}</Badge>
-            {cab.destination ? (
+            {primaryCity ? (
               <span className="inline-flex items-center gap-1 text-sm font-medium text-white/90">
                 <MapPin className="size-4 text-accent" />
-                {cab.destination.name}
+                {primaryCity.name}
               </span>
             ) : null}
             {cab.ac ? (
@@ -443,7 +484,11 @@ export default async function PublicCabDetailPage({ params }: Props) {
                   <CabInquiryForm
                     cabId={cab.id}
                     cabName={cab.vehicleName}
-                    destinationName={cab.destination?.name}
+                    destinationName={primaryCity?.name}
+                    defaultTravelDate={travelDate}
+                    defaultTripType={tripType}
+                    defaultPickup={defaultPickup}
+                    defaultDrop={defaultDrop}
                   />
                 </Card>
               </div>
@@ -453,7 +498,7 @@ export default async function PublicCabDetailPage({ params }: Props) {
           {relatedCabs.length > 0 ? (
             <div className="mt-16">
               <h2 className="text-2xl font-semibold text-foreground mb-6">
-                More Cabs {cab.destination ? `in ${cab.destination.name}` : "Available"}
+                More Cabs {primaryCity ? `in ${primaryCity.name}` : "Available"}
               </h2>
               <div className="grid grid-cols-1 gap-6 tablet:grid-cols-3">
                 {relatedCabs.map((rel) => (

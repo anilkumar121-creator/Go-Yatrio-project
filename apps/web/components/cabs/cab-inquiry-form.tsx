@@ -29,20 +29,32 @@ type CabInquiryFormProps = {
   cabId: string;
   cabName: string;
   destinationName?: string;
+  defaultTripType?: string;
+  defaultTravelDate?: string;
+  defaultPickup?: string;
+  defaultDrop?: string;
 };
 
-export function CabInquiryForm({ cabId, cabName, destinationName }: CabInquiryFormProps) {
+export function CabInquiryForm({
+  cabId,
+  cabName,
+  destinationName,
+  defaultTripType = "",
+  defaultTravelDate = "",
+  defaultPickup = "",
+  defaultDrop = "",
+}: CabInquiryFormProps) {
   const { options } = useLookups(["CAB_TRIP_TYPE"]);
   const tripTypeOptions = options.CAB_TRIP_TYPE || [];
 
   const [formData, setFormData] = useState({
-    tripType: "",
+    tripType: defaultTripType,
     customerName: "",
     email: "",
     phone: "",
-    pickupLocation: "",
-    dropLocation: "",
-    travelDate: "",
+    pickupLocation: defaultPickup,
+    dropLocation: defaultDrop,
+    travelDate: defaultTravelDate,
     returnDate: "",
     passengers: 2,
     message: "",

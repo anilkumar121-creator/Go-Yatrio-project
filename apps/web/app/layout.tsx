@@ -4,6 +4,7 @@ import { Footer } from "@/components/layout/footer";
 import { Navbar } from "@/components/layout/navbar";
 import { PageTransition } from "@/components/layout/page-transition";
 import { ScrollToTop } from "@/components/layout/scroll-to-top";
+import { FloatingEnquiry } from "@/components/layout/floating-enquiry";
 import { ToastProvider } from "@/components/common/toast";
 import "./globals.css";
 
@@ -74,6 +75,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
             <main id="main-content">{children}</main>
           </PageTransition>
           <Footer />
+          <FloatingEnquiry />
           <ScrollToTop />
         </ToastProvider>
       </body>

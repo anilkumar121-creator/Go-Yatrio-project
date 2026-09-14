@@ -5,9 +5,14 @@ import {
   adminDeleteRoutePricing,
   adminListRoutePricings,
   adminUpdateRoutePricing,
+  publicListRoutePricings,
 } from "../controllers/routePricing.controller.js";
+import { publicCacheControl } from "../middleware/cache-control.js";
 
 export const routePricingRouter = Router();
+
+routePricingRouter.get("/", publicCacheControl(300, 600), publicListRoutePricings);
+
 export const adminRoutePricingRouter = Router();
 
 adminRoutePricingRouter.use(authenticate, requireAdmin);

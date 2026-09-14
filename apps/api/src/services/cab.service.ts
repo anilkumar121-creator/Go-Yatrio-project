@@ -80,8 +80,7 @@ export const cabService = {
       search?: string;
       vehicleType?: VehicleType;
       tripType?: CabTripType;
-      destinationId?: string;
-      destinationSlug?: string;
+      cityId?: string;
       status?: CabStatus;
       featuredOnly?: boolean;
       sort?: "price_asc" | "price_desc" | "capacity_desc" | "newest";
@@ -93,8 +92,7 @@ export const cabService = {
       search,
       vehicleType,
       tripType,
-      destinationId,
-      destinationSlug,
+      cityId,
       status,
       featuredOnly = false,
       sort = "newest",
@@ -105,8 +103,9 @@ export const cabService = {
     if (status) where.status = status;
     if (featuredOnly) where.featured = true;
     if (vehicleType) where.vehicleType = vehicleType;
-    if (destinationId) where.destinationId = destinationId;
-    if (destinationSlug) where.destination = { slug: destinationSlug };
+    if (cityId) {
+      where.serviceLocations = { some: { cityId } };
+    }
 
     if (tripType) {
       where.tripTypes = { has: tripType };
@@ -160,18 +159,18 @@ export const cabService = {
       .then((items) => attachMediaToItems("CAB", items));
   },
 
-  listByDestinationSlug: async (destinationSlug: string, take = 20) => {
+  listByCityId: async (cityId: string, take = 20) => {
     return prisma.vehicle
       .findMany({
         where: {
-          destination: { slug: destinationSlug },
+          serviceLocations: { some: { cityId } },
           status: CabStatus.ACTIVE,
           isActive: true,
         },
         take,
         orderBy: [{ featured: "desc" }, { createdAt: "desc" }],
         include: {
-          destination: true,
+          serviceLocations: { include: { city: true } },
         },
       })
       .then((items) => attachMediaToItems("CAB", items));

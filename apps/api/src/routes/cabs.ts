@@ -7,7 +7,7 @@ import {
   deleteCab,
   getCabAmenities,
   getCabBySlug,
-  getCabsByDestination,
+  getCabsByCity,
   getFeaturedCabs,
   listCabs,
   searchCabs,
@@ -27,7 +27,7 @@ cabsRouter.get("/", publicCacheControl(300, 600), listCabs);
 cabsRouter.get("/search", publicCacheControl(180, 360), searchCabs);
 cabsRouter.post("/calculate-fare", calculateFare);
 cabsRouter.get("/featured", publicCacheControl(300, 600), getFeaturedCabs);
-cabsRouter.get("/destination/:slug", publicCacheControl(300, 600), getCabsByDestination);
+cabsRouter.get("/city/:cityId", publicCacheControl(300, 600), getCabsByCity);
 cabsRouter.get("/:slug", publicCacheControl(300, 600), getCabBySlug);
 cabsRouter.post("/:id/inquiry", submitCabInquiry);
 

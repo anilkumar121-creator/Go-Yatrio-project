@@ -1,5 +1,5 @@
 import type { Request, Response, NextFunction } from "express";
-import { CabStatus, CabTripType, VehicleType, prisma } from "../db.js";
+import { CabStatus, CabTripType, VehicleType, prisma, Prisma } from "../db.js";
 import { cabService } from "../services/cab.service.js";
 import {
   cabCreateSchema,
@@ -20,8 +20,7 @@ export async function listCabs(req: Request, res: Response) {
   const search = req.query.search as string | undefined;
   const vehicleType = req.query.vehicleType as VehicleType | undefined;
   const tripType = req.query.tripType as CabTripType | undefined;
-  const destinationId = req.query.destinationId as string | undefined;
-  const destinationSlug = req.query.destinationSlug as string | undefined;
+  const cityId = req.query.cityId as string | undefined;
   const sort = req.query.sort as
     "price_asc" | "price_desc" | "capacity_desc" | "newest" | undefined;
 
@@ -31,8 +30,7 @@ export async function listCabs(req: Request, res: Response) {
     search,
     vehicleType,
     tripType,
-    destinationId,
-    destinationSlug,
+    cityId,
     status: CabStatus.ACTIVE,
     sort,
   });
@@ -64,9 +62,9 @@ export async function getFeaturedCabs(req: Request, res: Response) {
   res.json({ success: true, data: items });
 }
 
-export async function getCabsByDestination(req: Request, res: Response) {
-  const slug = getParam(req.params.slug);
-  const items = await cabService.listByDestinationSlug(slug);
+export async function getCabsByCity(req: Request, res: Response) {
+  const cityId = getParam(req.params.cityId);
+  const items = await cabService.listByCityId(cityId);
 
   res.json({ success: true, data: items });
 }
@@ -114,18 +112,37 @@ export async function submitCabInquiry(req: Request, res: Response) {
 
 export async function calculateFare(req: Request, res: Response, next: NextFunction) {
   try {
-    const { origin, destination, distanceKm, categoryId, tripTypeId } =
-      fareCalculateRequestSchema.parse(req.body);
+    const {
+      origin,
+      destination,
+      originCityId,
+      destinationCityId,
+      distanceKm,
+      categoryId,
+      tripTypeId,
+    } = fareCalculateRequestSchema.parse(req.body);
+
+    const whereClause: Prisma.RoutePricingWhereInput = {
+      categoryId,
+      tripTypeId,
+      isActive: true,
+    };
+
+    if (originCityId && destinationCityId) {
+      whereClause.originCityId = originCityId;
+      whereClause.destinationCityId = destinationCityId;
+    } else if (origin && destination) {
+      whereClause.origin = { equals: origin, mode: "insensitive" };
+      whereClause.destination = { equals: destination, mode: "insensitive" };
+    } else {
+      return res
+        .status(400)
+        .json({ success: false, error: "Valid origin and destination pair required" });
+    }
 
     // Try finding exact RoutePricing match
     const exactRoute = await prisma.routePricing.findFirst({
-      where: {
-        origin: { equals: origin, mode: "insensitive" },
-        destination: { equals: destination, mode: "insensitive" },
-        categoryId,
-        tripTypeId,
-        isActive: true,
-      },
+      where: whereClause,
     });
 
     let fare = 0;
@@ -151,6 +168,8 @@ export async function calculateFare(req: Request, res: Response, next: NextFunct
         fare,
         origin,
         destination,
+        originCityId,
+        destinationCityId,
         categoryId,
         tripTypeId,
       },
