@@ -101,12 +101,15 @@ export const deleteState = asyncHandler(async (req: Request, res: Response) => {
 // --- CITIES ---
 
 export const getCities = asyncHandler(async (req: Request, res: Response) => {
-  const { stateId, activeOnly } = req.query;
+  const { stateId, activeOnly, hasCabService } = req.query;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const where: any = {};
 
   if (stateId) where.stateId = String(stateId);
   if (activeOnly === "true") where.isActive = true;
+  if (hasCabService === "true") {
+    where.serviceLocations = { some: { isActive: true } };
+  }
 
   const cities = await prisma.city.findMany({
     where,

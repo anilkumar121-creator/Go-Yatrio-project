@@ -159,7 +159,7 @@ async function getCabs(
 
 async function getCities(): Promise<CityOption[]> {
   try {
-    const res = await fetch(`${API_BASE}/api/locations/cities?take=50`, {
+    const res = await fetch(`${API_BASE}/api/locations/cities?hasCabService=true&activeOnly=true`, {
       next: { revalidate: 600, tags: ["cities"] },
     });
     if (!res.ok) return [];

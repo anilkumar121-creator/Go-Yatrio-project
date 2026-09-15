@@ -2430,34 +2430,150 @@ async function main() {
     }
   }
 
-  // Seed Phase 22 Geography
-  const states = [
-    { name: "Gujarat", code: "GJ" },
-    { name: "Rajasthan", code: "RJ" },
-    { name: "Maharashtra", code: "MH" },
+  // Seed GoYatrio Canonical Geography
+  console.log("Seeding canonical geography...");
+
+  const operationalData = [
+    {
+      state: "Gujarat",
+      cities: ["Ahmedabad", "Surat", "Vadodara", "Rajkot", "Bhavnagar", "Jamnagar"],
+    },
+    {
+      state: "Uttar Pradesh",
+      cities: [
+        "Lucknow",
+        "Kanpur",
+        "Ayodhya",
+        "Agra",
+        "Varanasi",
+        "Chitrakoot",
+        { canonical: "Prayagraj", aliases: ["Allahabad"] },
+      ],
+    },
+    { state: "Goa", cities: ["Panaji", "Vasco da Gama"] },
+    {
+      state: "Odisha",
+      cities: ["Bhubaneswar", "Cuttack", "Rourkela", "Puri", "Daringbadi", "Gopalpur"],
+    },
+    {
+      state: "Karnataka",
+      cities: [
+        "Bengaluru",
+        "Hubballi-Dharwad",
+        { canonical: "Mysuru", aliases: ["Mysore"] },
+        { canonical: "Mangaluru", aliases: ["Mangalore"] },
+        "Coorg",
+        { canonical: "Chikkamagaluru", aliases: ["Chikmagalur", "Chikmangalore"] },
+        "Udupi",
+        "Gokarna",
+        "Hampi",
+        "Vijayapura",
+        "Dharmasthala",
+        "Sringeri",
+        "Hospet",
+      ],
+    },
+    {
+      state: "Kerala",
+      cities: [
+        "Thiruvananthapuram",
+        { canonical: "Kochi", aliases: ["Cochin"] },
+        "Wayanad",
+        "Munnar",
+        "Kollam",
+        { canonical: "Alappuzha", aliases: ["Alleppey"] },
+      ],
+    },
+    {
+      state: "Uttarakhand",
+      cities: [
+        "Dehradun",
+        "Haridwar",
+        "Haldwani",
+        "Nainital",
+        "Mussoorie",
+        "Corbett",
+        "Rishikesh",
+        "Ranikhet",
+        "Kausani",
+        "Almora",
+      ],
+    },
+    {
+      state: "Tamil Nadu",
+      cities: [
+        "Chennai",
+        "Coimbatore",
+        "Madurai",
+        "Tiruchirappalli",
+        "Salem",
+        "Tiruppur",
+        "Kanyakumari",
+        "Rameswaram",
+        "Kodaikanal",
+        "Ooty",
+      ],
+    },
+    { state: "Puducherry", cities: [{ canonical: "Puducherry", aliases: ["Pondicherry"] }] },
+    { state: "Madhya Pradesh", cities: ["Indore", "Bhopal", "Jabalpur", "Gwalior", "Ujjain"] },
+    { state: "Sikkim", cities: ["Gangtok"] },
+    { state: "Meghalaya", cities: ["Shillong"] },
+    { state: "Assam", cities: ["Guwahati", "Silchar", "Dibrugarh", "Jorhat"] },
+    { state: "West Bengal", cities: ["Kolkata", "Asansol", "Siliguri", "Durgapur", "Howrah"] },
+    { state: "Bihar", cities: ["Patna", "Gaya", "Bhagalpur", "Muzaffarpur"] },
+    { state: "Jammu & Kashmir", cities: ["Srinagar"] },
   ];
 
-  for (const state of states) {
-    await prisma.state.upsert({
-      where: { name: state.name },
-      update: { code: state.code, isActive: true },
-      create: { name: state.name, code: state.code, isActive: true },
+  for (const group of operationalData) {
+    // 1. Case-insensitive state lookup
+    let state = await prisma.state.findFirst({
+      where: { name: { equals: group.state, mode: "insensitive" } },
     });
-  }
 
-  const gujarat = await prisma.state.findUnique({ where: { name: "Gujarat" } });
-  if (gujarat) {
-    const cities = ["Ahmedabad", "Rajkot", "Dwarka", "Surat", "Vadodara"];
-    for (const cityName of cities) {
-      await prisma.city.upsert({
-        where: { stateId_name: { stateId: gujarat.id, name: cityName } },
-        update: { isActive: true },
-        create: { stateId: gujarat.id, name: cityName, isActive: true },
+    if (!state) {
+      state = await prisma.state.create({ data: { name: group.state, isActive: true } });
+    } else if (!state.isActive) {
+      state = await prisma.state.update({ where: { id: state.id }, data: { isActive: true } });
+    }
+
+    // 2. Process Cities
+    for (const cityInput of group.cities) {
+      let canonicalName = "";
+      let aliases: string[] = [];
+
+      if (typeof cityInput === "string") {
+        canonicalName = cityInput;
+      } else {
+        canonicalName = cityInput.canonical;
+        aliases = cityInput.aliases || [];
+      }
+
+      let city = await prisma.city.findFirst({
+        where: { stateId: state.id, name: { equals: canonicalName, mode: "insensitive" } },
       });
+
+      if (!city) {
+        city = await prisma.city.create({
+          data: {
+            stateId: state.id,
+            name: canonicalName,
+            aliases,
+            isActive: true,
+          },
+        });
+      } else {
+        const existingAliases = city.aliases || [];
+        const newAliases = [...new Set([...existingAliases, ...aliases])];
+
+        await prisma.city.update({
+          where: { id: city.id },
+          data: { aliases: newAliases, isActive: true },
+        });
+      }
     }
   }
 
-  console.log(`Phase 22 Geography Seed complete. States and Cities seeded.`);
+  console.log(`Phase 22 Geography Seed complete. Canonical States and Cities seeded safely.`);
   console.log(`Phase 21 Seed complete. Cab Booking Foundation records seeded.`);
 }
 

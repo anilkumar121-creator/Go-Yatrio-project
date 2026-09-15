@@ -187,6 +187,7 @@ export const stateUpdateSchema = stateCreateSchema.partial();
 export const cityCreateSchema = z.object({
   stateId: stringField(100),
   name: stringField(100),
+  aliases: z.array(z.string()).optional(),
   isActive: z.boolean().optional(),
 });
 

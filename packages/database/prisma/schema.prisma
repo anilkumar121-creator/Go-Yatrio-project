@@ -962,6 +962,7 @@ model City {
   id                 String   @id @default(cuid())
   stateId            String
   name               String
+  aliases            String[] @default([])
   isActive           Boolean  @default(true)
   state              State    @relation(fields: [stateId], references: [id], onDelete: Restrict)
 
