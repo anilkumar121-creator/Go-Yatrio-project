@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from "express";
+import { BookingStatus } from "@prisma/client";
 import { prisma } from "../db.js";
 import { AppError } from "../utils/app-error.js";
 import { cabBookingCreateSchema, cabBookingStatusSchema } from "../validators/schemas.js";
@@ -67,48 +68,70 @@ export const createCabBooking = async (req: Request, res: Response, next: NextFu
     const advance = Math.round(totalFare * (advancePercent / 100));
     const remaining = Math.max(0, totalFare - advance);
 
-    const booking = await prisma.cabBooking.create({
-      data: {
-        bookingReference: ref,
-        userId: data.userId || null,
-        vehicleId: data.vehicleId,
-        routePricingId: appliedRoutePricingId,
-        pickupLocation: data.pickupLocation,
-        dropLocation: data.dropLocation,
-        pickupDate: data.pickupDate,
-        pickupTime: data.pickupTime,
-        passengers: data.passengers,
-        luggageCount: data.luggageCount,
-        tripType: data.tripType,
-        vehicleCategory: data.vehicleCategory,
-        calculatedFare: totalFare,
-        advanceAmount: advance,
-        remainingAmount: remaining,
-        customerName: data.customerName,
-        customerEmail: data.customerEmail,
-        customerPhone: data.customerPhone,
-        notes: data.notes,
-        // Immutable Booking Price Snapshot
-        pricingSnapshot: {
-          pricingMethod: appliedRoutePricingId ? "ROUTE_PRICING" : "DISTANCE_FALLBACK",
-          vehicleId: vehicle.id,
-          appliedRoutePricingId,
-          vehicleBaseFare: vehicle.baseFare,
-          vehicleExtraKmCharge: vehicle.extraKmCharge,
-          originUsed: data.pickupLocation,
-          destinationUsed: data.dropLocation,
-          distanceKm: data.distanceKm || null,
-          totalFare,
-          advancePercentApplied: advancePercent,
+    const result = await prisma.$transaction(async (tx) => {
+      // 1. Create the new generic Booking parent
+      const parentBooking = await tx.booking.create({
+        data: {
+          bookingReference: ref,
+          userId: data.userId || null,
+          serviceType: "CAB",
+          status: "PENDING_PAYMENT",
+          totalAmount: totalFare,
           advanceAmount: advance,
           remainingAmount: remaining,
-          paymentConfigurationId: paymentConfig?.id || null,
+          currency: "INR",
+          customerName: data.customerName,
+          customerEmail: data.customerEmail,
+          customerPhone: data.customerPhone,
         },
-        status: "PENDING",
-      },
+      });
+
+      // 2. Create the CabBooking child, retaining legacy fields for zero-downtime
+      const cabBooking = await tx.cabBooking.create({
+        data: {
+          bookingReference: ref, // Legacy
+          bookingId: parentBooking.id, // The new standard relation
+          userId: data.userId || null, // Legacy
+          vehicleId: data.vehicleId,
+          routePricingId: appliedRoutePricingId,
+          pickupLocation: data.pickupLocation,
+          dropLocation: data.dropLocation,
+          pickupDate: data.pickupDate,
+          pickupTime: data.pickupTime,
+          passengers: data.passengers,
+          luggageCount: data.luggageCount,
+          tripType: data.tripType,
+          vehicleCategory: data.vehicleCategory,
+          calculatedFare: totalFare, // Legacy
+          advanceAmount: advance, // Legacy
+          remainingAmount: remaining, // Legacy
+          customerName: data.customerName, // Legacy
+          customerEmail: data.customerEmail, // Legacy
+          customerPhone: data.customerPhone, // Legacy
+          notes: data.notes,
+          pricingSnapshot: {
+            pricingMethod: appliedRoutePricingId ? "ROUTE_PRICING" : "DISTANCE_FALLBACK",
+            vehicleId: vehicle.id,
+            appliedRoutePricingId,
+            vehicleBaseFare: vehicle.baseFare,
+            vehicleExtraKmCharge: vehicle.extraKmCharge,
+            originUsed: data.pickupLocation,
+            destinationUsed: data.dropLocation,
+            distanceKm: data.distanceKm || null,
+            totalFare,
+            advancePercentApplied: advancePercent,
+            advanceAmount: advance,
+            remainingAmount: remaining,
+            paymentConfigurationId: paymentConfig?.id || null,
+          },
+          status: "PENDING", // Legacy
+        },
+      });
+
+      return cabBooking;
     });
 
-    res.status(201).json(booking);
+    res.status(201).json(result);
   } catch (error) {
     next(error);
   }
@@ -120,10 +143,19 @@ export const adminListCabBookings = async (req: Request, res: Response, next: Ne
       orderBy: { createdAt: "desc" },
       include: {
         vehicle: { select: { vehicleName: true, vehicleType: true } },
-        payment: true,
+        booking: {
+          include: { payments: true },
+        },
       },
     });
-    res.json(bookings);
+
+    // Map nested payments back to the legacy top-level `payment` object for backward compatibility
+    const formattedBookings = bookings.map((b) => ({
+      ...b,
+      payment: b.booking?.payments[0] || null,
+    }));
+
+    res.json(formattedBookings);
   } catch (error) {
     next(error);
   }
@@ -132,16 +164,24 @@ export const adminListCabBookings = async (req: Request, res: Response, next: Ne
 export const adminGetCabBooking = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const id = getParam(req.params.id);
-    const booking = await prisma.cabBooking.findUnique({
+    const cabBooking = await prisma.cabBooking.findUnique({
       where: { id },
       include: {
         vehicle: true,
-        payment: true,
         routePricing: true,
+        booking: {
+          include: { payments: true },
+        },
       },
     });
-    if (!booking) throw new AppError("Booking not found", 404);
-    res.json(booking);
+    if (!cabBooking) throw new AppError("Booking not found", 404);
+
+    const formattedBooking = {
+      ...cabBooking,
+      payment: cabBooking.booking?.payments[0] || null,
+    };
+
+    res.json(formattedBooking);
   } catch (error) {
     next(error);
   }
@@ -155,11 +195,33 @@ export const adminUpdateCabBookingStatus = async (
   try {
     const id = getParam(req.params.id);
     const { status } = cabBookingStatusSchema.parse(req.body);
-    const booking = await prisma.cabBooking.update({
+
+    const cabBooking = await prisma.cabBooking.findUnique({
       where: { id },
-      data: { status },
+      include: { booking: true },
     });
-    res.json(booking);
+    if (!cabBooking) throw new AppError("Booking not found", 404);
+
+    const updatedCabBooking = await prisma.$transaction(async (tx) => {
+      let bookingStatus = "PENDING_PAYMENT";
+      if (status === "CONFIRMED") bookingStatus = "CONFIRMED";
+      if (status === "COMPLETED") bookingStatus = "COMPLETED";
+      if (status === "CANCELLED") bookingStatus = "CANCELLED";
+
+      if (cabBooking.bookingId) {
+        await tx.booking.update({
+          where: { id: cabBooking.bookingId },
+          data: { status: bookingStatus as BookingStatus },
+        });
+      }
+
+      return tx.cabBooking.update({
+        where: { id },
+        data: { status },
+      });
+    });
+
+    res.json(updatedCabBooking);
   } catch (error) {
     next(error);
   }

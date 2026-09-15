@@ -98,6 +98,21 @@ enum PaymentStatus {
   REFUNDED
 }
 
+enum ServiceType {
+  CAB
+  HOTEL
+  PACKAGE
+  FLIGHT
+}
+
+enum BookingStatus {
+  DRAFT
+  PENDING_PAYMENT
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+}
+
 enum CabBookingStatus {
   PENDING
   CONFIRMED
@@ -221,6 +236,7 @@ model User {
   updatedAt     DateTime       @updatedAt
   refreshTokens RefreshToken[]
   cabBookings   CabBooking[]
+  bookings      Booking[]
 
   @@map("users")
 }
@@ -810,9 +826,37 @@ model PaymentConfiguration {
   @@map("payment_configurations")
 }
 
+model Booking {
+  id               String        @id @default(cuid())
+  bookingReference String        @unique
+  userId           String?
+  serviceType      ServiceType
+  status           BookingStatus @default(PENDING_PAYMENT)
+
+  totalAmount      Decimal       @db.Decimal(12, 2)
+  advanceAmount    Decimal       @db.Decimal(12, 2)
+  remainingAmount  Decimal       @db.Decimal(12, 2)
+  currency         String        @default("INR")
+
+  customerName     String
+  customerEmail    String
+  customerPhone    String
+
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  confirmedAt      DateTime?
+  cancelledAt      DateTime?
+
+  user             User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+  payments         Payment[]
+  cabBooking       CabBooking?
+
+  @@map("bookings")
+}
+
 model Payment {
   id                   String        @id @default(cuid())
-  bookingId            String        @unique
+  bookingId            String
   paymentReference     String?       @unique
   amount               Decimal       @db.Decimal(12, 2)
   currency             String        @default("INR")
@@ -826,8 +870,9 @@ model Payment {
   createdAt            DateTime      @default(now())
   updatedAt            DateTime      @updatedAt
 
-  booking              CabBooking    @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  booking              Booking       @relation(fields: [bookingId], references: [id], onDelete: Restrict)
 
+  @@index([bookingId])
   @@map("payments")
 }
 
@@ -866,10 +911,12 @@ model CabBooking {
   createdAt        DateTime         @default(now())
   updatedAt        DateTime         @updatedAt
 
+  bookingId        String?          @unique
+  booking          Booking?         @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
   user             User?            @relation(fields: [userId], references: [id], onDelete: SetNull)
   vehicle          Vehicle          @relation(fields: [vehicleId], references: [id], onDelete: Restrict)
   routePricing     RoutePricing?    @relation(fields: [routePricingId], references: [id], onDelete: SetNull)
-  payment          Payment?
   pickupCity       City?            @relation("CabBookingPickupCity", fields: [pickupCityId], references: [id], onDelete: SetNull)
   dropCity         City?            @relation("CabBookingDropCity", fields: [dropCityId], references: [id], onDelete: SetNull)
 
