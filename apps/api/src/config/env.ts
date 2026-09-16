@@ -13,6 +13,8 @@ const envSchema = z
     CLOUDINARY_CLOUD_NAME: z.string().optional(),
     CLOUDINARY_API_KEY: z.string().optional(),
     CLOUDINARY_API_SECRET: z.string().optional(),
+    RAZORPAY_KEY_ID: z.string().optional(),
+    RAZORPAY_KEY_SECRET: z.string().optional(),
     NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
   })
   .superRefine((data, ctx) => {
@@ -42,6 +44,13 @@ const envSchema = z
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           message: `Cloudinary environment variables are required in production: ${missingCloudinary.join(", ")}`,
+        });
+      }
+
+      if (!data.RAZORPAY_KEY_ID || !data.RAZORPAY_KEY_SECRET) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `Razorpay credentials (RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET) are required in production.`,
         });
       }
     }

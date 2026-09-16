@@ -22,6 +22,7 @@ import { adminLookupsRouter, lookupsRouter } from "./routes/lookups.js";
 import { adminPackagesRouter, packagesRouter } from "./routes/packages.js";
 import { adminSeoRouter, seoRouter } from "./routes/seo.js";
 import { locationsRouter, adminLocationsRouter } from "./routes/locations.js";
+import { paymentsRouter } from "./routes/payments.js";
 
 import { apiLimiter } from "./middleware/rate-limiter.js";
 
@@ -96,6 +97,7 @@ export function createApp() {
   app.use("/api/admin/seo-metadata", adminSeoRouter);
   app.use("/api/locations", locationsRouter);
   app.use("/api/admin/locations", adminLocationsRouter);
+  app.use("/api/payments", paymentsRouter);
 
   app.use(notFound);
   app.use(errorHandler);
