@@ -34,6 +34,14 @@ export function CabCustomerDetailsForm({
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const [idempotencyKey] = useState(() => {
+    if (typeof crypto !== "undefined" && crypto.randomUUID) {
+      return crypto.randomUUID();
+    }
+    // Fallback for environments without crypto.randomUUID
+    return `idempotency-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+  });
+
   const {
     register,
     handleSubmit,
@@ -92,7 +100,10 @@ export function CabCustomerDetailsForm({
 
         const res = await fetch("/api/cab-bookings", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            "Idempotency-Key": idempotencyKey,
+          },
           body: JSON.stringify(payload),
         });
 
@@ -108,7 +119,9 @@ export function CabCustomerDetailsForm({
           variant: "default",
         });
 
-        router.push(`/cabs/booking/success/${responseData.data.id}`);
+        // Use bookingId as the canonical parent Booking ID for the success page
+        const parentBookingId = responseData.data?.bookingId || responseData.bookingId;
+        router.push(`/cabs/booking/success/${parentBookingId}`);
       }
     } catch (error) {
       toast({

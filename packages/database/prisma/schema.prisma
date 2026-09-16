@@ -830,6 +830,7 @@ model PaymentConfiguration {
 model Booking {
   id               String        @id @default(cuid())
   bookingReference String        @unique
+  idempotencyKey   String?       @unique
   userId           String?
   serviceType      ServiceType
   status           BookingStatus @default(PENDING_PAYMENT)
