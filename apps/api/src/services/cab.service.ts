@@ -84,6 +84,9 @@ export const cabService = {
       status?: CabStatus;
       featuredOnly?: boolean;
       sort?: "price_asc" | "price_desc" | "capacity_desc" | "newest";
+      minCapacity?: number;
+      ac?: boolean;
+      fuelType?: CabFuelType;
     } = {},
   ) => {
     const {
@@ -96,6 +99,9 @@ export const cabService = {
       status,
       featuredOnly = false,
       sort = "newest",
+      minCapacity,
+      ac,
+      fuelType,
     } = query;
 
     const where: Record<string, unknown> = {};
@@ -109,6 +115,18 @@ export const cabService = {
 
     if (tripType) {
       where.tripTypes = { has: tripType };
+    }
+
+    if (minCapacity !== undefined) {
+      where.capacity = { gte: minCapacity };
+    }
+
+    if (ac !== undefined) {
+      where.ac = ac;
+    }
+
+    if (fuelType) {
+      where.fuelType = fuelType;
     }
 
     if (search) {

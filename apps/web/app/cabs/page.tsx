@@ -3,12 +3,9 @@ import Link from "next/link";
 import {
   Car,
   Users,
-  Fuel,
-  Snowflake,
   MapPin,
   Search,
   ArrowRight,
-  Briefcase,
   Calendar,
   ShieldCheck,
   CreditCard,
@@ -17,12 +14,13 @@ import {
 import { Container } from "@/components/common/container";
 import { SectionTitle } from "@/components/common/section-title";
 import { Card } from "@/components/common/card";
-import { Badge } from "@/components/common/badge";
 import { Price } from "@/components/common/price";
 import { Button } from "@/components/common/button";
 
 import { PageWrapper } from "@/components/layout/page-wrapper";
 import { CardMedia } from "@/components/cards/card-media";
+import { CabCatalogueCard } from "@/components/cabs/cab-catalogue-card";
+import { CabFilterSidebar } from "@/components/cabs/cab-filter-sidebar";
 
 import { resolvePageMetadata } from "@/components/seo/seo";
 
@@ -138,6 +136,9 @@ async function getCabs(
   sort = "newest",
   skip = 0,
   take = 9,
+  minCapacity = "",
+  ac = "",
+  fuelType = "",
 ): Promise<{ items: CabCard[]; total: number; networkError?: boolean }> {
   try {
     const params = new URLSearchParams({ take: String(take), skip: String(skip) });
@@ -147,6 +148,9 @@ async function getCabs(
     if (tripType) params.set("tripType", tripType);
     if (cityId) params.set("cityId", cityId);
     if (sort !== "newest") params.set("sort", sort);
+    if (minCapacity) params.set("minCapacity", minCapacity);
+    if (ac) params.set("ac", ac);
+    if (fuelType) params.set("fuelType", fuelType);
 
     const res = await fetch(`${API_BASE}/api/cabs?${params.toString()}`, { cache: "no-store" });
     if (!res.ok) return { items: [], total: 0 };
@@ -180,6 +184,9 @@ type Props = {
     travelDate?: string;
     sort?: string;
     page?: string;
+    minCapacity?: string;
+    ac?: string;
+    fuelType?: string;
   }>;
 };
 
@@ -195,10 +202,24 @@ export default async function PublicCabsPage({ searchParams }: Props) {
   const sort = params.sort ?? "newest";
   const page = Number(params.page) || 1;
   const skip = (page - 1) * 9;
+  const minCapacity = params.minCapacity ?? "";
+  const ac = params.ac ?? "";
+  const fuelType = params.fuelType ?? "";
 
   const [result, allCities, showcaseCabsRes, vehicleTypes, tripTypes, packages, popularRoutes] =
     await Promise.all([
-      getCabs(search, vehicleType, tripType, originCityId, sort, skip, 9),
+      getCabs(
+        search,
+        vehicleType,
+        tripType,
+        originCityId,
+        sort,
+        skip,
+        9,
+        minCapacity,
+        ac,
+        fuelType,
+      ),
       getCities(),
       getCabs("", "", "", "", "newest", 0, 50),
       getLookupItems("VEHICLE_TYPE"),
@@ -217,6 +238,9 @@ export default async function PublicCabsPage({ searchParams }: Props) {
   if (destinationCityId) baseQuery.set("destinationCityId", destinationCityId);
   if (travelDate) baseQuery.set("travelDate", travelDate);
   if (sort && sort !== "newest") baseQuery.set("sort", sort);
+  if (minCapacity) baseQuery.set("minCapacity", minCapacity);
+  if (ac) baseQuery.set("ac", ac);
+  if (fuelType) baseQuery.set("fuelType", fuelType);
 
   const uniqueShowcaseCabs = vehicleTypes
     .map((vt) => showcaseCabsRes.items?.find((cab: CabCard) => cab.vehicleType === vt.value))
@@ -560,13 +584,13 @@ export default async function PublicCabsPage({ searchParams }: Props) {
         </section>
       )}
 
-      {/* 4. The Fleet Listing Section */}
+      {/* 4. The Fleet Listing Section (Catalogue) */}
       <section className="py-16 bg-muted/10" id="fleet">
         <Container>
           <div className="flex flex-col sm:flex-row items-end justify-between gap-4 mb-8">
             <SectionTitle
-              title="Available Cabs"
-              description="Browse real vehicles available for immediate booking."
+              title="Cab Catalogue"
+              description="Browse our complete active vehicle fleet or filter to find the perfect ride."
               align="left"
             />
             <div className="flex items-center gap-3 shrink-0">
@@ -576,6 +600,10 @@ export default async function PublicCabsPage({ searchParams }: Props) {
                 <input type="hidden" name="travelDate" value={travelDate} />
                 <input type="hidden" name="type" value={vehicleType} />
                 <input type="hidden" name="trip" value={tripType} />
+                <input type="hidden" name="search" value={search} />
+                <input type="hidden" name="minCapacity" value={minCapacity} />
+                <input type="hidden" name="ac" value={ac} />
+                <input type="hidden" name="fuelType" value={fuelType} />
                 <select
                   name="sort"
                   defaultValue={sort}
@@ -593,153 +621,93 @@ export default async function PublicCabsPage({ searchParams }: Props) {
             </div>
           </div>
 
-          {/* 5. Robust Empty States */}
-          {result.networkError ? (
-            <Card className="p-12 text-center max-w-2xl mx-auto border-destructive/20 bg-destructive/5">
-              <div className="mx-auto flex size-16 items-center justify-center rounded-full bg-destructive/10 text-destructive mb-4">
-                <Car className="size-8" />
-              </div>
-              <h3 className="text-xl font-bold text-foreground">
-                Cab Service Temporarily Unavailable
-              </h3>
-              <p className="text-sm text-muted-foreground mt-2 mb-6">
-                Cab service is temporarily unavailable. Please try again.
-              </p>
-              <Button asChild variant="outline">
-                <Link href="/cabs">Try Again</Link>
-              </Button>
-            </Card>
-          ) : result.items.length === 0 ? (
-            <Card className="p-12 text-center max-w-2xl mx-auto border-dashed border-2">
-              <div className="mx-auto flex size-16 items-center justify-center rounded-full bg-primary/10 text-primary mb-4">
-                <Search className="size-8" />
-              </div>
-              <h3 className="text-xl font-bold text-foreground">No Cabs Match Your Search</h3>
-              <p className="text-sm text-muted-foreground mt-2 mb-6">
-                Try adjusting your filters, selecting a different city, or viewing all available
-                fleet.
-              </p>
-              <Button asChild>
-                <Link href="/cabs">View All Cabs</Link>
-              </Button>
-            </Card>
-          ) : (
-            <>
-              <div className="flex overflow-x-auto snap-x snap-mandatory lg:grid lg:grid-cols-4 xl:grid-cols-5 gap-4 hide-scrollbar pb-6">
-                {result.items.map((cab) => {
-                  const displayCity = cab.serviceLocations?.[0]?.city?.name ?? "All Cities";
-                  return (
-                    <div
-                      key={cab.id}
-                      className="group shrink-0 snap-start w-[75vw] sm:w-72 lg:w-auto flex flex-col bg-card rounded-xl overflow-hidden border border-border hover:shadow-md transition-all duration-300"
-                    >
-                      <div className="relative aspect-[16/10] bg-white overflow-hidden p-4 border-b border-border/30 flex items-center justify-center">
-                        {cab.featuredMedia?.secureUrl || cab.image ? (
-                          <CardMedia
-                            src={cab.featuredMedia?.secureUrl ?? cab.image ?? ""}
-                            alt={cab.vehicleName}
-                            className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500"
-                          />
-                        ) : (
-                          <div className="absolute inset-0 flex items-center justify-center bg-muted/30">
-                            <Car className="size-12 text-muted-foreground/30" />
-                          </div>
-                        )}
-                        <div className="absolute top-2 left-2 flex flex-col gap-2">
-                          {cab.featured && (
-                            <Badge
-                              variant="accent"
-                              className="shadow-sm w-fit font-bold tracking-wide text-[10px] px-2 py-0.5"
-                            >
-                              TOP RATED
-                            </Badge>
-                          )}
-                        </div>
-                        <span className="absolute top-2 right-2 rounded-full bg-background/90 px-2.5 py-0.5 text-[10px] font-bold tracking-widest uppercase text-foreground shadow-sm backdrop-blur-md border border-border/50">
-                          {cab.vehicleType.replace(/_/g, " ")}
-                        </span>
-                      </div>
+          <div className="flex flex-col lg:flex-row gap-8 items-start">
+            {/* Sidebar for Filters */}
+            <CabFilterSidebar
+              vehicleTypes={vehicleTypes}
+              defaultValues={{
+                type: vehicleType,
+                fuelType,
+                ac,
+                minCapacity,
+                originCityId,
+                destinationCityId,
+                travelDate,
+                trip: tripType,
+                search,
+                sort,
+              }}
+            />
 
-                      <div className="p-4 flex flex-col flex-1">
-                        <div className="flex items-start justify-between mb-2">
-                          <div>
-                            <h3 className="font-bold text-base text-foreground group-hover:text-primary transition-colors line-clamp-1">
-                              <Link href={`/cabs/${cab.slug}?${baseQuery.toString()}`}>
-                                {cab.vehicleName}
-                              </Link>
-                            </h3>
-                            <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1">
-                              <MapPin className="size-3 text-primary" />
-                              <span>{displayCity}</span>
-                            </p>
-                          </div>
-                        </div>
+            {/* Results Area */}
+            <div className="flex-1 w-full min-w-0">
+              {/* Robust Empty States */}
+              {result.networkError ? (
+                <Card className="p-12 text-center w-full border-destructive/20 bg-destructive/5">
+                  <div className="mx-auto flex size-16 items-center justify-center rounded-full bg-destructive/10 text-destructive mb-4">
+                    <Car className="size-8" />
+                  </div>
+                  <h3 className="text-xl font-bold text-foreground">
+                    Cab Service Temporarily Unavailable
+                  </h3>
+                  <p className="text-sm text-muted-foreground mt-2 mb-6">
+                    Cab service is temporarily unavailable. Please try again.
+                  </p>
+                  <Button asChild variant="outline">
+                    <Link href="/cabs">Try Again</Link>
+                  </Button>
+                </Card>
+              ) : result.items.length === 0 ? (
+                <Card className="p-12 text-center w-full border-dashed border-2">
+                  <div className="mx-auto flex size-16 items-center justify-center rounded-full bg-primary/10 text-primary mb-4">
+                    <Search className="size-8" />
+                  </div>
+                  <h3 className="text-xl font-bold text-foreground">No Cabs Match Your Search</h3>
+                  <p className="text-sm text-muted-foreground mt-2 mb-6">
+                    Try adjusting your filters, selecting a different city, or viewing all available
+                    fleet.
+                  </p>
+                  <Button asChild>
+                    <Link href="/cabs">View All Cabs</Link>
+                  </Button>
+                </Card>
+              ) : (
+                <>
+                  <div className="mb-4 flex items-center justify-between text-sm text-muted-foreground">
+                    <p>
+                      Showing {result.items.length} of {result.total} vehicles
+                    </p>
+                  </div>
+                  <div className="flex flex-col gap-4">
+                    {result.items.map((cab) => (
+                      <CabCatalogueCard key={cab.id} cab={cab} baseQuery={baseQuery} />
+                    ))}
+                  </div>
 
-                        <div className="grid grid-cols-2 gap-2 my-3 text-[11px] font-medium text-muted-foreground">
-                          <div className="flex items-center gap-1.5">
-                            <Users className="size-3.5 text-primary/70" />
-                            {cab.capacity} Seats
-                          </div>
-                          <div className="flex items-center gap-1.5">
-                            <Briefcase className="size-3.5 text-primary/70" />
-                            {cab.luggageCapacity ?? 2} Bags
-                          </div>
-                          <div className="flex items-center gap-1.5">
-                            <Fuel className="size-3.5 text-primary/70" />
-                            <span className="capitalize">{cab.fuelType.toLowerCase()}</span>
-                          </div>
-                          <div className="flex items-center gap-1.5">
-                            <Snowflake className="size-3.5 text-sky-500" />
-                            {cab.ac ? "AC" : "Non-AC"}
-                          </div>
-                        </div>
-
-                        <div className="mt-auto pt-3 flex items-center justify-between border-t border-border/50">
-                          <div className="flex flex-col">
-                            <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">
-                              Per Km
-                            </span>
-                            <Price
-                              amount={Number(cab.priceFrom)}
-                              className="text-sm font-extrabold text-foreground"
-                            />
-                          </div>
+                  {totalPages > 1 && (
+                    <div className="mt-12 flex flex-wrap items-center justify-center gap-2">
+                      {Array.from({ length: totalPages }).map((_, idx) => {
+                        const pageNum = idx + 1;
+                        const qs = new URLSearchParams(baseQuery);
+                        qs.set("page", String(pageNum));
+                        return (
                           <Button
+                            key={pageNum}
                             asChild
-                            size="sm"
-                            className="rounded-lg text-xs px-3 h-8 shadow-sm"
+                            size="icon"
+                            variant={pageNum === page ? "primary" : "outline"}
+                            className="rounded-full shadow-sm"
                           >
-                            <Link href={`/cabs/${cab.slug}?${baseQuery.toString()}`}>Book Now</Link>
+                            <Link href={`/cabs?${qs.toString()}`}>{pageNum}</Link>
                           </Button>
-                        </div>
-                      </div>
+                        );
+                      })}
                     </div>
-                  );
-                })}
-              </div>
-
-              {totalPages > 1 && (
-                <div className="mt-12 flex flex-wrap items-center justify-center gap-2">
-                  {Array.from({ length: totalPages }).map((_, idx) => {
-                    const pageNum = idx + 1;
-                    const qs = new URLSearchParams(baseQuery);
-                    qs.set("page", String(pageNum));
-                    return (
-                      <Button
-                        key={pageNum}
-                        asChild
-                        size="icon"
-                        variant={pageNum === page ? "primary" : "outline"}
-                        className="rounded-full shadow-sm"
-                      >
-                        <Link href={`/cabs?${qs.toString()}`}>{pageNum}</Link>
-                      </Button>
-                    );
-                  })}
-                </div>
+                  )}
+                </>
               )}
-            </>
-          )}
+            </div>
+          </div>
         </Container>
       </section>
 

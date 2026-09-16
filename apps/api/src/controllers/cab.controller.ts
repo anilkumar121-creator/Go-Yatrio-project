@@ -1,5 +1,5 @@
 import type { Request, Response, NextFunction } from "express";
-import { CabStatus, CabTripType, VehicleType, prisma, Prisma } from "../db.js";
+import { CabStatus, CabTripType, CabFuelType, VehicleType, prisma, Prisma } from "../db.js";
 import { cabService } from "../services/cab.service.js";
 import {
   cabCreateSchema,
@@ -24,6 +24,10 @@ export async function listCabs(req: Request, res: Response) {
   const sort = req.query.sort as
     "price_asc" | "price_desc" | "capacity_desc" | "newest" | undefined;
 
+  const minCapacity = req.query.minCapacity ? Number(req.query.minCapacity) : undefined;
+  const ac = req.query.ac !== undefined ? req.query.ac === "true" : undefined;
+  const fuelType = req.query.fuelType as CabFuelType | undefined;
+
   const result = await cabService.list({
     take,
     skip,
@@ -33,6 +37,9 @@ export async function listCabs(req: Request, res: Response) {
     cityId,
     status: CabStatus.ACTIVE,
     sort,
+    minCapacity,
+    ac,
+    fuelType,
   });
 
   res.json({
