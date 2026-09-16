@@ -1,10 +1,12 @@
 import { Router } from "express";
-import { createPaymentIntent } from "../controllers/payment.controller.js";
+import { createPaymentIntent, handleRazorpayWebhook } from "../controllers/payment.controller.js";
 import { optionalAuth } from "../middleware/auth.js";
 
 const paymentsRouter = Router();
 
-// Guest booking and authenticated user booking share this endpoint.
+// Webhook relies on rawBody injected by express.json verify hook
+paymentsRouter.post("/webhook", handleRazorpayWebhook);
+
 // We use optionalAuth because auth depends on booking.userId vs guestAccessToken.
 paymentsRouter.post("/:bookingId/intent", optionalAuth, createPaymentIntent);
 

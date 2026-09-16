@@ -1,3 +1,12 @@
+export interface NormalizedGatewayEvent {
+  eventType: "payment.success" | "payment.failed" | "unknown";
+  providerOrderId: string;
+  providerPaymentId?: string;
+  amount?: number; // In minor units (paise)
+  currency?: string;
+  failureReason?: string;
+}
+
 export interface PaymentGatewayAdapter {
   /**
    * Creates a payment order on the provider.
@@ -14,4 +23,14 @@ export interface PaymentGatewayAdapter {
     amount: number;
     currency: string;
   }>;
+
+  /**
+   * Verifies the cryptographic signature of the incoming webhook.
+   */
+  verifyWebhookSignature(payload: string, signature: string, secret: string): boolean;
+
+  /**
+   * Parses the raw payload into a NormalizedGatewayEvent.
+   */
+  parseWebhookEvent(payload: string): NormalizedGatewayEvent;
 }

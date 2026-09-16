@@ -55,7 +55,17 @@ export function createApp() {
   );
 
   // Parse request bodies with safe 1mb limit
-  app.use(express.json({ limit: "1mb" }));
+  // Capture raw body for webhook signature verification
+  app.use(
+    express.json({
+      limit: "1mb",
+      verify: (req: express.Request, res, buf) => {
+        if (req.originalUrl && req.originalUrl.includes("/api/payments/webhook")) {
+          (req as express.Request & { rawBody?: string }).rawBody = buf.toString("utf8");
+        }
+      },
+    }),
+  );
   app.use(express.urlencoded({ extended: true, limit: "1mb" }));
 
   // Health APIs (exempt from rate limiting for probes / uptime monitors)
