@@ -1,15 +1,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import {
-  Car,
-  Users,
   MapPin,
-  Search,
   ArrowRight,
-  Calendar,
+  Clock,
   ShieldCheck,
   CreditCard,
-  Clock,
+  Car,
+  Users,
+  Search,
 } from "lucide-react";
 import { Container } from "@/components/common/container";
 import { SectionTitle } from "@/components/common/section-title";
@@ -21,6 +20,7 @@ import { PageWrapper } from "@/components/layout/page-wrapper";
 import { CardMedia } from "@/components/cards/card-media";
 import { CabCatalogueCard } from "@/components/cabs/cab-catalogue-card";
 import { CabFilterSidebar } from "@/components/cabs/cab-filter-sidebar";
+import { CabSearchWidget } from "@/components/cabs/cab-search-widget";
 
 import { resolvePageMetadata } from "@/components/seo/seo";
 
@@ -261,114 +261,8 @@ export default async function PublicCabsPage({ searchParams }: Props) {
               comfortable travel with GoYatrio.
             </p>
 
-            <div className="bg-background rounded-2xl shadow-xl p-4 sm:p-6 text-foreground max-w-4xl mx-auto border border-border/50 backdrop-blur-sm">
-              <form className="flex flex-col gap-6" method="get" action="/cabs">
-                <fieldset className="flex flex-wrap items-center justify-center gap-2">
-                  {tripTypes.map((trip) => (
-                    <label key={trip.value} className="relative cursor-pointer">
-                      <input
-                        type="radio"
-                        name="trip"
-                        value={trip.value}
-                        defaultChecked={tripType === trip.value}
-                        className="peer sr-only"
-                      />
-                      <span className="inline-flex items-center justify-center px-4 py-2 text-sm font-semibold rounded-full border border-border/60 bg-muted/30 text-foreground peer-checked:bg-primary peer-checked:text-primary-foreground peer-checked:border-primary transition-all hover:bg-muted">
-                        {trip.label}
-                      </span>
-                    </label>
-                  ))}
-                </fieldset>
-
-                <div className="relative">
-                  <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-                    <Search className="size-5" />
-                  </div>
-                  <input
-                    name="search"
-                    type="text"
-                    placeholder="Search cabs or vehicle models"
-                    defaultValue={search}
-                    className="w-full rounded-xl border border-input bg-background/50 pl-10 pr-3 py-3 text-sm font-medium focus:ring-2 focus:ring-primary focus:border-primary transition-all"
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
-                  <div className="relative">
-                    <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-                      <MapPin className="size-5" />
-                    </div>
-                    <select
-                      name="originCityId"
-                      defaultValue={originCityId}
-                      className="w-full rounded-xl border border-input bg-background/50 pl-10 pr-3 py-3 text-sm font-medium focus:ring-2 focus:ring-primary focus:border-primary transition-all appearance-none"
-                    >
-                      <option value="">Pickup City</option>
-                      {allCities.map((c) => (
-                        <option key={c.id} value={c.id}>
-                          {c.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div className="relative">
-                    <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-                      <MapPin className="size-5" />
-                    </div>
-                    <select
-                      name="destinationCityId"
-                      defaultValue={destinationCityId}
-                      className="w-full rounded-xl border border-input bg-background/50 pl-10 pr-3 py-3 text-sm font-medium focus:ring-2 focus:ring-primary focus:border-primary transition-all appearance-none"
-                    >
-                      <option value="">Drop City</option>
-                      {allCities.map((c) => (
-                        <option key={c.id} value={c.id}>
-                          {c.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div className="relative">
-                    <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-                      <Calendar className="size-5" />
-                    </div>
-                    <input
-                      type="date"
-                      name="travelDate"
-                      defaultValue={travelDate}
-                      className="w-full rounded-xl border border-input bg-background/50 pl-10 pr-3 py-3 text-sm font-medium focus:ring-2 focus:ring-primary focus:border-primary transition-all appearance-none"
-                    />
-                  </div>
-
-                  <div className="relative">
-                    <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-                      <Car className="size-5" />
-                    </div>
-                    <select
-                      name="type"
-                      defaultValue={vehicleType}
-                      className="w-full rounded-xl border border-input bg-background/50 pl-10 pr-3 py-3 text-sm font-medium focus:ring-2 focus:ring-primary focus:border-primary transition-all appearance-none"
-                    >
-                      <option value="">Vehicle Class</option>
-                      {vehicleTypes.map((vt) => (
-                        <option key={vt.value} value={vt.value}>
-                          {vt.label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <Button
-                    type="submit"
-                    size="lg"
-                    className="w-full rounded-xl text-base font-semibold shadow-md lg:col-span-1 h-full py-3"
-                  >
-                    Search Cabs
-                  </Button>
-                </div>
-              </form>
+            <div className="mt-8 relative z-20">
+              <CabSearchWidget tripTypes={tripTypes} allCities={allCities} />
             </div>
           </div>
         </Container>

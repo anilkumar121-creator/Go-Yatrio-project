@@ -20,6 +20,7 @@ import {
   CtaSection,
 } from "@/components/sections";
 import { MotionDiv } from "@/components/animation/motion";
+import { CabSearchWidget } from "@/components/cabs/cab-search-widget";
 
 export const revalidate = 300; // 5-minute ISR
 
@@ -217,6 +218,49 @@ async function getFeaturedPackages(): Promise<PackageSummary[]> {
   }
 }
 
+type LookupItem = {
+  id: string;
+  value: string;
+  label: string;
+  description: string | null;
+  sortOrder: number;
+};
+
+type CityOption = {
+  id: string;
+  name: string;
+};
+
+async function getLookupItems(groupKey: string): Promise<LookupItem[]> {
+  try {
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+    const API_BASE = process.env.API_URL || baseUrl;
+    const res = await fetch(`${API_BASE}/api/lookups/${groupKey}`, {
+      next: { revalidate: 600, tags: ["lookups"] },
+    });
+    if (!res.ok) return [];
+    const payload = await res.json();
+    return payload?.data?.items ?? [];
+  } catch {
+    return [];
+  }
+}
+
+async function getCities(): Promise<CityOption[]> {
+  try {
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+    const API_BASE = process.env.API_URL || baseUrl;
+    const res = await fetch(`${API_BASE}/api/locations/cities?hasCabService=true&activeOnly=true`, {
+      next: { revalidate: 600, tags: ["cities"] },
+    });
+    if (!res.ok) return [];
+    const payload = await res.json();
+    return Array.isArray(payload?.data) ? payload.data : (payload?.data?.data ?? []);
+  } catch {
+    return [];
+  }
+}
+
 const mockTestimonials = [
   {
     id: "1",
@@ -294,9 +338,11 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function HomePage() {
-  const [dbDestinations, dbPackages] = await Promise.all([
+  const [dbDestinations, dbPackages, tripTypes, allCities] = await Promise.all([
     getFeaturedDestinations(),
     getFeaturedPackages(),
+    getLookupItems("CAB_TRIP_TYPE"),
+    getCities(),
   ]);
 
   const destinations =
@@ -351,6 +397,7 @@ export default async function HomePage() {
         subtitle="Handcrafted tours, hotel bookings, cab services, and unforgettable travel experiences."
         primaryCta={{ label: "Explore Packages", href: "/packages" }}
         secondaryCta={{ label: "Plan Your Trip", href: "/contact" }}
+        searchArea={<CabSearchWidget tripTypes={tripTypes} allCities={allCities} />}
       />
 
       {/* SECTION 2 — QUICK SERVICES */}
