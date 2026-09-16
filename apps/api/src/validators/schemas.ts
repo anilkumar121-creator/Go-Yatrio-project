@@ -398,6 +398,18 @@ export const cabBookingCreateSchema = z.object({
   distanceKm: z.coerce.number().positive().optional(),
   pickupDate: z.coerce.date(),
   pickupTime: optionalStringField(20),
+  returnDate: z.coerce.date().optional().nullable(),
+  returnTime: optionalStringField(20),
+  stops: z
+    .array(
+      z.object({
+        location: z.string().trim().min(1).max(200),
+        cityId: z.string().trim().min(1).optional(),
+      }),
+    )
+    .max(20)
+    .optional()
+    .nullable(),
   passengers: z.coerce.number().int().positive(),
   luggageCount: z.coerce.number().int().min(0).optional(),
   tripType: stringField(120),

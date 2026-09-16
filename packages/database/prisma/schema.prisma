@@ -70,6 +70,7 @@ enum CabTripType {
   ONE_WAY
   ROUND_TRIP
   MULTI_DAY
+  MULTI_WAY
 }
 
 enum CabFuelType {
@@ -889,8 +890,11 @@ model CabBooking {
   dropCityId       String?
   pickupDate       DateTime
   pickupTime       String?
+  returnDate       DateTime?
+  returnTime       String?
   passengers       Int
   luggageCount     Int?
+  stops            Json?
 
   tripType         String           // Snapshot from LookupItem value
   vehicleCategory  String           // Snapshot from LookupItem value
