@@ -85,3 +85,76 @@ export const getBooking = async (req: Request, res: Response, next: NextFunction
     next(error);
   }
 };
+
+export const getBookings = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const authReq = req as AuthenticatedRequest;
+    const authUserId = authReq.user?.sub;
+
+    if (!authUserId) {
+      throw new AppError("Unauthorized", 401);
+    }
+
+    const page = Math.max(1, parseInt(req.query.page as string) || 1);
+    const limit = Math.min(50, Math.max(1, parseInt(req.query.limit as string) || 10));
+    const skip = (page - 1) * limit;
+
+    const [totalCount, bookings] = await Promise.all([
+      prisma.booking.count({
+        where: { userId: authUserId },
+      }),
+      prisma.booking.findMany({
+        where: { userId: authUserId },
+        orderBy: { createdAt: "desc" },
+        skip,
+        take: limit,
+        include: {
+          cabBooking: {
+            include: {
+              vehicle: {
+                select: {
+                  vehicleName: true,
+                  vehicleType: true,
+                },
+              },
+              pickupCity: { select: { name: true } },
+              dropCity: { select: { name: true } },
+            },
+          },
+        },
+      }),
+    ]);
+
+    const safeBookings = bookings.map((booking) => ({
+      id: booking.id,
+      bookingReference: booking.bookingReference,
+      serviceType: booking.serviceType,
+      status: booking.status,
+      createdAt: booking.createdAt,
+      totalAmount: booking.cabBooking?.pricingSnapshot
+        ? (booking.cabBooking.pricingSnapshot as unknown as { totalFare?: number }).totalFare
+        : null, // Just a simple amount representation for list
+      cabBooking: booking.cabBooking
+        ? {
+            tripType: booking.cabBooking.tripType,
+            pickupCity: booking.cabBooking.pickupCity,
+            dropCity: booking.cabBooking.dropCity,
+            pickupDate: booking.cabBooking.pickupDate,
+            vehicle: booking.cabBooking.vehicle,
+          }
+        : null,
+    }));
+
+    res.json({
+      data: safeBookings,
+      meta: {
+        page,
+        limit,
+        totalCount,
+        totalPages: Math.ceil(totalCount / limit),
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};

@@ -28,33 +28,81 @@ export default async function CabBookingSuccessPage({ params }: Props) {
 
   const booking = res.ok ? await res.json() : null;
 
+  const cab = booking?.cabBooking;
+  const pricing = cab?.pricingSnapshot;
+
   return (
     <div className="min-h-screen bg-muted/30 py-12 md:py-20 flex items-center justify-center">
-      <Container className="max-w-xl">
-        <Card className="p-8 text-center border-border shadow-md">
-          <div className="mx-auto w-16 h-16 bg-success/20 rounded-full flex items-center justify-center mb-6">
-            <CheckCircle2 className="size-10 text-success" />
-          </div>
+      <Container className="max-w-2xl">
+        <Card className="p-8 border-border shadow-md">
+          <div className="text-center mb-8">
+            <div className="mx-auto w-16 h-16 bg-success/20 rounded-full flex items-center justify-center mb-6">
+              <CheckCircle2 className="size-10 text-success" />
+            </div>
 
-          <h1 className="text-3xl font-extrabold tracking-tight mb-2">Booking Requested</h1>
-          <p className="text-muted-foreground mb-8">
-            Your cab booking request has been successfully received. We will contact you shortly to
-            confirm the final fare and payment details.
-          </p>
-
-          <div className="bg-muted/50 rounded-xl p-4 mb-8">
-            <p className="text-sm text-muted-foreground mb-1">Booking Reference</p>
-            <p className="text-lg font-mono font-bold tracking-wider">
-              {booking ? booking.bookingReference : id.toUpperCase().substring(0, 8)}
+            <h1 className="text-3xl font-extrabold tracking-tight mb-2">Booking Requested</h1>
+            <p className="text-muted-foreground">
+              Your cab booking request has been successfully received. We will contact you shortly
+              to confirm the final fare and payment details.
             </p>
           </div>
 
-          <div className="space-y-3">
-            <Button asChild size="lg" className="w-full">
+          <div className="bg-muted/50 rounded-xl p-6 mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <p className="text-sm text-muted-foreground mb-1">Booking Reference</p>
+              <p className="text-xl font-mono font-bold tracking-wider">
+                {booking ? booking.bookingReference : id.toUpperCase().substring(0, 8)}
+              </p>
+            </div>
+            {booking && (
+              <div className="md:text-right">
+                <p className="text-sm text-muted-foreground mb-1">Status</p>
+                <div className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-primary/10 text-primary">
+                  {booking.status}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {booking && cab && (
+            <div className="space-y-6 mb-8 text-left">
+              <h3 className="font-semibold text-lg border-b pb-2">Trip Summary</h3>
+              <div className="grid sm:grid-cols-2 gap-4 text-sm">
+                <div>
+                  <span className="text-muted-foreground block mb-1">Route</span>
+                  <span className="font-medium">
+                    {cab.pickupLocation} → {cab.dropLocation || cab.pickupCity?.name}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-muted-foreground block mb-1">Date & Time</span>
+                  <span className="font-medium">
+                    {new Date(cab.pickupDate).toLocaleDateString()} at {cab.pickupTime}
+                  </span>
+                </div>
+                {cab.vehicle && (
+                  <div>
+                    <span className="text-muted-foreground block mb-1">Vehicle</span>
+                    <span className="font-medium">
+                      {cab.vehicle.vehicleName} ({cab.vehicle.vehicleType})
+                    </span>
+                  </div>
+                )}
+                {pricing?.totalFare && (
+                  <div>
+                    <span className="text-muted-foreground block mb-1">Total Fare</span>
+                    <span className="font-medium">₹{pricing.totalFare}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          <div className="space-y-3 sm:space-y-0 sm:space-x-3 sm:flex sm:justify-center">
+            <Button asChild size="lg" className="w-full sm:w-auto">
               <Link href="/">Return to Home</Link>
             </Button>
-
-            <Button asChild variant="outline" size="lg" className="w-full">
+            <Button asChild variant="outline" size="lg" className="w-full sm:w-auto">
               <Link href="/cabs">Browse More Cabs</Link>
             </Button>
           </div>
