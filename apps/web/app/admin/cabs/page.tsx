@@ -24,7 +24,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/common/select";
-import { MediaLinkPanel } from "@/components/media/media-link-panel";
+import { MediaPicker, type PickedMedia } from "@/components/media/media-picker";
 import { useLookups } from "@/lib/use-lookups";
 
 type DestinationOption = {
@@ -173,6 +173,9 @@ export default function AdminCabsPage() {
   const [deleteTarget, setDeleteTarget] = useState<VehicleItem | null>(null);
   const [deleting, setDeleting] = useState(false);
 
+  const [isMediaPickerOpen, setIsMediaPickerOpen] = useState(false);
+  const [mediaPickerTarget, setMediaPickerTarget] = useState<"primary" | "gallery">("primary");
+
   const { options: cabLookupOptions } = useLookups(["VEHICLE_TYPE", "FUEL_TYPE", "CAB_TRIP_TYPE"], {
     VEHICLE_TYPE: [
       "HATCHBACK",
@@ -296,6 +299,24 @@ export default function AdminCabsPage() {
         ? prev.amenities.filter((a) => a !== name)
         : [...prev.amenities, name],
     }));
+  };
+
+  const handleMediaPick = (selection: PickedMedia[]) => {
+    if (selection.length === 0) return;
+    const picked = selection[0];
+    if (!picked.secureUrl) return;
+
+    if (mediaPickerTarget === "primary") {
+      setForm((prev) => ({ ...prev, image: picked.secureUrl! }));
+    } else {
+      setForm((prev) => {
+        const existing = prev.galleryImages ? prev.galleryImages.split("\n").filter(Boolean) : [];
+        if (!existing.includes(picked.secureUrl!)) {
+          existing.push(picked.secureUrl!);
+        }
+        return { ...prev, galleryImages: existing.join("\n") };
+      });
+    }
   };
 
   const handleSaveVehicle = async (e: React.FormEvent) => {
@@ -477,16 +498,33 @@ export default function AdminCabsPage() {
               {
                 header: "Vehicle Name",
                 cell: (row) => (
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="font-semibold text-foreground">{row.vehicleName}</span>
-                      {row.featured ? <Badge variant="accent">Featured</Badge> : null}
-                      {row.ac ? <Snowflake className="size-3.5 text-sky-500" /> : null}
+                  <div className="flex items-center gap-3">
+                    {row.image ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={row.image}
+                        alt={row.vehicleName}
+                        className="h-10 w-14 rounded-md object-cover border border-border"
+                      />
+                    ) : (
+                      <div className="flex h-10 w-14 items-center justify-center rounded-md border border-border bg-muted">
+                        <Car className="size-5 text-muted-foreground" />
+                      </div>
+                    )}
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold text-foreground">{row.vehicleName}</span>
+                        {row.featured ? <Badge variant="accent">Featured</Badge> : null}
+                        {row.ac ? <Snowflake className="size-3.5 text-sky-500" /> : null}
+                      </div>
+                      <span className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
+                        <MapPin className="size-3 text-primary" />
+                        {row.serviceLocations?.length
+                          ? `${row.serviceLocations.length} Locations`
+                          : "Global (No City)"}{" "}
+                        &middot; /{row.slug}
+                      </span>
                     </div>
-                    <span className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
-                      <MapPin className="size-3 text-primary" />
-                      {row.destination?.name ?? "All Destinations"} ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â· /{row.slug}
-                    </span>
                   </div>
                 ),
               },
@@ -832,28 +870,95 @@ export default function AdminCabsPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="cab-image">Cover Image URL</Label>
-                  <Input
-                    id="cab-image"
-                    type="url"
-                    value={form.image}
-                    onChange={(e) => setForm({ ...form, image: e.target.value })}
-                    placeholder="https://..."
-                  />
+                  <Label>Primary Vehicle Image</Label>
+                  <div className="flex items-center gap-3">
+                    {form.image ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={form.image}
+                        alt="Cover Preview"
+                        className="h-16 w-24 object-cover rounded-md border border-border bg-muted"
+                      />
+                    ) : (
+                      <div className="flex h-16 w-24 items-center justify-center rounded-md border border-dashed border-border bg-muted">
+                        <span className="text-xs text-muted-foreground">No Image</span>
+                      </div>
+                    )}
+                    <div className="flex flex-col gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setMediaPickerTarget("primary");
+                          setIsMediaPickerOpen(true);
+                        }}
+                      >
+                        Select from Media Library
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="text-xs text-destructive hover:text-destructive h-auto p-0 justify-start"
+                        onClick={() => setForm((prev) => ({ ...prev, image: "" }))}
+                        disabled={!form.image}
+                      >
+                        Remove Image
+                      </Button>
+                    </div>
+                  </div>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="cab-gallery">Gallery Images (One URL per line)</Label>
-                  <Textarea
-                    id="cab-gallery"
-                    rows={2}
-                    value={form.galleryImages}
-                    onChange={(e) => setForm({ ...form, galleryImages: e.target.value })}
-                    placeholder={"https://...\nhttps://..."}
-                  />
-                </div>
                 <div className="space-y-2 tablet:col-span-2">
-                  <MediaLinkPanel module="CAB" moduleId={editingVehicle?.id} />
+                  <Label>Gallery Images</Label>
+                  <div className="flex flex-col gap-3">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="w-fit"
+                      onClick={() => {
+                        setMediaPickerTarget("gallery");
+                        setIsMediaPickerOpen(true);
+                      }}
+                    >
+                      Add Gallery Image
+                    </Button>
+                    {form.galleryImages ? (
+                      <div className="grid grid-cols-3 tablet:grid-cols-5 gap-3">
+                        {form.galleryImages
+                          .split("\n")
+                          .filter(Boolean)
+                          .map((url, i) => (
+                            <div
+                              key={i}
+                              className="relative group aspect-square rounded-md border border-border overflow-hidden bg-muted"
+                            >
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img
+                                src={url}
+                                alt={`Gallery ${i}`}
+                                className="h-full w-full object-cover"
+                              />
+                              <button
+                                type="button"
+                                className="absolute top-1 right-1 bg-black/60 rounded-full p-1 text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                                onClick={() => {
+                                  setForm((prev) => {
+                                    const list = prev.galleryImages.split("\n").filter(Boolean);
+                                    list.splice(i, 1);
+                                    return { ...prev, galleryImages: list.join("\n") };
+                                  });
+                                }}
+                              >
+                                <X className="size-3" />
+                              </button>
+                            </div>
+                          ))}
+                      </div>
+                    ) : null}
+                  </div>
                 </div>
 
                 {/* Air Conditioning + Featured toggles */}
@@ -982,6 +1087,15 @@ export default function AdminCabsPage() {
         isDestructive
         onConfirm={handleDeleteVehicle}
         onClose={() => setDeleteTarget(null)}
+      />
+
+      <MediaPicker
+        open={isMediaPickerOpen}
+        onOpenChange={setIsMediaPickerOpen}
+        onPick={handleMediaPick}
+        title={
+          mediaPickerTarget === "primary" ? "Select Primary Vehicle Image" : "Select Gallery Image"
+        }
       />
     </AdminLayout>
   );

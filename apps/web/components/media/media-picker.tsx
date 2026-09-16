@@ -6,12 +6,19 @@ import { Search, X, FileText, FileVideo } from "lucide-react";
 import { Button } from "@/components/common/button";
 import { Badge } from "@/components/common/badge";
 import { Input } from "@/components/common/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/common/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/common/select";
 
 export type PickedMedia = {
   mediaId: string;
   role: string;
   sortOrder: number;
+  secureUrl?: string;
 };
 
 type MediaOption = {
@@ -102,6 +109,7 @@ export function MediaPicker({
         mediaId: selected.id,
         role,
         sortOrder: 0,
+        secureUrl: selected.secureUrl,
       },
     ]);
     onOpenChange(false);
@@ -114,7 +122,9 @@ export function MediaPicker({
         <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm" />
         <DialogPrimitive.Content className="fixed inset-4 z-50 m-auto flex max-h-[85vh] w-full max-w-3xl flex-col overflow-hidden rounded-lg border border-border bg-card shadow-2xl">
           <div className="flex items-center justify-between border-b border-border p-4">
-            <DialogPrimitive.Title className="text-lg font-semibold text-foreground">{title}</DialogPrimitive.Title>
+            <DialogPrimitive.Title className="text-lg font-semibold text-foreground">
+              {title}
+            </DialogPrimitive.Title>
             <DialogPrimitive.Close className="rounded-sm opacity-70 hover:opacity-100">
               <X className="size-5 text-muted-foreground" />
             </DialogPrimitive.Close>
@@ -143,7 +153,12 @@ export function MediaPicker({
                 <SelectItem value="RAW">Documents</SelectItem>
               </SelectContent>
             </Select>
-            <Select value={role} onValueChange={(value) => setRole(value as "FEATURED" | "GALLERY" | "VIDEO" | "DOCUMENT")}>
+            <Select
+              value={role}
+              onValueChange={(value) =>
+                setRole(value as "FEATURED" | "GALLERY" | "VIDEO" | "DOCUMENT")
+              }
+            >
               <SelectTrigger className="w-40">
                 <SelectValue placeholder="Role" />
               </SelectTrigger>
@@ -170,13 +185,19 @@ export function MediaPicker({
                     type="button"
                     onClick={() => setSelectedId(item.id)}
                     className={`group relative overflow-hidden rounded-lg border bg-card text-left transition-all ${
-                      selectedId === item.id ? "border-primary ring-2 ring-primary/40" : "border-border hover:border-primary/50"
+                      selectedId === item.id
+                        ? "border-primary ring-2 ring-primary/40"
+                        : "border-border hover:border-primary/50"
                     }`}
                   >
                     <div className="relative aspect-square w-full">
                       {item.resourceType === "IMAGE" && item.secureUrl ? (
                         // eslint-disable-next-line @next/next/no-img-element
-                        <img src={item.secureUrl} alt={item.altText ?? item.fileName ?? ""} className="h-full w-full object-cover" />
+                        <img
+                          src={item.secureUrl}
+                          alt={item.altText ?? item.fileName ?? ""}
+                          className="h-full w-full object-cover"
+                        />
                       ) : item.resourceType === "VIDEO" ? (
                         <div className="flex h-full w-full items-center justify-center bg-muted/60">
                           <FileVideo className="size-7 text-primary" />
@@ -191,8 +212,12 @@ export function MediaPicker({
                       </Badge>
                     </div>
                     <div className="p-2">
-                      <p className="truncate text-xs font-medium text-foreground">{item.fileName ?? item.publicId}</p>
-                      <p className="truncate text-[10px] text-muted-foreground font-mono">{item.publicId}</p>
+                      <p className="truncate text-xs font-medium text-foreground">
+                        {item.fileName ?? item.publicId}
+                      </p>
+                      <p className="truncate text-[10px] text-muted-foreground font-mono">
+                        {item.publicId}
+                      </p>
                     </div>
                   </button>
                 ))}
