@@ -141,13 +141,23 @@ export function CabCatalogueCard({ cab, baseQuery }: Props) {
                 </div>
               </div>
 
-              <Button
-                asChild
-                size="lg"
-                className="w-full rounded-xl text-sm font-semibold shadow-md mt-auto"
-              >
-                <Link href={`/cabs/${cab.slug}?${baseQuery.toString()}`}>View Details</Link>
-              </Button>
+              <div className="flex flex-col gap-2 mt-auto w-full">
+                <Button
+                  asChild
+                  size="lg"
+                  className="w-full rounded-xl text-sm font-semibold shadow-md"
+                >
+                  <Link href={`/cabs/${cab.slug}/book?${baseQuery.toString()}`}>Book Now</Link>
+                </Button>
+                <Button
+                  asChild
+                  variant="outline"
+                  size="sm"
+                  className="w-full rounded-xl text-sm font-medium"
+                >
+                  <Link href={`/cabs/${cab.slug}?${baseQuery.toString()}`}>View Details</Link>
+                </Button>
+              </div>
             </div>
           </div>
         </div>

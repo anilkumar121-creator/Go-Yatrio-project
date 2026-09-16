@@ -42,13 +42,12 @@ export const createCabBooking = async (req: Request, res: Response, next: NextFu
       totalFare = Number(exactRoute.basePrice);
       appliedRoutePricingId = exactRoute.id;
     } else {
-      // Hierarchy B: Explicit fallback to vehicle pricing using distance
       if (data.distanceKm) {
         totalFare =
           Number(vehicle.baseFare) + Number(data.distanceKm) * Number(vehicle.extraKmCharge);
       } else {
         throw new AppError(
-          "Route pricing not configured and distance not provided for fallback calculation.",
+          "Authoritative fare cannot be calculated. Manual pricing required.",
           400,
         );
       }

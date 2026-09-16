@@ -163,15 +163,21 @@ export async function calculateFare(req: Request, res: Response, next: NextFunct
       if (vehicle && distanceKm) {
         fare = Number(vehicle.baseFare) + Number(distanceKm) * Number(vehicle.extraKmCharge);
       } else {
-        return res
-          .status(404)
-          .json({ success: false, error: "Route pricing not configured for this selection" });
+        return res.json({
+          success: true,
+          data: {
+            available: false,
+            requiresManualPricing: true,
+            message: "Fare requires manual confirmation",
+          },
+        });
       }
     }
 
     res.json({
       success: true,
       data: {
+        available: true,
         fare,
         origin,
         destination,
