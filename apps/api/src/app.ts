@@ -10,6 +10,7 @@ import { authRouter } from "./routes/auth.js";
 import { adminBlogsRouter, blogsRouter } from "./routes/blogs.js";
 import { adminCabsRouter, cabsRouter } from "./routes/cabs.js";
 import { adminCabBookingsRouter, cabBookingsRouter } from "./routes/cabBookings.js";
+import { bookingsRouter } from "./routes/bookings.js";
 import { adminRoutePricingRouter, routePricingRouter } from "./routes/routePricing.js";
 import { adminPaymentConfigsRouter, paymentConfigsRouter } from "./routes/paymentConfigs.js";
 import { adminDestinationsRouter, destinationsRouter } from "./routes/destinations.js";
@@ -78,6 +79,7 @@ export function createApp() {
   app.use("/api/admin/cabs", adminCabsRouter);
   app.use("/api/cab-bookings", cabBookingsRouter);
   app.use("/api/admin/cab-bookings", adminCabBookingsRouter);
+  app.use("/api/bookings", bookingsRouter);
   app.use("/api/route-pricing", routePricingRouter);
   app.use("/api/admin/route-pricing", adminRoutePricingRouter);
   app.use("/api/payment-configs", paymentConfigsRouter);

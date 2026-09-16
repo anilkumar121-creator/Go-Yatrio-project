@@ -1,4 +1,4 @@
-﻿import type { NextFunction, Request, Response } from "express";
+import type { NextFunction, Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import { UserRole } from "../db.js";
 import { requireJwtSecret } from "../config/env.js";
@@ -33,6 +33,21 @@ export function verifyJWT(request: Request, _response: Response, next: NextFunct
 }
 
 export const authenticate = verifyJWT;
+
+export function optionalAuth(request: Request, _response: Response, next: NextFunction) {
+  const header = request.headers.authorization;
+  const token = header?.startsWith("Bearer ") ? header.slice(7) : undefined;
+
+  if (token) {
+    try {
+      const verified = jwt.verify(token, requireJwtSecret()) as JwtPayload;
+      (request as AuthenticatedRequest).user = verified;
+    } catch {
+      // Ignore invalid token for optional auth
+    }
+  }
+  next();
+}
 
 export function requireAdmin(request: Request, _response: Response, next: NextFunction) {
   if ((request as AuthenticatedRequest).user?.role !== UserRole.ADMIN) {

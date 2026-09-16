@@ -1,3 +1,4 @@
+import crypto from "crypto";
 import { Request, Response, NextFunction } from "express";
 import { BookingStatus, Prisma } from "@prisma/client";
 import { prisma } from "../db.js";
@@ -8,6 +9,18 @@ function getParam(param: string | string[] | undefined): string {
   if (Array.isArray(param)) return param[0] ?? "";
   return param ?? "";
 }
+
+const setGuestCookie = (res: Response, bookingId: string, token: string | null) => {
+  if (token) {
+    res.cookie(`guest_booking_${bookingId}`, token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+      path: "/",
+    });
+  }
+};
 
 export const createCabBooking = async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -46,9 +59,15 @@ export const createCabBooking = async (req: Request, res: Response, next: NextFu
           throw new AppError("Idempotency key already used with a different payload", 409);
         }
 
+        if (existingBooking.guestAccessToken) {
+          setGuestCookie(res, existingBooking.id, existingBooking.guestAccessToken);
+        }
         return res.status(200).json(cb);
       }
     }
+
+    const isGuest = !data.userId;
+    const guestAccessToken = isGuest ? crypto.randomBytes(32).toString("hex") : null;
 
     const ref = `CAB-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
 
@@ -112,6 +131,7 @@ export const createCabBooking = async (req: Request, res: Response, next: NextFu
           data: {
             bookingReference: ref,
             idempotencyKey: idempotencyKey || null,
+            guestAccessToken,
             userId: data.userId || null,
             serviceType: "CAB",
             status: "PENDING_PAYMENT",
@@ -208,10 +228,17 @@ export const createCabBooking = async (req: Request, res: Response, next: NextFu
           if (!isSamePayload) {
             throw new AppError("Idempotency key already used with a different payload", 409);
           }
+          if (existingBooking.guestAccessToken) {
+            setGuestCookie(res, existingBooking.id, existingBooking.guestAccessToken);
+          }
           return res.status(200).json(cb);
         }
       }
       throw error;
+    }
+
+    if (guestAccessToken && result?.bookingId) {
+      setGuestCookie(res, result.bookingId, guestAccessToken);
     }
 
     res.status(201).json(result);

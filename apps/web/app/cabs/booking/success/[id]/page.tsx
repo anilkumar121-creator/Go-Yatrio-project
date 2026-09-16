@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { cookies } from "next/headers";
 import { CheckCircle2 } from "lucide-react";
 import { Container } from "@/components/common/container";
 import { Card } from "@/components/common/card";
@@ -11,8 +12,21 @@ type Props = {
 export default async function CabBookingSuccessPage({ params }: Props) {
   const { id } = await params;
 
-  // Since we don't have a public endpoint to fetch booking details by ID in the current schema without auth,
-  // we will just show the confirmation with the ID.
+  const cookieStore = await cookies();
+  const guestCookie = cookieStore.get(`guest_booking_${id}`);
+
+  const headers: HeadersInit = {};
+  if (guestCookie) {
+    headers.Cookie = `${guestCookie.name}=${guestCookie.value}`;
+  }
+
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+  const res = await fetch(`${apiUrl}/api/bookings/${id}`, {
+    headers,
+    cache: "no-store",
+  });
+
+  const booking = res.ok ? await res.json() : null;
 
   return (
     <div className="min-h-screen bg-muted/30 py-12 md:py-20 flex items-center justify-center">
@@ -31,7 +45,7 @@ export default async function CabBookingSuccessPage({ params }: Props) {
           <div className="bg-muted/50 rounded-xl p-4 mb-8">
             <p className="text-sm text-muted-foreground mb-1">Booking Reference</p>
             <p className="text-lg font-mono font-bold tracking-wider">
-              {id.toUpperCase().substring(0, 8)}
+              {booking ? booking.bookingReference : id.toUpperCase().substring(0, 8)}
             </p>
           </div>
 
