@@ -14,16 +14,29 @@ export class PaymentVerificationService {
       return { status: "ignored", reason: "unknown event or missing order id" };
     }
 
+    // 1. Resolve the Payment to determine the Booking ID for locking
+    const initialPayment = await prisma.payment.findUnique({
+      where: { paymentReference: event.providerOrderId },
+      select: { id: true, bookingId: true },
+    });
+
+    if (!initialPayment) {
+      // Payment not found. Acknowledge to gateway to stop retries, but log it.
+      return { status: "ignored", reason: "payment not found" };
+    }
+
     return prisma.$transaction(async (tx) => {
-      // 1. Re-read the Payment and Booking state atomically with a lock (if applicable) or fresh read
+      // 2. Acquire the parent Booking row lock to prevent race with intent creation
+      await tx.$executeRaw`SELECT id FROM "Booking" WHERE id = ${initialPayment.bookingId} FOR UPDATE`;
+
+      // 3. Re-read the Payment and Booking state atomically INSIDE the locked transaction
       const payment = await tx.payment.findUnique({
-        where: { paymentReference: event.providerOrderId },
+        where: { id: initialPayment.id },
         include: { booking: true },
       });
 
       if (!payment) {
-        // Payment not found. Acknowledge to gateway to stop retries, but log it.
-        return { status: "ignored", reason: "payment not found" };
+        return { status: "ignored", reason: "payment deleted before lock" };
       }
 
       if (payment.gatewayName !== "Razorpay") {

@@ -866,7 +866,7 @@ model Payment {
   status               PaymentStatus @default(PENDING)
   paymentMethod        String?
   gatewayName          String?
-  gatewayTransactionId String?
+  gatewayTransactionId String?       @unique
   paidAt               DateTime?
   failureReason        String?
   metadata             Json?
