@@ -7,6 +7,7 @@ import { Container } from "@/components/common/container";
 import { Card } from "@/components/common/card";
 import { Button } from "@/components/common/button";
 import { useSearchParams } from "next/navigation";
+import { DocumentDownloadButton } from "@/components/documents/document-download-button";
 
 interface InitialBookingData {
   status: string;
@@ -32,6 +33,13 @@ interface InitialBookingData {
     outstandingAmount: number;
     advanceAmount: number;
   };
+  payments?: {
+    id: string;
+    amount: string | number;
+    status: string;
+    createdAt: string;
+    paymentReference: string | null;
+  }[];
 }
 
 type Props = {
@@ -281,6 +289,33 @@ export function CabBookingSuccessClient({ id, initialBooking }: Props) {
                     </span>
                   </div>
                 )}
+              </div>
+            </div>
+          )}
+
+          {booking && (booking.status === "CONFIRMED" || booking.status === "COMPLETED") && (
+            <div className="space-y-6 mb-8 text-left border-t pt-6">
+              <h3 className="font-semibold text-lg pb-2">Documents</h3>
+              <div className="flex flex-col sm:flex-row gap-4">
+                <DocumentDownloadButton
+                  url={`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/bookings/${id}/voucher`}
+                  filename={`GoYatrio-Voucher-${booking.bookingReference || id}.pdf`}
+                  label="Download Voucher"
+                  variant="outline"
+                />
+
+                {booking.payments &&
+                  booking.payments
+                    .filter((p) => p.status === "SUCCESS")
+                    .map((payment) => (
+                      <DocumentDownloadButton
+                        key={payment.id}
+                        url={`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/bookings/${id}/payments/${payment.id}/receipt`}
+                        filename={`GoYatrio-Receipt-${payment.paymentReference || payment.id}.pdf`}
+                        label={`Receipt (₹${payment.amount})`}
+                        variant="secondary"
+                      />
+                    ))}
               </div>
             </div>
           )}

@@ -1,10 +1,20 @@
 import { PaymentButton } from "@/components/payment/payment-button";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { DocumentDownloadButton } from "@/components/documents/document-download-button";
 
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/common/card";
 import { Badge } from "@/components/common/badge";
-import { MapPin, Calendar, Car, Clock, CreditCard, ChevronLeft } from "lucide-react";
+import {
+  MapPin,
+  Calendar,
+  Car,
+  Clock,
+  CreditCard,
+  ChevronLeft,
+  FileText,
+  Receipt,
+} from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/common/button";
 
@@ -272,6 +282,70 @@ export default async function BookingDetailsPage({ params }: { params: { id: str
                 <p className="text-muted-foreground text-sm">
                   Fare details are pending or manually calculated.
                 </p>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Documents Card */}
+          {(booking.status === "CONFIRMED" || booking.status === "COMPLETED") && (
+            <Card>
+              <CardHeader className="bg-muted/30 border-b border-border pb-4">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <FileText className="h-5 w-5 text-primary" />
+                  Documents
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-6 space-y-4">
+                <div className="flex flex-col gap-2">
+                  <span className="text-sm font-medium">Booking Voucher</span>
+                  <DocumentDownloadButton
+                    url={`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/bookings/${booking.id}/voucher`}
+                    token={token}
+                    filename={`GoYatrio-Voucher-${booking.bookingReference}.pdf`}
+                    label="Download Voucher"
+                    variant="outline"
+                  />
+                </div>
+
+                {booking.payments &&
+                  booking.payments.filter((p: { status: string }) => p.status === "SUCCESS")
+                    .length > 0 && (
+                    <div className="pt-4 border-t border-border flex flex-col gap-3">
+                      <span className="text-sm font-medium flex items-center gap-2">
+                        <Receipt className="h-4 w-4" />
+                        Payment Receipts
+                      </span>
+                      {booking.payments
+                        .filter((p: { status: string }) => p.status === "SUCCESS")
+                        .map(
+                          (payment: {
+                            id: string;
+                            amount: number | string;
+                            createdAt: Date | string;
+                            paymentReference: string | null;
+                          }) => (
+                            <div
+                              key={payment.id}
+                              className="flex justify-between items-center text-sm border border-border rounded-md p-3"
+                            >
+                              <div>
+                                <div className="font-medium text-success">₹{payment.amount}</div>
+                                <div className="text-xs text-muted-foreground">
+                                  {new Date(payment.createdAt).toLocaleDateString("en-IN")}
+                                </div>
+                              </div>
+                              <DocumentDownloadButton
+                                url={`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/bookings/${booking.id}/payments/${payment.id}/receipt`}
+                                token={token}
+                                filename={`GoYatrio-Receipt-${payment.paymentReference || payment.id}.pdf`}
+                                label="Receipt"
+                                variant="secondary"
+                              />
+                            </div>
+                          ),
+                        )}
+                    </div>
+                  )}
               </CardContent>
             </Card>
           )}
