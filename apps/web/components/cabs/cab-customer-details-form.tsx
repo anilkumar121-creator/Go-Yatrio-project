@@ -12,6 +12,8 @@ import { Textarea } from "@/components/common/textarea";
 import { Card } from "@/components/common/card";
 import { useToast } from "@/components/common/toast";
 
+import { useRazorpay } from "../../hooks/use-razorpay";
+
 const customerSchema = z.object({
   customerName: z.string().min(2, "Name is required"),
   customerEmail: z.string().email("Invalid email address"),
@@ -26,6 +28,16 @@ type CabCustomerDetailsFormProps = {
   requiresManualPricing?: boolean;
 };
 
+function getErrorMessage(error: unknown): string {
+  if (error instanceof Error) {
+    return error.message;
+  }
+  if (typeof error === "string") {
+    return error;
+  }
+  return "An unexpected error occurred.";
+}
+
 export function CabCustomerDetailsForm({
   bookingPayload,
   requiresManualPricing,
@@ -33,6 +45,7 @@ export function CabCustomerDetailsForm({
   const router = useRouter();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { isLoaded, createRazorpayInstance } = useRazorpay();
 
   const [idempotencyKey] = useState(() => {
     if (typeof crypto !== "undefined" && crypto.randomUUID) {
@@ -115,13 +128,94 @@ export function CabCustomerDetailsForm({
 
         toast({
           title: "Booking Created",
-          description: "Your cab booking has been successfully created.",
+          description: "Your cab booking has been successfully created. Initiating payment...",
           variant: "default",
         });
 
         // Use bookingId as the canonical parent Booking ID for the success page
         const parentBookingId = responseData.data?.bookingId || responseData.bookingId;
-        router.push(`/cabs/booking/success/${parentBookingId}`);
+
+        // Try to initiate payment intent
+        let intentRes;
+        try {
+          intentRes = await fetch(`/api/payments/${parentBookingId}/intent`, {
+            method: "POST",
+          });
+        } catch {
+          toast({
+            title: "Payment Unavailable",
+            description: "Online payment is currently unavailable. Redirecting to booking details.",
+            variant: "error",
+          });
+          router.push(`/cabs/booking/success/${parentBookingId}?payment=pending`);
+          return;
+        }
+
+        const intentData = await intentRes.json();
+
+        if (!intentRes.ok) {
+          toast({
+            title: "Payment Unavailable",
+            description: intentData.error || "Online payment is currently unavailable.",
+            variant: "error",
+          });
+          router.push(`/cabs/booking/success/${parentBookingId}?payment=pending`);
+          return;
+        }
+
+        if (!intentData.gatewayKey) {
+          toast({
+            title: "Payment Unavailable",
+            description: "Online payment is currently unavailable.",
+            variant: "error",
+          });
+          router.push(`/cabs/booking/success/${parentBookingId}?payment=pending`);
+          return;
+        }
+
+        if (!isLoaded) {
+          toast({
+            title: "Payment SDK Not Ready",
+            description: "Please wait or refresh the page.",
+            variant: "error",
+          });
+          router.push(`/cabs/booking/success/${parentBookingId}?payment=pending`);
+          return;
+        }
+
+        const options = {
+          key: intentData.gatewayKey,
+          amount: Math.round(Number(intentData.amount) * 100),
+          currency: intentData.currency,
+          name: "GoYatrio",
+          description: "Cab booking advance payment",
+          order_id: intentData.providerOrderId,
+          prefill: {
+            name: data.customerName,
+            email: data.customerEmail,
+            contact: data.customerPhone,
+          },
+          handler: function () {
+            router.push(`/cabs/booking/success/${parentBookingId}?payment=processing`);
+          },
+          modal: {
+            ondismiss: function () {
+              router.push(`/cabs/booking/success/${parentBookingId}?payment=pending`);
+            },
+          },
+        };
+
+        try {
+          const rzp = createRazorpayInstance(options);
+          rzp.open();
+        } catch (err: unknown) {
+          toast({
+            title: "Payment Error",
+            description: getErrorMessage(err) || "Failed to open payment gateway.",
+            variant: "error",
+          });
+          router.push(`/cabs/booking/success/${parentBookingId}?payment=pending`);
+        }
       }
     } catch (error) {
       toast({

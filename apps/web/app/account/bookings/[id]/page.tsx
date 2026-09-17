@@ -1,3 +1,4 @@
+import { PaymentButton } from "@/components/payment/payment-button";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
@@ -68,7 +69,15 @@ export default async function BookingDetailsPage({ params }: { params: { id: str
             <div>
               <h2 className="text-2xl font-semibold tracking-tight flex items-center gap-3">
                 Booking Details
-                <Badge variant={booking.status === "CONFIRMED" ? "default" : "secondary"}>
+                <Badge
+                  variant={
+                    booking.status === "CONFIRMED"
+                      ? "default"
+                      : booking.status === "PENDING_PAYMENT"
+                        ? "secondary"
+                        : "error"
+                  }
+                >
                   {booking.status}
                 </Badge>
               </h2>
@@ -223,6 +232,14 @@ export default async function BookingDetailsPage({ params }: { params: { id: str
                       <span>₹{pricing.remainingAmount}</span>
                     </div>
                   </>
+                )}
+
+                {booking.status === "PENDING_PAYMENT" && pricing.advanceAmount > 0 && (
+                  <PaymentButton
+                    bookingId={booking.id}
+                    customerName={booking.user?.name || ""}
+                    customerEmail={booking.user?.email || ""}
+                  />
                 )}
               </CardContent>
             </Card>
