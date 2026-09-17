@@ -81,7 +81,7 @@ export const createCabBooking = async (req: Request, res: Response, next: NextFu
       throw new AppError("Vehicle not found", 404);
     }
 
-    let totalFare = 0;
+    let totalFareDecimal: Prisma.Decimal;
     let appliedRoutePricingId = null;
 
     // Hierarchy A: Exact active RoutePricing match
@@ -95,12 +95,16 @@ export const createCabBooking = async (req: Request, res: Response, next: NextFu
     });
 
     if (exactRoute) {
-      totalFare = Number(exactRoute.basePrice);
+      totalFareDecimal = new Prisma.Decimal(exactRoute.basePrice);
       appliedRoutePricingId = exactRoute.id;
     } else {
       if (data.distanceKm) {
-        totalFare =
-          Number(vehicle.baseFare) + Number(data.distanceKm) * Number(vehicle.extraKmCharge);
+        const baseFareDecimal = new Prisma.Decimal(vehicle.baseFare);
+        const distanceDecimal = new Prisma.Decimal(data.distanceKm.toString());
+        const extraKmChargeDecimal = new Prisma.Decimal(vehicle.extraKmCharge);
+
+        const extraFareDecimal = distanceDecimal.mul(extraKmChargeDecimal);
+        totalFareDecimal = baseFareDecimal.add(extraFareDecimal);
       } else {
         throw new AppError(
           "Authoritative fare cannot be calculated. Manual pricing required.",
@@ -116,12 +120,22 @@ export const createCabBooking = async (req: Request, res: Response, next: NextFu
       orderBy: { isDefault: "desc" },
     });
 
-    // Default to 100% advance if no config is found
-    const advancePercent = paymentConfig ? Number(paymentConfig.advancePercent) : 100;
+    // Require an active payment configuration for online booking
+    if (!paymentConfig) {
+      throw new AppError(
+        "Online booking is currently unavailable. No active payment configuration found.",
+        400,
+      );
+    }
+
+    const advancePercent = Number(paymentConfig.advancePercent);
 
     // Server-side money validation
-    const advance = Math.round(totalFare * (advancePercent / 100));
-    const remaining = Math.max(0, totalFare - advance);
+    let advanceDecimal = totalFareDecimal.mul(advancePercent).div(100).toDecimalPlaces(2);
+    if (advanceDecimal.gt(totalFareDecimal)) {
+      advanceDecimal = totalFareDecimal;
+    }
+    const remainingDecimal = totalFareDecimal.sub(advanceDecimal);
 
     let result;
     try {
@@ -135,9 +149,9 @@ export const createCabBooking = async (req: Request, res: Response, next: NextFu
             userId: data.userId || null,
             serviceType: "CAB",
             status: "PENDING_PAYMENT",
-            totalAmount: totalFare,
-            advanceAmount: advance,
-            remainingAmount: remaining,
+            totalAmount: totalFareDecimal,
+            advanceAmount: advanceDecimal,
+            remainingAmount: remainingDecimal,
             currency: "INR",
             customerName: data.customerName,
             customerEmail: data.customerEmail,
@@ -164,9 +178,9 @@ export const createCabBooking = async (req: Request, res: Response, next: NextFu
             luggageCount: data.luggageCount,
             tripType: data.tripType,
             vehicleCategory: data.vehicleCategory,
-            calculatedFare: totalFare, // Legacy
-            advanceAmount: advance, // Legacy
-            remainingAmount: remaining, // Legacy
+            calculatedFare: totalFareDecimal, // Legacy
+            advanceAmount: advanceDecimal, // Legacy
+            remainingAmount: remainingDecimal, // Legacy
             customerName: data.customerName, // Legacy
             customerEmail: data.customerEmail, // Legacy
             customerPhone: data.customerPhone, // Legacy
@@ -180,11 +194,11 @@ export const createCabBooking = async (req: Request, res: Response, next: NextFu
               originUsed: data.pickupLocation,
               destinationUsed: data.dropLocation,
               distanceKm: data.distanceKm || null,
-              totalFare,
+              totalFare: totalFareDecimal.toNumber(),
               advancePercentApplied: advancePercent,
-              advanceAmount: advance,
-              remainingAmount: remaining,
-              paymentConfigurationId: paymentConfig?.id || null,
+              advanceAmount: advanceDecimal.toNumber(),
+              remainingAmount: remainingDecimal.toNumber(),
+              paymentConfigurationId: paymentConfig.id,
             },
             status: "PENDING", // Legacy
           },

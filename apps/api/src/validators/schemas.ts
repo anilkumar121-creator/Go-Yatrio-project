@@ -354,7 +354,7 @@ export const routePricingUpdateSchema = routePricingCreateSchema.partial();
 
 export const paymentConfigurationCreateSchema = z.object({
   label: stringField(120),
-  advancePercent: z.coerce.number().min(0).max(100),
+  advancePercent: z.coerce.number().positive().max(100),
   isDefault: z.boolean().optional(),
   isActive: z.boolean().optional(),
 });

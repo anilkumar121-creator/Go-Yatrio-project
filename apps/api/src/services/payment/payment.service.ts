@@ -39,18 +39,17 @@ export class PaymentService {
     const totalAmount = new Prisma.Decimal(booking.totalAmount);
     const advanceAmount = new Prisma.Decimal(booking.advanceAmount);
 
+    let payableAmount: Prisma.Decimal;
+
     if (successfulPaymentsSum.gte(totalAmount)) {
       throw new AppError("Booking is already fully paid", 400);
     }
 
     if (successfulPaymentsSum.gte(advanceAmount)) {
-      throw new AppError(
-        "Initial advance payment is already completed. Remaining-balance payment is not yet available.",
-        400,
-      );
+      payableAmount = totalAmount.sub(successfulPaymentsSum);
+    } else {
+      payableAmount = advanceAmount.sub(successfulPaymentsSum);
     }
-
-    const payableAmount = advanceAmount.sub(successfulPaymentsSum);
 
     if (payableAmount.lte(0)) {
       throw new AppError("No payment required at this time", 400);
@@ -74,7 +73,7 @@ export class PaymentService {
     }
 
     const internalReceipt = `RCPT_${booking.id.substring(0, 8)}_${crypto.randomBytes(4).toString("hex")}`;
-    const amountInPaise = Math.round(payableAmount.toNumber() * 100);
+    const amountInPaise = Math.round(payableAmount.mul(100).toNumber());
 
     const gatewayOrder = await this.adapter.createOrder(
       amountInPaise,
