@@ -24,6 +24,7 @@ export class PaymentService {
     let amountToPay: Prisma.Decimal;
     let currency: string;
     let existingProviderOrderId: string | null = null;
+    let paymentType: "ADVANCE" | "BALANCE";
 
     await prisma.$transaction(async (tx) => {
       // 1. Acquire booking-level concurrency protection
@@ -53,6 +54,8 @@ export class PaymentService {
       if (reconciliation.payableAmount.lte(0)) {
         throw new AppError("No payment required at this time", 400);
       }
+
+      paymentType = reconciliation.isAdvanceSatisfied ? "BALANCE" : "ADVANCE";
 
       // 4. Check existing reusable PENDING payment
       const pendingPayments = booking.payments.filter(
@@ -116,6 +119,7 @@ export class PaymentService {
         amount: amountToPay!.toNumber(),
         currency: currency!,
         gatewayKey: process.env.RAZORPAY_KEY_ID,
+        paymentType: paymentType!,
       };
     }
 
@@ -154,6 +158,7 @@ export class PaymentService {
       amount: amountToPay!.toNumber(),
       currency: currency!,
       gatewayKey: process.env.RAZORPAY_KEY_ID,
+      paymentType: paymentType!,
     };
   }
 }

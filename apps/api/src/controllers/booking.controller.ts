@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { prisma } from "../db.js";
 import { AppError } from "../utils/app-error.js";
+import { PaymentReconciliationService } from "../services/payment/payment-reconciliation.service.js";
 import type { AuthenticatedRequest } from "../middleware/auth.js";
 
 function getCookieValue(cookieHeader: string | undefined, name: string): string | null {
@@ -57,6 +58,8 @@ export const getBooking = async (req: Request, res: Response, next: NextFunction
       }
     }
 
+    const reconciliation = PaymentReconciliationService.reconcile(booking, booking.payments);
+
     // Strip internal/sensitive data
     const safeResponse = {
       id: booking.id,
@@ -78,6 +81,15 @@ export const getBooking = async (req: Request, res: Response, next: NextFunction
         status: p.status,
         createdAt: p.createdAt,
       })),
+      paymentSummary: {
+        totalAmount: Number(reconciliation.totalAmount),
+        advanceAmount: Number(reconciliation.advanceAmount),
+        successfulPaymentsSum: Number(reconciliation.successfulPaymentsSum),
+        outstandingAmount: Number(reconciliation.outstandingAmount),
+        payableAmount: Number(reconciliation.payableAmount),
+        isAdvanceSatisfied: reconciliation.isAdvanceSatisfied,
+        isFullyPaid: reconciliation.isFullyPaid,
+      },
     };
 
     res.json(safeResponse);

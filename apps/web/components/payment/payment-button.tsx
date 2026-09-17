@@ -12,6 +12,7 @@ type PaymentButtonProps = {
   customerName?: string;
   customerEmail?: string;
   customerPhone?: string;
+  isAdvance?: boolean;
 };
 
 function getErrorMessage(error: unknown): string {
@@ -29,6 +30,7 @@ export function PaymentButton({
   customerName,
   customerEmail,
   customerPhone,
+  isAdvance = true,
 }: PaymentButtonProps) {
   const router = useRouter();
   const { toast } = useToast();
@@ -76,7 +78,7 @@ export function PaymentButton({
         amount: Math.round(Number(intentData.amount) * 100),
         currency: intentData.currency,
         name: "GoYatrio",
-        description: "Cab booking advance payment",
+        description: isAdvance ? "Cab booking advance payment" : "Cab booking balance payment",
         order_id: intentData.providerOrderId,
         prefill: {
           name: customerName,
@@ -84,7 +86,9 @@ export function PaymentButton({
           contact: customerPhone,
         },
         handler: function () {
-          router.push(`/cabs/booking/success/${bookingId}?payment=processing`);
+          router.push(
+            `/cabs/booking/success/${bookingId}?payment=processing&paymentId=${intentData.paymentId}`,
+          );
         },
         modal: {
           ondismiss: function () {
@@ -127,7 +131,7 @@ export function PaymentButton({
       size="lg"
     >
       <CreditCard className="mr-2 h-4 w-4" />
-      {isProcessing ? "Processing..." : "Pay Advance"}
+      {isProcessing ? "Processing..." : isAdvance ? "Pay Advance" : "Pay Remaining Balance"}
     </Button>
   );
 }

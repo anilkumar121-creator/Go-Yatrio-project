@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from "express";
+import { Prisma } from "@prisma/client";
 import { prisma } from "../db.js";
 import { AppError } from "../utils/app-error.js";
 import { PaymentService } from "../services/payment/payment.service.js";
@@ -89,6 +90,68 @@ export const handleRazorpayWebhook = async (req: Request, res: Response, next: N
 
     // Send 200 OK back to the provider in all handled cases so they don't retry unnecessarily
     res.status(200).json(result);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getPaymentStatus = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const rawId = req.params.paymentId;
+    const paymentId = Array.isArray(rawId) ? rawId[0] : rawId;
+    if (!paymentId || typeof paymentId !== "string") {
+      throw new AppError("Payment ID is required", 400);
+    }
+
+    const payment = await prisma.payment.findUnique({
+      where: { id: paymentId },
+      include: { booking: true },
+    });
+
+    if (!payment) {
+      throw new AppError("Payment not found or access denied", 404);
+    }
+
+    const booking = payment.booking;
+    const authReq = req as AuthenticatedRequest;
+    const authUserId = authReq.user?.sub;
+
+    if (booking.userId) {
+      if (!authUserId || booking.userId !== authUserId) {
+        throw new AppError("Payment not found or access denied", 404);
+      }
+    } else {
+      const token = getCookieValue(req.headers.cookie, `guest_booking_${booking.id}`);
+      if (!token || token !== booking.guestAccessToken) {
+        throw new AppError("Payment not found or access denied", 404);
+      }
+    }
+
+    const priorSuccessPayments = await prisma.payment.findMany({
+      where: {
+        bookingId: payment.bookingId,
+        status: "SUCCESS",
+        createdAt: {
+          lt: payment.createdAt,
+        },
+      },
+    });
+
+    const priorSuccessSum = priorSuccessPayments.reduce(
+      (sum, p) => sum.add(new Prisma.Decimal(p.amount)),
+      new Prisma.Decimal(0),
+    );
+
+    const paymentType = priorSuccessSum.lt(booking.advanceAmount) ? "ADVANCE" : "BALANCE";
+
+    res.status(200).json({
+      paymentId: payment.id,
+      bookingId: payment.bookingId,
+      status: payment.status,
+      amount: Number(payment.amount),
+      currency: payment.currency,
+      paymentType,
+    });
   } catch (error) {
     next(error);
   }

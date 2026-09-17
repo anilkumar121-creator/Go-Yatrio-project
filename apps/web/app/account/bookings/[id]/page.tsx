@@ -227,20 +227,40 @@ export default async function BookingDetailsPage({ params }: { params: { id: str
                       <span>Advance Amount</span>
                       <span>₹{pricing.advanceAmount}</span>
                     </div>
-                    <div className="flex justify-between text-sm text-amber-600 font-medium">
-                      <span>Remaining Balance</span>
-                      <span>₹{pricing.remainingAmount}</span>
+                  </>
+                )}
+                {booking.paymentSummary && (
+                  <>
+                    <div className="flex justify-between text-sm font-medium">
+                      <span className="text-muted-foreground">Paid Amount</span>
+                      <span className="text-success">
+                        ₹{booking.paymentSummary.successfulPaymentsSum}
+                      </span>
                     </div>
+                    {booking.paymentSummary.outstandingAmount > 0 ? (
+                      <div className="flex justify-between text-sm text-amber-600 font-medium pt-2 border-t border-border">
+                        <span>Remaining Balance</span>
+                        <span>₹{booking.paymentSummary.outstandingAmount}</span>
+                      </div>
+                    ) : (
+                      <div className="flex justify-between text-sm text-success font-bold pt-2 border-t border-border">
+                        <span>Status</span>
+                        <span>Fully Paid</span>
+                      </div>
+                    )}
                   </>
                 )}
 
-                {booking.status === "PENDING_PAYMENT" && pricing.advanceAmount > 0 && (
-                  <PaymentButton
-                    bookingId={booking.id}
-                    customerName={booking.user?.name || ""}
-                    customerEmail={booking.user?.email || ""}
-                  />
-                )}
+                {booking.status !== "CANCELLED" &&
+                  booking.status !== "COMPLETED" &&
+                  booking.paymentSummary?.payableAmount > 0 && (
+                    <PaymentButton
+                      bookingId={booking.id}
+                      customerName={booking.user?.name || ""}
+                      customerEmail={booking.user?.email || ""}
+                      isAdvance={!booking.paymentSummary.isAdvanceSatisfied}
+                    />
+                  )}
               </CardContent>
             </Card>
           ) : (

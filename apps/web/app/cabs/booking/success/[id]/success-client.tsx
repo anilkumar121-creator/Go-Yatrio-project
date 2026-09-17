@@ -25,6 +25,13 @@ interface InitialBookingData {
       totalFare: number;
     };
   };
+  paymentSummary?: {
+    isAdvanceSatisfied: boolean;
+    isFullyPaid: boolean;
+    payableAmount: number;
+    outstandingAmount: number;
+    advanceAmount: number;
+  };
 }
 
 type Props = {
@@ -35,11 +42,15 @@ type Props = {
 export function CabBookingSuccessClient({ id, initialBooking }: Props) {
   const searchParams = useSearchParams();
   const paymentQuery = searchParams.get("payment");
+  const paymentId = searchParams.get("paymentId");
   const [booking, setBooking] = useState(initialBooking);
   const [status, setStatus] = useState(initialBooking?.status);
-  const [isPolling, setIsPolling] = useState(
-    initialBooking?.status === "PENDING_PAYMENT" && paymentQuery === "processing",
-  );
+  const [paymentStatus, setPaymentStatus] = useState<string | null>(null);
+  const [paymentType, setPaymentType] = useState<string | null>(null);
+
+  // Start polling if we are in processing mode. We prefer polling the specific paymentId.
+  // Fall back to polling booking status if paymentId is missing (legacy).
+  const [isPolling, setIsPolling] = useState(paymentQuery === "processing");
   const [pollingTimeout, setPollingTimeout] = useState(false);
 
   useEffect(() => {
@@ -47,16 +58,42 @@ export function CabBookingSuccessClient({ id, initialBooking }: Props) {
 
     const pollStatus = async () => {
       try {
-        const res = await fetch(`/api/bookings/${id}`);
-        if (res.ok) {
-          const data = await res.json();
-          setBooking(data);
-          setStatus(data.status);
+        if (paymentId) {
+          const res = await fetch(`/api/payments/${paymentId}/status`);
+          if (res.ok) {
+            const data = await res.json();
+            setPaymentStatus(data.status);
+            if (data.paymentType) {
+              setPaymentType(data.paymentType);
+            }
 
-          if (data.status !== "PENDING_PAYMENT") {
-            setIsPolling(false);
-            clearInterval(intervalId);
-            clearTimeout(timeoutId);
+            if (data.status === "SUCCESS" || data.status === "FAILED") {
+              setIsPolling(false);
+              clearInterval(intervalId);
+              clearTimeout(timeoutId);
+
+              // Refetch booking to update the summary in the UI
+              const bRes = await fetch(`/api/bookings/${id}`);
+              if (bRes.ok) {
+                const bData = await bRes.json();
+                setBooking(bData);
+                setStatus(bData.status);
+              }
+            }
+          }
+        } else {
+          // Legacy fallback
+          const res = await fetch(`/api/bookings/${id}`);
+          if (res.ok) {
+            const data = await res.json();
+            setBooking(data);
+            setStatus(data.status);
+
+            if (data.status !== "PENDING_PAYMENT") {
+              setIsPolling(false);
+              clearInterval(intervalId);
+              clearTimeout(timeoutId);
+            }
           }
         }
       } catch {
@@ -82,7 +119,28 @@ export function CabBookingSuccessClient({ id, initialBooking }: Props) {
   const pricing = cab?.pricingSnapshot;
 
   const renderStatusHeader = () => {
-    if (status === "CONFIRMED") {
+    // If we tracked a specific payment and it failed
+    if (paymentId && paymentStatus === "FAILED") {
+      return (
+        <>
+          <div className="mx-auto w-16 h-16 bg-destructive/20 rounded-full flex items-center justify-center mb-6">
+            <XCircle className="size-10 text-destructive" />
+          </div>
+          <h1 className="text-3xl font-extrabold tracking-tight mb-2">Payment Failed</h1>
+          <p className="text-muted-foreground">
+            The payment transaction failed. You can try again from the booking details page.
+          </p>
+        </>
+      );
+    }
+
+    // If we tracked a specific payment and it succeeded, OR legacy fallback
+    const isSuccess =
+      (paymentId && paymentStatus === "SUCCESS") || (!paymentId && status === "CONFIRMED");
+
+    if (isSuccess) {
+      const isFullyPaid = booking?.paymentSummary?.isFullyPaid;
+
       return (
         <>
           <div className="mx-auto w-16 h-16 bg-success/20 rounded-full flex items-center justify-center mb-6">
@@ -90,7 +148,11 @@ export function CabBookingSuccessClient({ id, initialBooking }: Props) {
           </div>
           <h1 className="text-3xl font-extrabold tracking-tight mb-2">Payment Successful</h1>
           <p className="text-muted-foreground">
-            Your cab booking has been confirmed. We have sent the details to your email.
+            {isFullyPaid
+              ? "Your booking is fully paid and confirmed. Have a safe journey!"
+              : paymentType === "BALANCE"
+                ? "Your balance payment was successful."
+                : "Your advance payment was successful and your cab booking is confirmed."}
           </p>
         </>
       );
@@ -224,11 +286,19 @@ export function CabBookingSuccessClient({ id, initialBooking }: Props) {
           )}
 
           <div className="space-y-3 sm:space-y-0 sm:space-x-3 sm:flex sm:justify-center">
-            {status === "PENDING_PAYMENT" && !isPolling && (
-              <Button asChild size="lg" className="w-full sm:w-auto">
-                <Link href={`/account/bookings/${id}`}>View Booking / Pay Now</Link>
-              </Button>
-            )}
+            {booking?.paymentSummary?.payableAmount
+              ? booking.paymentSummary.payableAmount > 0 &&
+                !isPolling && (
+                  <Button asChild size="lg" className="w-full sm:w-auto">
+                    <Link href={`/account/bookings/${id}`}>View Booking / Pay Now</Link>
+                  </Button>
+                )
+              : status === "PENDING_PAYMENT" &&
+                !isPolling && (
+                  <Button asChild size="lg" className="w-full sm:w-auto">
+                    <Link href={`/account/bookings/${id}`}>View Booking / Pay Now</Link>
+                  </Button>
+                )}
             <Button asChild variant="outline" size="lg" className="w-full sm:w-auto">
               <Link href="/cabs">Browse More Cabs</Link>
             </Button>

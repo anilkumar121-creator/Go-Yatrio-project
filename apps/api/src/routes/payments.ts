@@ -1,5 +1,9 @@
 import { Router } from "express";
-import { createPaymentIntent, handleRazorpayWebhook } from "../controllers/payment.controller.js";
+import {
+  createPaymentIntent,
+  handleRazorpayWebhook,
+  getPaymentStatus,
+} from "../controllers/payment.controller.js";
 import { optionalAuth } from "../middleware/auth.js";
 
 const paymentsRouter = Router();
@@ -9,5 +13,6 @@ paymentsRouter.post("/webhook", handleRazorpayWebhook);
 
 // We use optionalAuth because auth depends on booking.userId vs guestAccessToken.
 paymentsRouter.post("/:bookingId/intent", optionalAuth, createPaymentIntent);
+paymentsRouter.get("/:paymentId/status", optionalAuth, getPaymentStatus);
 
 export { paymentsRouter };
