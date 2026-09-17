@@ -106,7 +106,7 @@ export class PaymentVerificationService {
           });
         }
 
-        return { status: "success" };
+        return { status: "success", bookingId: booking.id, paymentId: payment.id };
       }
 
       if (event.eventType === "payment.failed") {

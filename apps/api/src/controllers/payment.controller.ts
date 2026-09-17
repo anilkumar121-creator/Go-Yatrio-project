@@ -4,12 +4,15 @@ import { prisma } from "../db.js";
 import { AppError } from "../utils/app-error.js";
 import { PaymentService } from "../services/payment/payment.service.js";
 import { PaymentVerificationService } from "../services/payment/payment-verification.service.js";
+import { PaymentReconciliationService } from "../services/payment/payment-reconciliation.service.js";
+import { NotificationService } from "../services/notification/notification.service.js";
 import { RazorpayAdapter } from "../services/payment/adapters/razorpay.js";
 import { env } from "../config/env.js";
 import type { AuthenticatedRequest } from "../middleware/auth.js";
 
 const paymentService = new PaymentService();
 const verificationService = new PaymentVerificationService();
+const notificationService = new NotificationService();
 
 function getCookieValue(cookieHeader: string | undefined, name: string): string | null {
   if (!cookieHeader) return null;
@@ -90,6 +93,56 @@ export const handleRazorpayWebhook = async (req: Request, res: Response, next: N
 
     // Send 200 OK back to the provider in all handled cases so they don't retry unnecessarily
     res.status(200).json(result);
+
+    // After responding to the gateway, send the confirmation notification if this was a new success
+    if (result.status === "success" && "bookingId" in result && "paymentId" in result) {
+      // Fetch required data asynchronously
+      setImmediate(async () => {
+        try {
+          const bookingId = result.bookingId as string;
+          const paymentId = result.paymentId as string;
+
+          const booking = await prisma.booking.findUnique({
+            where: { id: bookingId },
+            include: { cabBooking: true, payments: true },
+          });
+
+          if (!booking) return;
+
+          const payment = booking.payments.find((p) => p.id === paymentId);
+          if (!payment) return;
+
+          const paymentSummary = PaymentReconciliationService.reconcile(booking, booking.payments);
+
+          const priorSuccessPayments = await prisma.payment.findMany({
+            where: {
+              bookingId: booking.id,
+              status: "SUCCESS",
+              id: { not: paymentId },
+              createdAt: {
+                lt: payment.createdAt,
+              },
+            },
+          });
+
+          const priorSuccessSum = priorSuccessPayments.reduce(
+            (sum, p) => sum.add(new Prisma.Decimal(p.amount)),
+            new Prisma.Decimal(0),
+          );
+
+          const paymentType = priorSuccessSum.lt(booking.advanceAmount) ? "ADVANCE" : "BALANCE";
+
+          await notificationService.sendBookingConfirmation({
+            booking,
+            cabBooking: booking.cabBooking,
+            paymentSummary,
+            paymentType,
+          });
+        } catch (error) {
+          console.error("[Notification] Best-effort notification failed:", error);
+        }
+      });
+    }
   } catch (error) {
     next(error);
   }
