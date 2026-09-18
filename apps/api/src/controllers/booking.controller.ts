@@ -2,6 +2,8 @@ import { Request, Response, NextFunction } from "express";
 import { prisma } from "../db.js";
 import { AppError } from "../utils/app-error.js";
 import { PaymentReconciliationService } from "../services/payment/payment-reconciliation.service.js";
+import { CancellationService } from "../services/booking/cancellation.service.js";
+import { CancellationReasonType, CancellationSource } from "@prisma/client";
 import type { AuthenticatedRequest } from "../middleware/auth.js";
 
 function getCookieValue(cookieHeader: string | undefined, name: string): string | null {
@@ -164,6 +166,63 @@ export const getBookings = async (req: Request, res: Response, next: NextFunctio
         limit,
         totalCount,
         totalPages: Math.ceil(totalCount / limit),
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const cancelBooking = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const rawId = req.params.id;
+    const id = Array.isArray(rawId) ? rawId[0] : rawId;
+    if (!id || typeof id !== "string") throw new AppError("Booking ID is required", 400);
+
+    const booking = await prisma.booking.findUnique({
+      where: { id },
+      select: { userId: true, guestAccessToken: true },
+    });
+
+    if (!booking) {
+      throw new AppError("Booking not found or access denied", 404);
+    }
+
+    const authReq = req as AuthenticatedRequest;
+    const authUserId = authReq.user?.sub;
+
+    if (!authUserId) {
+      throw new AppError("Unauthorized", 401);
+    }
+
+    if (!booking.userId || booking.userId !== authUserId) {
+      throw new AppError("Booking not found or access denied", 404);
+    }
+
+    const source: CancellationSource = "CUSTOMER";
+    const userIdForCancellation = authUserId;
+
+    const { reasonType, reasonText } = req.body;
+
+    // Validate reasonType
+    if (!reasonType || !Object.values(CancellationReasonType).includes(reasonType)) {
+      throw new AppError("Valid reasonType is required", 400);
+    }
+
+    const updatedBooking = await CancellationService.cancelBooking({
+      bookingId: id,
+      cancellationSource: source,
+      reasonType: reasonType as CancellationReasonType,
+      reasonText,
+      cancelledByUserId: userIdForCancellation,
+    });
+
+    res.json({
+      message: "Booking cancelled successfully",
+      booking: {
+        id: updatedBooking.id,
+        status: updatedBooking.status,
+        cancellationRecord: updatedBooking.cancellationRecord,
       },
     });
   } catch (error) {
