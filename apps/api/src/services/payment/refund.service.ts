@@ -4,17 +4,19 @@ import { AppError } from "../../utils/app-error.js";
 import { PaymentGatewayAdapter } from "./adapters/payment-gateway.interface.js";
 import { RazorpayAdapter } from "./adapters/razorpay.js";
 
+let _gatewayAdapter: PaymentGatewayAdapter | null = null;
 const getGatewayAdapter = (): PaymentGatewayAdapter => {
-  const keyId = process.env.RAZORPAY_KEY_ID || "";
-  const keySecret = process.env.RAZORPAY_KEY_SECRET || "";
-  return new RazorpayAdapter(keyId, keySecret);
+  if (!_gatewayAdapter) {
+    const keyId = process.env.RAZORPAY_KEY_ID || "";
+    const keySecret = process.env.RAZORPAY_KEY_SECRET || "";
+    _gatewayAdapter = new RazorpayAdapter(keyId, keySecret);
+  }
+  return _gatewayAdapter;
 };
 
 export class RefundService {
-  private adapter: PaymentGatewayAdapter;
-
-  constructor() {
-    this.adapter = getGatewayAdapter();
+  private get adapter(): PaymentGatewayAdapter {
+    return getGatewayAdapter();
   }
 
   /**
