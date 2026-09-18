@@ -68,9 +68,11 @@ export class PaymentVerificationService {
         }
 
         const booking = payment.booking;
-        if (booking.status === "CANCELLED" || booking.status === "COMPLETED") {
-          return { status: "ignored", reason: "booking is cancelled or completed" };
+        if (booking.status === "COMPLETED") {
+          return { status: "ignored", reason: "booking is completed" };
         }
+
+        const isLatePaymentOnCancelled = booking.status === "CANCELLED";
 
         // Apply success transition atomically
         const { count } = await tx.payment.updateMany({
@@ -92,6 +94,17 @@ export class PaymentVerificationService {
             return { status: "already_processed" };
           }
           return { status: "ignored", reason: "payment already failed or state changed" };
+        }
+
+        if (isLatePaymentOnCancelled) {
+          // The booking was already cancelled but the payment just succeeded.
+          // We record the payment as SUCCESS above, but we must NOT mark it as REFUNDED.
+          // Return a specific status so the (future) RefundService can automatically initiate a 100% refund.
+          return {
+            status: "success_late_payment_refund_required",
+            bookingId: booking.id,
+            paymentId: payment.id,
+          };
         }
 
         // If the booking is PENDING_PAYMENT, transition it to CONFIRMED

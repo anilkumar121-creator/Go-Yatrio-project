@@ -79,9 +79,55 @@ export class RazorpayAdapter implements PaymentGatewayAdapter {
       };
     }
 
+    if (event === "refund.processed") {
+      const payload = eventObj?.payload as Record<string, unknown>;
+      const refund = payload?.refund as Record<string, unknown>;
+      const refundEntity = refund?.entity as Record<string, unknown>;
+      return {
+        eventType: "refund.processed",
+        providerPaymentId: refundEntity?.payment_id as string,
+        providerRefundId: refundEntity?.id as string,
+        amount: refundEntity?.amount ? Number(refundEntity.amount) : undefined,
+        currency: refundEntity?.currency as string,
+        providerPayload: refundEntity,
+      };
+    }
+
+    if (event === "refund.failed") {
+      const payload = eventObj?.payload as Record<string, unknown>;
+      const refund = payload?.refund as Record<string, unknown>;
+      const refundEntity = refund?.entity as Record<string, unknown>;
+      return {
+        eventType: "refund.failed",
+        providerPaymentId: refundEntity?.payment_id as string,
+        providerRefundId: refundEntity?.id as string,
+        failureReason: "Refund failed at provider",
+        providerPayload: refundEntity,
+      };
+    }
+
     return {
       eventType: "unknown",
-      providerOrderId: "",
     };
+  }
+
+  async refundPayment(providerPaymentId: string, amount: number, idempotencyKey: string) {
+    try {
+      const refund = await this.razorpay.payments.refund(providerPaymentId, {
+        amount, // in paise
+        speed: "optimum",
+        receipt: idempotencyKey, // Application DB handles strict idempotency via Refund.idempotencyKey. Receipt is just correlation metadata.
+      });
+
+      return {
+        providerRefundId: refund.id,
+        amount: Number(refund.amount),
+        currency: refund.currency,
+        status: refund.status,
+        providerMetadata: refund as unknown as Record<string, unknown>,
+      };
+    } catch {
+      throw new AppError("Failed to initiate refund on the provider.", 502);
+    }
   }
 }

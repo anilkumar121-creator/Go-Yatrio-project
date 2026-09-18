@@ -35,7 +35,7 @@ export class CancellationService {
           cabBooking: true,
           payments: true,
           refunds: {
-            where: { status: "PROCESSED" },
+            where: { status: { in: ["PENDING", "PROCESSING", "PROCESSED"] } },
           },
         },
       });
@@ -78,7 +78,7 @@ export class CancellationService {
       const reconciliation = PaymentReconciliationService.reconcile(booking, booking.payments);
 
       const existingRefundsSum = booking.refunds.reduce(
-        (sum, refund) => sum.add(new Prisma.Decimal(refund.amount)),
+        (sum, r) => sum.add(new Prisma.Decimal(r.amount)),
         new Prisma.Decimal(0),
       );
 

@@ -5,6 +5,7 @@ import { AppError } from "../utils/app-error.js";
 import { PaymentService } from "../services/payment/payment.service.js";
 import { PaymentVerificationService } from "../services/payment/payment-verification.service.js";
 import { PaymentReconciliationService } from "../services/payment/payment-reconciliation.service.js";
+import { RefundService } from "../services/payment/refund.service.js";
 import { NotificationService } from "../services/notification/notification.service.js";
 import { RazorpayAdapter } from "../services/payment/adapters/razorpay.js";
 import { env } from "../config/env.js";
@@ -12,6 +13,7 @@ import type { AuthenticatedRequest } from "../middleware/auth.js";
 
 const paymentService = new PaymentService();
 const verificationService = new PaymentVerificationService();
+const refundService = new RefundService();
 const notificationService = new NotificationService();
 
 function getCookieValue(cookieHeader: string | undefined, name: string): string | null {
@@ -139,7 +141,18 @@ export const handleRazorpayWebhook = async (req: Request, res: Response, next: N
             paymentType,
           });
         } catch (error) {
-          console.error("[Notification] Best-effort notification failed:", error);
+          console.error("Failed to send payment confirmation notification:", error);
+        }
+      });
+    }
+
+    if (result.status === "success_late_payment_refund_required" && "paymentId" in result) {
+      setImmediate(async () => {
+        try {
+          const paymentId = result.paymentId as string;
+          await refundService.initiateLatePaymentRefund(paymentId);
+        } catch (error) {
+          console.error("Failed to initiate auto-refund for late payment:", error);
         }
       });
     }
