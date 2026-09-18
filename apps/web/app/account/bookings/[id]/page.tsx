@@ -39,7 +39,8 @@ async function getBookingDetails(id: string, token: string) {
   return res.json();
 }
 
-export default async function BookingDetailsPage({ params }: { params: { id: string } }) {
+export default async function BookingDetailsPage({ params }: { params: Promise<{ id: string }> }) {
+  const resolvedParams = await params;
   const cookieStore = await cookies();
   const token = cookieStore.get("goyatrio_token")?.value;
 
@@ -47,7 +48,7 @@ export default async function BookingDetailsPage({ params }: { params: { id: str
     redirect("/login");
   }
 
-  const booking = await getBookingDetails(params.id, token);
+  const booking = await getBookingDetails(resolvedParams.id, token);
 
   if (!booking) {
     return (
