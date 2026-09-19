@@ -8,6 +8,56 @@ import {
   cityCreateSchema,
   cityUpdateSchema,
 } from "../validators/schemas.js";
+import { locationService } from "../services/location/location.service.js";
+import { serviceAreaService } from "../services/location/service-area.service.js";
+
+// --- LOCATION SEARCH & SERVICE AREA (Phase 184) ---
+
+import { z } from "zod";
+
+const locationSearchSchema = z.object({
+  q: z
+    .string()
+    .trim()
+    .min(2, "Search query must be at least 2 characters")
+    .max(120, "Search query must be at most 120 characters"),
+});
+
+export const searchLocation = asyncHandler(async (req: Request, res: Response) => {
+  const { q } = locationSearchSchema.parse(req.query);
+
+  const results = await locationService.search(q);
+  res.json({ success: true, data: results });
+});
+
+export const getServiceArea = asyncHandler(async (req: Request, res: Response) => {
+  const latStr = req.query.lat as string;
+  const lngStr = req.query.lng as string;
+
+  if (!latStr || !lngStr) {
+    throw new AppError("Latitude (lat) and longitude (lng) are required", 400);
+  }
+
+  const lat = parseFloat(latStr);
+  const lng = parseFloat(lngStr);
+
+  if (isNaN(lat) || isNaN(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+    throw new AppError("Invalid coordinates provided", 400);
+  }
+
+  const result = await serviceAreaService.getNearestServiceArea(lat, lng);
+
+  if (!result.available) {
+    res.status(404).json({
+      success: false,
+      error: "Not available in this city.",
+      data: result,
+    });
+    return;
+  }
+
+  res.json({ success: true, data: result });
+});
 
 // --- STATES ---
 

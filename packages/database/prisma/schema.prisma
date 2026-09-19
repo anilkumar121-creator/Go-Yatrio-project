@@ -1021,6 +1021,11 @@ model City {
   cabBookingsPickup CabBooking[]             @relation("CabBookingPickupCity")
   cabBookingsDrop   CabBooking[]             @relation("CabBookingDropCity")
 
+  // Phase 184: Geographic Information
+  latitude        Decimal? @db.Decimal(10, 7)
+  longitude       Decimal? @db.Decimal(10, 7)
+  serviceRadiusKm Decimal? @db.Decimal(10, 2)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

@@ -9,11 +9,17 @@ import {
   createCity,
   updateCity,
   deleteCity,
+  searchLocation,
+  getServiceArea,
 } from "../controllers/location.controller.js";
 import { authenticate, requireAdmin } from "../middleware/auth.js";
 
 export const locationsRouter = Router();
 export const adminLocationsRouter = Router();
+
+// --- LOCATION SEARCH & SERVICE AREA ---
+locationsRouter.get("/search", searchLocation);
+locationsRouter.get("/service-area", getServiceArea);
 
 // --- PUBLIC ROUTES ---
 locationsRouter.get("/states", getStates);
