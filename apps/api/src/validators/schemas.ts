@@ -368,6 +368,7 @@ export const fareCalculateRequestSchema = z
     originCityId: optionalStringField(120),
     destinationCityId: optionalStringField(120),
     distanceKm: z.coerce.number().positive().optional(),
+    vehicleId: z.string().min(1),
     categoryId: z.string().min(1),
     tripTypeId: z.string().min(1),
     passengers: z.coerce.number().int().positive(),

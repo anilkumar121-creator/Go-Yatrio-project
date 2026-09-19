@@ -1,6 +1,7 @@
 import type { Request, Response, NextFunction } from "express";
-import { CabStatus, CabTripType, CabFuelType, VehicleType, prisma, Prisma } from "../db.js";
+import { CabStatus, CabTripType, CabFuelType, VehicleType } from "../db.js";
 import { cabService } from "../services/cab.service.js";
+import { fareService } from "../services/cab/fare.service.js";
 import {
   cabCreateSchema,
   cabInquiryCreateSchema,
@@ -124,61 +125,35 @@ export async function calculateFare(req: Request, res: Response, next: NextFunct
       destination,
       originCityId,
       destinationCityId,
-      distanceKm,
       categoryId,
       tripTypeId,
+      vehicleId,
     } = fareCalculateRequestSchema.parse(req.body);
 
-    const whereClause: Prisma.RoutePricingWhereInput = {
-      categoryId,
-      tripTypeId,
-      isActive: true,
-    };
-
-    if (originCityId && destinationCityId) {
-      whereClause.originCityId = originCityId;
-      whereClause.destinationCityId = destinationCityId;
-    } else if (origin && destination) {
-      whereClause.origin = { equals: origin, mode: "insensitive" };
-      whereClause.destination = { equals: destination, mode: "insensitive" };
-    } else {
-      return res
-        .status(400)
-        .json({ success: false, error: "Valid origin and destination pair required" });
-    }
-
-    // Try finding exact RoutePricing match
-    const exactRoute = await prisma.routePricing.findFirst({
-      where: whereClause,
-    });
-
-    let fare = 0;
-    if (exactRoute) {
-      fare = Number(exactRoute.basePrice);
-    } else {
-      // Find a typical vehicle of this category
-      const vehicle = await prisma.vehicle.findFirst({
-        where: { categoryId, isActive: true },
-      });
-      if (vehicle && distanceKm) {
-        fare = Number(vehicle.baseFare) + Number(distanceKm) * Number(vehicle.extraKmCharge);
-      } else {
-        return res.json({
-          success: true,
-          data: {
-            available: false,
-            requiresManualPricing: true,
-            message: "Fare requires manual confirmation",
-          },
-        });
+    if (!origin || !destination) {
+      if (!originCityId || !destinationCityId) {
+        return res
+          .status(400)
+          .json({ success: false, error: "Valid origin and destination required" });
       }
     }
+
+    const result = await fareService.calculateFare({
+      origin: origin || "",
+      destination: destination || "",
+      originCityId,
+      destinationCityId,
+      categoryId,
+      tripTypeId,
+      vehicleId,
+    });
 
     res.json({
       success: true,
       data: {
         available: true,
-        fare,
+        fare: result.fare,
+        distanceKm: result.distanceKm,
         origin,
         destination,
         originCityId,

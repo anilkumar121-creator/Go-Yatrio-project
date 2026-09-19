@@ -4,6 +4,7 @@ import { BookingStatus, Prisma } from "@prisma/client";
 import { prisma } from "../db.js";
 import { AppError } from "../utils/app-error.js";
 import { cabBookingCreateSchema, cabBookingStatusSchema } from "../validators/schemas.js";
+import { fareService } from "../services/cab/fare.service.js";
 
 function getParam(param: string | string[] | undefined): string {
   if (Array.isArray(param)) return param[0] ?? "";
@@ -72,7 +73,7 @@ export const createCabBooking = async (req: Request, res: Response, next: NextFu
     const ref = `CAB-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
 
     // Server-Side Pricing Authority
-    // Do NOT trust the client-provided calculatedFare, advanceAmount, remainingAmount.
+    // Do NOT trust the client-provided calculatedFare, advanceAmount, remainingAmount, distanceKm.
     const vehicle = await prisma.vehicle.findUnique({
       where: { id: data.vehicleId },
     });
@@ -81,37 +82,17 @@ export const createCabBooking = async (req: Request, res: Response, next: NextFu
       throw new AppError("Vehicle not found", 404);
     }
 
-    let totalFareDecimal: Prisma.Decimal;
-    let appliedRoutePricingId = null;
-
-    // Hierarchy A: Exact active RoutePricing match
-    const exactRoute = await prisma.routePricing.findFirst({
-      where: {
-        origin: { equals: data.pickupLocation, mode: "insensitive" },
-        destination: { equals: data.dropLocation, mode: "insensitive" },
-        categoryId: vehicle.categoryId || "",
-        isActive: true,
-      },
+    const fareResult = await fareService.calculateFare({
+      origin: data.pickupLocation,
+      destination: data.dropLocation,
+      categoryId: vehicle.categoryId || "",
+      tripTypeId: data.tripType,
+      vehicleId: vehicle.id,
+      stops: data.stops || undefined,
     });
 
-    if (exactRoute) {
-      totalFareDecimal = new Prisma.Decimal(exactRoute.basePrice);
-      appliedRoutePricingId = exactRoute.id;
-    } else {
-      if (data.distanceKm) {
-        const baseFareDecimal = new Prisma.Decimal(vehicle.baseFare);
-        const distanceDecimal = new Prisma.Decimal(data.distanceKm.toString());
-        const extraKmChargeDecimal = new Prisma.Decimal(vehicle.extraKmCharge);
-
-        const extraFareDecimal = distanceDecimal.mul(extraKmChargeDecimal);
-        totalFareDecimal = baseFareDecimal.add(extraFareDecimal);
-      } else {
-        throw new AppError(
-          "Authoritative fare cannot be calculated. Manual pricing required.",
-          400,
-        );
-      }
-    }
+    const totalFareDecimal = new Prisma.Decimal(fareResult.fare.toString());
+    const appliedRoutePricingId = fareResult.appliedRoutePricingId;
 
     // Payment Configuration
     // Obtain the applicable active/default payment configuration from the database.
@@ -186,14 +167,16 @@ export const createCabBooking = async (req: Request, res: Response, next: NextFu
             customerPhone: data.customerPhone, // Legacy
             notes: data.notes,
             pricingSnapshot: {
-              pricingMethod: appliedRoutePricingId ? "ROUTE_PRICING" : "DISTANCE_FALLBACK",
+              pricingMethod: fareResult.pricingMethod,
+              pricingProvider: fareResult.pricingProvider,
+              durationSeconds: fareResult.durationSeconds || null,
               vehicleId: vehicle.id,
               appliedRoutePricingId,
               vehicleBaseFare: vehicle.baseFare,
               vehicleExtraKmCharge: vehicle.extraKmCharge,
               originUsed: data.pickupLocation,
               destinationUsed: data.dropLocation,
-              distanceKm: data.distanceKm || null,
+              distanceKm: fareResult.distanceKm,
               totalFare: totalFareDecimal.toNumber(),
               advancePercentApplied: advancePercent,
               advanceAmount: advanceDecimal.toNumber(),

@@ -81,9 +81,10 @@ export default async function CabBookingReviewPage({ params, searchParams }: Pro
       body: JSON.stringify({
         originCityId: searchState.originCityId,
         destinationCityId: searchState.destinationCityId,
+        vehicleId: cab.id,
         categoryId: cab.categoryId || "",
         tripTypeId: searchState.tripType,
-        distanceKm: 0,
+        passengers: 1,
       }),
     });
     if (fareRes.ok) {
